@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import ScrollBars from "styles/common/ScrollBars";
+import { DEFAULT_SCROLLBAR_WIDTH } from "utils/constants";
 
 type StyledSectionsProps = {
   $singleLine: boolean;
@@ -16,6 +17,14 @@ const StyledSections = styled.div<StyledSectionsProps>`
 
   @media (hover: none), (pointer: coarse) {
     overflow-y: auto;
+  }
+
+  @supports (not (scrollbar-gutter: stable)) {
+    margin-right: ${DEFAULT_SCROLLBAR_WIDTH}px;
+
+    &:hover {
+      margin-right: 0;
+    }
   }
 
   &:hover {
@@ -39,6 +48,10 @@ const StyledSections = styled.div<StyledSectionsProps>`
     background-color: rgba(50, 48, 47, 60%);
     border-radius: 5px;
     padding: 8px 12px;
+
+    &:hover {
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 40%);
+    }
 
     > figcaption {
       padding-left: 2px;
@@ -77,6 +90,12 @@ const StyledSections = styled.div<StyledSectionsProps>`
           font-size: 11px;
           font-weight: 400;
           padding-left: 2px;
+        }
+
+        &:hover {
+          h4 {
+            text-decoration: underline;
+          }
         }
       }
     }
