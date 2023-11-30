@@ -204,6 +204,8 @@ export const TRANSITIONS_IN_SECONDS = {
   WINDOW: TRANSITIONS_IN_MILLISECONDS.WINDOW / MILLISECONDS_IN_SECOND,
 };
 
+export const KEYPRESS_DEBOUNCE_MS = 150;
+
 export const LONG_PRESS_DELAY_MS = 750;
 
 export const ONE_DAY_IN_MILLISECONDS = 86400000;
@@ -302,6 +304,10 @@ export const MAX_RES_ICON_OVERRIDE: Record<string, [number, number]> = {
   user: [16, 16],
   videos: [16, 32],
 };
+
+export const SUPPORTED_ICON_PIXEL_RATIOS = [3, 2, 1];
+
+export const SUPPORTED_ICON_SIZES = [16, 32, 48, 96, 144];
 
 export const MAX_ICON_SIZE = 144;
 
