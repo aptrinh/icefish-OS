@@ -5,24 +5,27 @@ import {
   START_MENU_SIDEBAR_SELECTOR,
 } from "e2e/constants";
 import {
+  captureConsoleLogs,
   clickDesktop,
   clickStartButton,
   clickStartMenuEntry,
   contextMenuEntryIsVisible,
   contextMenuHasCount,
-  contextMenuIsVisible,
   desktopEntriesAreVisible,
+  didCaptureConsoleLogs,
   disableWallpaper,
   loadApp,
   pressDesktopKeys,
   searchMenuIsHidden,
   searchMenuIsVisible,
+  startMenuContextIsOpen,
   startMenuEntryIsVisible,
   startMenuIsHidden,
   startMenuIsVisible,
   startMenuSidebarEntryIsVisible,
 } from "e2e/functions";
 
+test.beforeEach(captureConsoleLogs);
 test.beforeEach(disableWallpaper);
 test.beforeEach(loadApp);
 test.beforeEach(async ({ page }) => clickStartButton({ page }));
@@ -65,8 +68,7 @@ test.describe("has folders", () => {
     const [firstEntry] = MENU_FOLDERS;
 
     await startMenuEntryIsVisible(firstEntry, { page });
-    await clickStartMenuEntry(firstEntry, { page }, true);
-    await contextMenuIsVisible({ page });
+    await startMenuContextIsOpen(firstEntry, { page });
     await contextMenuEntryIsVisible(/^Open$/, { page });
     await contextMenuHasCount(1, { page });
   });
@@ -98,8 +100,7 @@ test.describe("has files", () => {
     const [firstEntry] = START_MENU_APPS;
 
     await startMenuEntryIsVisible(firstEntry, { page });
-    await clickStartMenuEntry(firstEntry, { page }, true);
-    await contextMenuIsVisible({ page });
+    await startMenuContextIsOpen(firstEntry, { page });
     await contextMenuEntryIsVisible(/^Open$/, { page });
     await contextMenuHasCount(1, { page });
   });
@@ -133,3 +134,5 @@ test.describe("can close", () => {
     await searchMenuIsVisible({ page });
   });
 });
+
+test.afterEach(didCaptureConsoleLogs);

@@ -1,3 +1,5 @@
+/* eslint-disable sonarjs/no-duplicate-string */
+
 import { test } from "@playwright/test";
 import {
   CLOCK_MENU_ITEMS,
@@ -9,6 +11,7 @@ import {
 } from "e2e/constants";
 import {
   calendarIsVisible,
+  captureConsoleLogs,
   clickClock,
   clickContextMenuEntry,
   clickStartButton,
@@ -20,6 +23,7 @@ import {
   contextMenuEntryIsVisible,
   contextMenuHasCount,
   contextMenuIsVisible,
+  didCaptureConsoleLogs,
   disableOffscreenCanvas,
   disableWallpaper,
   fileExplorerEntriesAreVisible,
@@ -41,8 +45,7 @@ import {
   windowIsTransparent,
 } from "e2e/functions";
 
-const HAS_CONTEXT_MENU = "has context menu";
-
+test.beforeEach(captureConsoleLogs);
 test.beforeEach(disableWallpaper);
 
 test.describe("elements", () => {
@@ -60,7 +63,7 @@ test.describe("elements", () => {
       await sheepIsVisible({ page });
     });
 
-    test(HAS_CONTEXT_MENU, async ({ page }) => {
+    test("has context menu", async ({ page }) => {
       await clickStartButton({ page }, true);
       await contextMenuIsVisible({ page });
       await contextMenuHasCount(START_BUTTON_MENU_ITEMS.length, { page });
@@ -93,7 +96,7 @@ test.describe("elements", () => {
       await calendarIsVisible({ page });
     });
 
-    test(HAS_CONTEXT_MENU, async ({ page }) => {
+    test("has context menu", async ({ page }) => {
       await clickClock({ page }, 1, true);
       await contextMenuIsVisible({ page });
       await contextMenuHasCount(CLOCK_MENU_ITEMS.length, { page });
@@ -123,7 +126,7 @@ test.describe("entries", () => {
     test("has tooltip", async ({ page }) =>
       taskbarEntryHasTooltip(TEST_APP_TITLE, TEST_APP_TITLE, { page }));
 
-    test.describe(HAS_CONTEXT_MENU, () => {
+    test.describe("has context menu", () => {
       test.beforeEach(async ({ page }) => {
         await clickTaskbarEntry(TEST_APP_TITLE, { page }, true);
         await contextMenuIsVisible({ page });
@@ -178,7 +181,7 @@ test.describe("entries", () => {
     });
   });
 
-  test.describe(HAS_CONTEXT_MENU, () => {
+  test.describe("has context menu", () => {
     test.beforeEach(async ({ page }) => {
       await clickTaskbar({ page }, true);
       await contextMenuIsVisible({ page });
@@ -192,8 +195,7 @@ test.describe("entries", () => {
         await contextMenuEntryIsVisible(label, { page });
       }
     });
-
-    // TEST: Fullscreen
-    // TEST: Show the desktop
   });
 });
+
+test.afterEach(didCaptureConsoleLogs);

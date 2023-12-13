@@ -22,7 +22,6 @@ import {
   FILE_EXPLORER_ENTRIES_RENAMING_SELECTOR,
   FILE_EXPLORER_ENTRIES_SELECTOR,
   FILE_EXPLORER_NAV_SELECTOR,
-  FILE_EXPLORER_SEARCH_BOX_LABEL,
   FILE_EXPLORER_SELECTOR,
   ICON_SELECTOR,
   RIGHT_CLICK,
@@ -49,6 +48,7 @@ import {
   WINDOW_TITLEBAR_SELECTOR,
   SEARCH_MENU_INPUT_SELECTOR,
   SEARCH_MENU_RESULTS_SELECTOR,
+  FILE_EXPLORER_SEARCH_BOX_SELECTOR,
 } from "e2e/constants";
 
 type TestProps = {
@@ -77,21 +77,37 @@ type DocumentWithVendorFullscreen = Document & {
   webkitFullscreenElement?: HTMLElement;
 };
 
-export const captureConsoleLogs = ({ browserName, page }: TestProps): Page =>
+const captureConsole = (
+  { browserName, page }: TestPropsWithBrowser,
+  logType?: string
+): Page =>
   page.on("console", (msg) => {
+    if (typeof logType === "string" && msg.type() !== logType) return;
+
     const text = msg.text();
 
     if (
-      !EXCLUDED_CONSOLE_LOGS(browserName || "").some((excluded) =>
+      !text ||
+      EXCLUDED_CONSOLE_LOGS(browserName).some((excluded) =>
         text.includes(excluded)
       )
     ) {
-      globalThis.capturedConsoleLogs = [
-        ...(globalThis.capturedConsoleLogs || []),
-        text,
-      ];
+      return;
     }
+
+    globalThis.capturedConsoleLogs = [
+      ...(globalThis.capturedConsoleLogs || []),
+      text,
+    ];
   });
+
+export const captureConsoleLogs = ({
+  browserName,
+  page,
+}: TestPropsWithBrowser): Page => captureConsole({ browserName, page });
+
+export const didCaptureConsoleLogs = (): void =>
+  expect(globalThis.capturedConsoleLogs || []).toHaveLength(0);
 
 export const filterMenuItems = (
   menuItems: MenuItems,
@@ -210,6 +226,24 @@ export const dragFileExplorerEntryToDesktop = async (
       targetPosition: { x: 1, y: 1 },
     });
 
+export const dragDesktopEntryToFileExplorer = async (
+  label: RegExp | string,
+  { page }: TestProps
+): Promise<void> => {
+  const { height = 0, width = 0 } =
+    (await page.locator(FILE_EXPLORER_SELECTOR).boundingBox()) || {};
+
+  page
+    .locator(DESKTOP_ENTRIES_SELECTOR)
+    .getByLabel(label)
+    .dragTo(page.locator(FILE_EXPLORER_SELECTOR), {
+      targetPosition: {
+        x: width - 5,
+        y: height - 5,
+      },
+    });
+};
+
 export const dragWindowToDesktop = async ({
   page,
 }: TestProps): Promise<void> => {
@@ -317,10 +351,7 @@ export const clickFileExplorerAddressBar = async (
 export const clickFileExplorerSearchBox = async ({
   page,
 }: TestProps): Promise<void> =>
-  page
-    .locator(FILE_EXPLORER_NAV_SELECTOR)
-    .getByLabel(FILE_EXPLORER_SEARCH_BOX_LABEL)
-    .click();
+  page.locator(FILE_EXPLORER_SEARCH_BOX_SELECTOR).click();
 
 export const clickFileExplorer = async (
   { page }: TestProps,
@@ -385,8 +416,7 @@ export const typeInFileExplorerSearchBox = async (
   { page }: TestProps
 ): Promise<void> =>
   page
-    .locator(FILE_EXPLORER_NAV_SELECTOR)
-    .getByLabel(FILE_EXPLORER_SEARCH_BOX_LABEL)
+    .locator(FILE_EXPLORER_SEARCH_BOX_SELECTOR)
     .pressSequentially(text, { delay: TYPE_DELAY });
 
 export const typeInTaskbarSearchBar = async (
@@ -665,6 +695,15 @@ export const startMenuSidebarEntryIsVisible = async (
   expect(
     page.locator(START_MENU_SIDEBAR_SELECTOR).getByLabel(label)
   ).toBeVisible();
+
+export const startMenuContextIsOpen = async (
+  entry: RegExp | string,
+  { page }: TestProps
+): Promise<void> =>
+  expect(async () => {
+    await clickStartMenuEntry(entry, { page }, true);
+    await contextMenuIsVisible({ page });
+  }).toPass();
 
 export const taskbarEntryHasTooltip = async (
   label: RegExp,

@@ -3,17 +3,21 @@ import {
   backgroundCanvasMaybeIsVisible,
   backgroundIsUrl,
   canvasBackgroundIsHidden,
+  captureConsoleLogs,
   clickContextMenuEntry,
   clickDesktop,
   clickFileExplorerEntry,
   contextMenuIsVisible,
   desktopIsVisible,
+  didCaptureConsoleLogs,
   fileExplorerEntriesAreVisible,
   loadAppWithCanvas,
   mockPictureSlideshowRequest,
   sessionIsWriteable,
   windowsAreVisible,
 } from "e2e/functions";
+
+test.beforeEach(captureConsoleLogs);
 
 test("has background", loadAppWithCanvas);
 
@@ -53,12 +57,12 @@ test.describe("can set backgound", () => {
     await clickFileExplorerEntry("unknown.png", { page }, true);
     await contextMenuIsVisible({ page });
 
-    await clickContextMenuEntry(/^Set as desktop background$/, { page });
+    await clickContextMenuEntry(/^Set as background$/, { page });
     await clickContextMenuEntry(/^Fill$/, { page });
 
     await backgroundIsUrl({ page });
     await canvasBackgroundIsHidden({ page });
   });
-
-  // TEST: from video
 });
+
+test.afterEach(didCaptureConsoleLogs);
