@@ -25,7 +25,7 @@ const nextConfig = {
     buildActivityPosition: "top-right",
   },
   optimizeFonts: false,
-  output: "export",
+  // output: "export", <--This is the culprit for the errors -->
   productionBrowserSourceMaps: false,
   reactStrictMode: true,
   swcMinify: true,
