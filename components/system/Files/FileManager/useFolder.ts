@@ -21,6 +21,7 @@ import {
   sortByDate,
   sortBySize,
   sortContents,
+  getParentDirectories,
 } from "components/system/Files/FileManager/functions";
 import { type FocusEntryFunctions } from "components/system/Files/FileManager/useFocusableEntries";
 import useSortBy, {
@@ -540,6 +541,11 @@ const useFolder = (
   );
   const pasteToFolder = useCallback(
     (event?: CaptureTriggerEvent): void => {
+      [directory, ...getParentDirectories(directory)].forEach(
+        (parentDirectory) =>
+          pasteList[parentDirectory] && delete pasteList[parentDirectory]
+      );
+
       const pasteEntries = Object.entries(pasteList);
       const moving = pasteEntries.some(([, operation]) => operation === "move");
       const copyFiles = async (entry: string, basePath = ""): Promise<void> => {

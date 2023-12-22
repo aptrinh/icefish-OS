@@ -15,6 +15,7 @@
 - [ ] Write a few blog posts
 - [x] Put up some bouldering vids (as of 2023-11-21)
 - [x] Fix thumbnails not being there for YT vids (as of 2023-11-28 using `IconFile=Thumbnail jpg`)
+- [x] Fix .html extension being cut off on Vercel ([#40](https://github.com/aptrinh/icefish-OS/pull/40))
 
 # System 🧠
 
