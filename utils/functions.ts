@@ -160,10 +160,15 @@ export const createFallbackSrcSet = (
 export const imageToBufferUrl = (
   path: string,
   buffer: Buffer | string
-): string =>
-  getExtension(path) === ".svg"
+): string => {
+  const extension = getExtension(path);
+
+  return extension === ".svg"
     ? `data:image/svg+xml;base64,${window.btoa(buffer.toString())}`
-    : `data:image/png;base64,${buffer.toString("base64")}`;
+    : `data:image/${
+        extension === ".ani" || extension === ".gif" ? "gif" : "png"
+      };base64,${buffer.toString("base64")}`;
+};
 
 export const blobToBase64 = (blob: Blob): Promise<string> =>
   new Promise((resolve) => {
@@ -365,14 +370,20 @@ export const getWindowViewport = (): Position => ({
 });
 
 export const calcInitialPosition = (
-  relativePosition: RelativePosition,
-  container: HTMLElement
-): Position => ({
-  x: relativePosition.left || viewWidth() - (relativePosition.right || 0),
-  y:
-    relativePosition.top ||
-    viewHeight() - (relativePosition.bottom || 0) - container.offsetHeight,
-});
+  { offsetHeight }: HTMLElement,
+  { right = 0, left = 0, top = 0, bottom = 0 } = {} as RelativePosition,
+  { width = 0, height = 0 } = {} as Size
+): Position => {
+  const [vh, vw] = [viewHeight(), viewWidth()];
+
+  return {
+    x: pxToNum(width) >= vw ? 0 : left || vw - right,
+    y:
+      pxToNum(height) + TASKBAR_HEIGHT >= vh
+        ? 0
+        : top || vh - bottom - offsetHeight,
+  };
+};
 
 const GRID_TEMPLATE_ROWS = "grid-template-rows";
 
@@ -586,6 +597,7 @@ export const updateIconPositions = (
 
 export const isCanvasDrawn = (canvas?: HTMLCanvasElement | null): boolean => {
   if (!(canvas instanceof HTMLCanvasElement)) return false;
+  if (canvas.width === 0 || canvas.height === 0) return false;
 
   const { data: pixels = [] } =
     canvas

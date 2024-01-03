@@ -431,6 +431,11 @@ const useCommandInterpreter = (
         }
         case "find":
         case "search": {
+          if (commandArgs.length === 0) {
+            localEcho?.println("FIND: Parameter format not correct");
+            break;
+          }
+
           const results = await fullSearch(
             commandArgs.join(" "),
             readFile,
@@ -626,7 +631,8 @@ const useCommandInterpreter = (
 
               if (
                 ["move", "mv"].includes(lcBaseCommand) &&
-                (await stat(fullDestinationPath)).isDirectory()
+                (await exists(fullDestinationPath)) &&
+                (await lstat(fullDestinationPath)).isDirectory()
               ) {
                 fullDestinationPath = join(
                   fullDestinationPath,
