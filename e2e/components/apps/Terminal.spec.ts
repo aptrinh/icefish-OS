@@ -1,10 +1,12 @@
 import { expect, test } from "@playwright/test";
 import directory from "contexts/process/directory";
-import { TERMINAL_BASE_CD } from "e2e/constants";
+import { ROOT_PUBLIC_TEST_FILE, TERMINAL_BASE_CD } from "e2e/constants";
 import {
   captureConsoleLogs,
   didCaptureConsoleLogs,
   disableWallpaper,
+  sendKeyToTerminal,
+  sendTextToTerminal,
   sendToTerminal,
   sheepIsVisible,
   terminalDirectoryMatchesPublicFolder,
@@ -100,9 +102,26 @@ test.describe("has file system access", () => {
     });
   });
 
+  test.describe("can copy", () => {
+    test("file", async ({ page }) => {
+      const testFile = ROOT_PUBLIC_TEST_FILE;
+      const newTestFile = "test.ini";
+
+      await sendToTerminal({ page }, "ls");
+      await terminalHasText({ page }, testFile);
+
+      await sendToTerminal({ page }, `copy ${testFile} ${newTestFile}`);
+      await sendToTerminal({ page }, "clear");
+
+      await sendToTerminal({ page }, "ls");
+      await terminalHasText({ page }, testFile);
+      await terminalHasText({ page }, newTestFile);
+    });
+  });
+
   test.describe("can delete", () => {
     test("file", async ({ page }) => {
-      const testFile = "desktop.ini";
+      const testFile = ROOT_PUBLIC_TEST_FILE;
 
       await sendToTerminal({ page }, "ls");
       await terminalHasText({ page }, testFile);
@@ -129,9 +148,20 @@ test.describe("has file system access", () => {
   });
 
   test.describe("can find", () => {
-    test("file", async ({ page }) => {
+    test("existing file", async ({ page }) => {
       await sendToTerminal({ page }, "find credit");
       await terminalHasText({ page }, "/CREDITS.md");
+    });
+
+    test("new file", async ({ page }) => {
+      const testFile = "abc123.txt";
+
+      await sendToTerminal({ page }, `find ${testFile}`);
+      await terminalDoesNotHaveText({ page }, `/Users/Public/${testFile}`);
+
+      await sendToTerminal({ page }, `touch ${testFile}`);
+      await sendToTerminal({ page }, `find ${testFile}`);
+      await terminalHasText({ page }, `/Users/Public/${testFile}`);
     });
 
     test("folder", async ({ page }) => {
@@ -179,15 +209,17 @@ test.describe("has commands", () => {
 
   test("neofetch", async ({ page }) => {
     await sendToTerminal({ page }, "neofetch");
-
-    const packageCount = Object.keys(directory).length;
-
-    await terminalHasText({ page }, `Packages: ${packageCount}`);
+    await terminalHasText(
+      { page },
+      `Packages: ${Object.keys(directory).length}`
+    );
   });
 
   test("nslookup", async ({ page }) => {
     await sendToTerminal({ page }, "nslookup dustinbrett.com");
     await terminalHasText({ page }, "Server:  cloudflare-dns.com");
+    await terminalHasText({ page }, "Address:  1.1.1.1");
+    await terminalHasText({ page }, "Name:    dustinbrett.com");
   });
 
   test("sheep", async ({ page }) => {
@@ -220,23 +252,51 @@ test.describe("has commands", () => {
 
   test("title", async ({ page }) => {
     const testTitle = "Testing";
+
     await sendToTerminal({ page }, `title ${testTitle}`);
     await windowTitlebarTextIsVisible(testTitle, { page });
   });
 
   test("time", async ({ page }) => {
     await sendToTerminal({ page }, "time");
-    await terminalHasText({ page }, "The current time is:");
+    await terminalHasText(
+      { page },
+      /The current time is: ([01]\d|2[0-3]):[0-5]\d:[0-5]\d\.\d{2}/
+    );
+  });
+
+  test("date", async ({ page }) => {
+    await sendToTerminal({ page }, "date");
+    await terminalHasText({ page }, /The current date is: \d{4}-\d{2}-\d{2}/);
   });
 
   test("uptime", async ({ page }) => {
     await sendToTerminal({ page }, "uptime");
-    await terminalHasText({ page }, "Uptime:");
+    await terminalHasText({ page }, /Uptime: \d+ second(s)?/);
+  });
+});
+
+test.describe("has tab completion", () => {
+  test("can see file/folder list", async ({ page }) => {
+    await sendTextToTerminal({ page }, "d");
+    await sendKeyToTerminal({ page }, "Tab");
+
+    await terminalHasText({ page }, "Documents");
+    await terminalHasText({ page }, ROOT_PUBLIC_TEST_FILE);
   });
 
-  test("weather", async ({ page }) => {
-    await sendToTerminal({ page }, "weather");
-    await terminalHasText({ page }, "Weather report:");
+  test("can complete folder name", async ({ page }) => {
+    await sendTextToTerminal({ page }, "Vi");
+    await sendKeyToTerminal({ page }, "Tab");
+
+    await terminalHasText({ page }, "Videos", 1, true);
+  });
+
+  test("can complete command name", async ({ page }) => {
+    await sendTextToTerminal({ page }, "he");
+    await sendKeyToTerminal({ page }, "Tab");
+
+    await terminalHasText({ page }, "help", 1, true);
   });
 });
 

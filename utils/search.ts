@@ -26,6 +26,11 @@ export const SEARCH_INPUT_PROPS = {
 export const SEARCH_LIBS = ["/System/lunr/lunr.min.js"];
 
 let baseIndex = Object.create(null) as Index;
+let basePaths = [] as string[];
+
+type ResponseIndex = Index & {
+  paths: string[];
+};
 
 const search = async (
   searchTerm: string,
@@ -36,13 +41,17 @@ const search = async (
     const response = await fetch(FILE_INDEX, HIGH_PRIORITY_REQUEST);
 
     try {
-      baseIndex = window.lunr?.Index.load(
-        JSON.parse(await response.text()) as Index
-      );
+      const { paths, ...responseIndex } = JSON.parse(
+        await response.text()
+      ) as ResponseIndex;
+
+      baseIndex = window.lunr?.Index.load(responseIndex);
+      basePaths = paths;
     } catch {
       // Failed to parse text data to JSON
     }
   }
+
   const searchIndex = index ?? baseIndex;
   let results: Index.Result[] = [];
   const normalizedSearchTerm = searchTerm
@@ -62,7 +71,17 @@ const search = async (
     // Ignore search errors
   }
 
-  return results ?? [];
+  if (results) {
+    return results.map((result) => ({
+      ...result,
+      ref:
+        (result.ref in basePaths
+          ? (basePaths[result.ref as keyof typeof basePaths] as string)
+          : result.ref) || "",
+    }));
+  }
+
+  return [];
 };
 
 interface IWritableFs extends Omit<IndexedDBFileSystem, "_cache"> {
@@ -93,13 +112,17 @@ const buildDynamicIndex = async (
     return Boolean(ext) && !SEARCH_EXTENSIONS.ignore.includes(ext);
   });
   const indexedFiles = await Promise.all(
-    filesToIndex.map(async (path) => ({
-      name: basename(path, extname(path)),
-      path,
-      text: SEARCH_EXTENSIONS.index.includes(getExtension(path))
-        ? (await readFile(path)).toString()
-        : undefined,
-    }))
+    filesToIndex.map(async (path) => {
+      const name = basename(path, extname(path));
+
+      return {
+        name,
+        path,
+        text: SEARCH_EXTENSIONS.index.includes(getExtension(path))
+          ? `${name} ${(await readFile(path)).toString()}`
+          : name,
+      };
+    })
   );
   const dynamicIndex = window.lunr?.(function buildIndex() {
     this.ref("path");

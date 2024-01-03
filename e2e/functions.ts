@@ -794,7 +794,7 @@ export const taskbarEntriesAreVisible = async ({
 
 export const terminalHasText = async (
   { page }: TestProps,
-  text: string,
+  text: string | RegExp,
   count = 1,
   cursorLine = false,
   exact = false
@@ -822,12 +822,23 @@ export const terminalDoesNotHaveText = async (
   cursorLine = false
 ): Promise<void> => terminalHasText({ page }, text, 0, cursorLine);
 
+export const sendKeyToTerminal = async (
+  { page }: TestProps,
+  key: string
+): Promise<void> => page.locator(TERMINAL_SELECTOR).press(key);
+
+export const sendTextToTerminal = async (
+  { page }: TestProps,
+  text: string
+): Promise<void> => page.locator(TERMINAL_SELECTOR).pressSequentially(text);
+
 export const sendToTerminal = async (
   { page }: TestProps,
   text: string
 ): Promise<void> => {
   const terminal = page.locator(TERMINAL_SELECTOR);
 
+  await terminalHasText({ page }, /.*>$/, 1, true);
   await terminal.pressSequentially(text);
   await terminalHasText({ page }, `>${text}`, 1, true);
   await terminal.press("Enter");
