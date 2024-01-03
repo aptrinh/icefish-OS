@@ -1,3 +1,5 @@
+import { readFileSync, readdirSync, statSync } from "fs";
+import { join } from "path";
 import {
   type Locator,
   type Page,
@@ -48,6 +50,9 @@ import {
   SEARCH_MENU_INPUT_SELECTOR,
   SEARCH_MENU_RESULTS_SELECTOR,
   FILE_EXPLORER_SEARCH_BOX_SELECTOR,
+  TERMINAL_ROWS_SELECTOR,
+  TERMINAL_SELECTOR,
+  ROOT_PUBLIC_FOLDER,
 } from "e2e/constants";
 
 type TestProps = {
@@ -786,6 +791,86 @@ export const fileExplorerEntriesAreVisible = async ({
 export const taskbarEntriesAreVisible = async ({
   page,
 }: TestProps): Promise<void> => entriesAreVisible(TASKBAR_ENTRY_SELECTOR, page);
+
+export const terminalHasText = async (
+  { page }: TestProps,
+  text: string,
+  count = 1,
+  cursorLine = false,
+  exact = false
+): Promise<void> => {
+  const terminalRows = page.locator(TERMINAL_ROWS_SELECTOR);
+  const terminalWithTextRows = cursorLine
+    ? terminalRows.last().getByText(text, { exact })
+    : terminalRows.getByText(text, { exact });
+
+  if (count !== -1) {
+    await expect(terminalWithTextRows).toHaveCount(count);
+  }
+
+  if (count !== 0) {
+    for (const row of await terminalWithTextRows.all()) {
+      // eslint-disable-next-line no-await-in-loop
+      await expect(row).toBeVisible();
+    }
+  }
+};
+
+export const terminalDoesNotHaveText = async (
+  { page }: TestProps,
+  text: string,
+  cursorLine = false
+): Promise<void> => terminalHasText({ page }, text, 0, cursorLine);
+
+export const sendToTerminal = async (
+  { page }: TestProps,
+  text: string
+): Promise<void> => {
+  const terminal = page.locator(TERMINAL_SELECTOR);
+
+  await terminal.pressSequentially(text);
+  await terminalHasText({ page }, `>${text}`, 1, true);
+  await terminal.press("Enter");
+  await terminalDoesNotHaveText({ page }, `>${text}`, true);
+};
+
+export const terminalDirectoryMatchesPublicFolder = async (
+  { page }: TestProps,
+  directory: string
+): Promise<void> => {
+  await sendToTerminal({ page }, `dir "${directory}"`);
+
+  const publicDirectory = join(ROOT_PUBLIC_FOLDER, directory);
+  const dirContents = readdirSync(publicDirectory);
+  const fileCount = dirContents.filter((entry) =>
+    statSync(join(publicDirectory, entry)).isFile()
+  ).length;
+  const dirCount = dirContents.length - fileCount;
+
+  await expect(async () => {
+    await terminalHasText({ page }, `${fileCount} File(s)`);
+    await terminalHasText({ page }, `${dirCount} Dir(s)`);
+  }).toPass();
+};
+
+export const terminalFileMatchesPublicFile = async (
+  { page }: TestProps,
+  file: string
+): Promise<void> => {
+  const fileLines = readFileSync(join(ROOT_PUBLIC_FOLDER, file))
+    .toString()
+    .split("\r\n")
+    .filter(Boolean);
+
+  await Promise.all(fileLines.map((line) => terminalHasText({ page }, line)));
+};
+
+export const terminalHasRows = async ({ page }: TestProps): Promise<void> =>
+  expect(async () =>
+    expect(await page.locator(TERMINAL_ROWS_SELECTOR).count()).toBeGreaterThan(
+      0
+    )
+  ).toPass();
 
 export const windowsAreVisible = async ({ page }: TestProps): Promise<void> =>
   entriesAreVisible(WINDOW_SELECTOR, page);
