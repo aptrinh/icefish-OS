@@ -14,11 +14,11 @@ const StyledNavigation = styled.nav`
       color: #fbf1c7;
       fill: currentColor;
       height: 16px;
+      transition: color 0.35s ease;
       width: 16px;
 
       &:hover {
         color: rgb(69, 133, 136);
-        transition: fill 0.5s ease;
       }
 
       &:active {

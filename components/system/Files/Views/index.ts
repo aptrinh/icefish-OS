@@ -6,10 +6,12 @@ import { type IconProps } from "styles/common/Icon";
 
 export type StyledFileEntryProps = {
   $selecting?: boolean;
+  $shadows?: boolean;
   $visible?: boolean;
 };
 
 export type StyledFileManagerProps = {
+  $isEmptyFolder: boolean;
   $scrollable: boolean;
   $selecting?: boolean;
 };

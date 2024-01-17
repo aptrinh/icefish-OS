@@ -19,10 +19,11 @@ const colors = {
       0 2px 2px rgba(0, 0, 0, 50%)`,
   },
   highlight: "hsla(157, 16%, 58%, 90%)",
-  highlightBackground: "hsla(157, 16%, 58%, 20%)",
   progress: "hsla(61, 66%, 44%, 90%)",
   progressBackground: "hsla(60, 71%, 35%, 70%)",
   progressBarRgb: "rgb(184, 187, 38)",
+  selectionHighlight: "hsla(183, 32.7%, 40.2%, 90%)",
+  selectionHighlightBackground: "hsla(183, 32.7%, 40.2%, 30%)",
   startButton: "#fbf1c7",
   taskbar: {
     active: "hsla(0, 0%, 20%, 70%)",
@@ -51,8 +52,8 @@ const colors = {
     background: "#928374",
     outline: "hsla(0, 0%, 25%, 75%)",
     outlineInactive: "hsla(0, 0%, 30%, 100%)",
-    shadow: "0 0 12px 0 rgba(0, 0, 0, 50%)",
-    shadowInactive: "0 0 8px 0 rgba(0, 0, 0, 50%)",
+    shadow: "0 0 14px 0 rgba(0, 0, 0, 50%)",
+    shadowInactive: "0 0 10px 0 rgba(0, 0, 0, 45%)",
   },
 };
 
