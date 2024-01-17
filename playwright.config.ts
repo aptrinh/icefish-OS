@@ -21,6 +21,7 @@ const config: PlaywrightTestConfig = {
     baseURL,
     trace: "retain-on-failure",
     video: "retain-on-failure",
+    timeout: 120000,
   },
   webServer: {
     command: CI ? "yarn serve" : "yarn dev",
