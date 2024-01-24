@@ -33,7 +33,7 @@
   - Cut, Copy, Create shortcut, Delete, Rename
   - [Add file(s)](https://developer.mozilla.org/en-US/docs/Web/API/File/Using_files_from_web_applications), [Map directory](https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API)
   - Open with options/dialog, Open file/folder location, Open in new window, Open Terminal here
-  - Download, Add to archive, Extract here, Set as wallpaper, Convert audio/video/photo/spreadsheets, Properties
+  - Download, Add to archive, Extract here, Set as wallpaper, Convert audio/video/photo/spreadsheets, Properties (w/[Details](https://github.com/buzz/mediainfo.js))
   - Sort by, New Folder, New Text Document
   - Screen Capture
 - Keyboard Shortcuts
@@ -103,11 +103,13 @@
 
 ### Browser (**_.htm, .html_**)
 
-- Loads websites (_w/HTTP header support_)
+- Loads websites (_w/CORS support_)
 - Bookmark bar
 - Favicon support
 - Back/Forward & Reload
 - Google search via Address bar
+- IPFS protocol support
+- [chrome://dino](https://github.com/wayou/t-rex-runner) game
 
 ### [DevTools](https://eruda.liriliri.io/)
 
@@ -179,6 +181,7 @@
 
 - File system support
 - Autocomplete & history
+- Pipe commands together
 - Command list via `help`
 - [Git support](https://isomorphic-git.org/) (checkout & clone)
 - [Python support](https://pyodide.org/) (**_.py_**)

@@ -23,9 +23,10 @@ const StyledBrowser = styled.div<StyledBrowserProps>`
     div {
       display: flex;
       justify-content: space-around;
+      margin-right: 2px;
       min-width: 102px;
-      padding-left: 6px;
-      width: 102px;
+      padding-left: 4px;
+      width: 142px;
     }
 
     button {
@@ -39,8 +40,8 @@ const StyledBrowser = styled.div<StyledBrowserProps>`
 
       svg {
         fill: rgb(235, 219, 178);
-        height: 22px;
-        width: 22px;
+        height: 20px;
+        width: 20px;
       }
 
       &:hover {
@@ -62,13 +63,13 @@ const StyledBrowser = styled.div<StyledBrowserProps>`
 
     &:not(:first-child) {
       border-bottom: 1px solid rgb(124, 111, 100);
-      height: 33px;
+      height: 37px;
       justify-content: left;
       padding: 0 8px;
 
       button {
         margin-bottom: 4px;
-        margin-right: 4px;
+        margin-right: 8px;
       }
     }
 
@@ -78,15 +79,19 @@ const StyledBrowser = styled.div<StyledBrowserProps>`
       color: rgb(251, 241, 199);
       font-family: ${({ theme }) => theme.formats.systemFont};
       font-size: 13px;
-      height: 28px;
+      height: 34px;
       letter-spacing: 0.2px;
-      line-height: 26px;
       margin: 0 6px;
       padding: 0 13px;
+      padding-bottom: 2px;
       width: 100%;
 
       &:focus {
         outline: 2px solid rgb(131, 165, 152);
+      }
+
+      &::selection {
+        background-color: rgb(69, 133, 136);
       }
     }
   }

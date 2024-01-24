@@ -1,6 +1,12 @@
+import { basename, extname } from "path";
 import { type WASIBindings } from "wasi-js";
-import { config } from "components/apps/Terminal/config";
-import { type LocalEcho } from "components/apps/Terminal/types";
+import {
+  WAPM_STD_IN_APPS,
+  WAPM_STD_IN_EXCLUDE_ARGS,
+  config,
+} from "components/apps/Terminal/config";
+import { parseCommand } from "components/apps/Terminal/functions";
+import { getExtension } from "utils/functions";
 
 type WASIError = Error & {
   code: number;
@@ -142,8 +148,10 @@ const fetchCommandFromWAPM = async ({
 
 const loadWapm = async (
   commandArgs: string[],
-  localEcho: LocalEcho,
-  wasmFile?: Buffer
+  print: (message: string) => void,
+  printLn: (message: string) => void,
+  wasmFile?: Buffer,
+  pipedCommand?: string
 ): Promise<void> => {
   const args = commandArgs[0] === "run" ? commandArgs.slice(1) : commandArgs;
   const { lowerI64Imports } = await import("@wasmer/wasm-transformer");
@@ -166,15 +174,55 @@ const loadWapm = async (
       bindings ||= (await import("wasi-js/dist/bindings/browser")).default;
 
       const wasmModule = await WebAssembly.compile(moduleResponse);
+      const stdIn =
+        (WAPM_STD_IN_APPS.includes(args[0]) ||
+          (getExtension(args[0]) === ".wasm" &&
+            WAPM_STD_IN_APPS.includes(basename(args[0], extname(args[0]))))) &&
+        (args[2] !== undefined || !WAPM_STD_IN_EXCLUDE_ARGS.includes(args[1]));
+      let readStdIn = false;
+      let exitStdIn = false;
+      const wasiArgs = stdIn
+        ? pipedCommand
+          ? parseCommand(pipedCommand).slice(1)
+          : []
+        : args;
       const wasi = new WASI({
-        args,
+        args: wasiArgs,
         bindings,
         env: {
           COLUMNS: config.cols?.toString(),
           LINES: config.rows?.toString(),
         },
-        sendStderr: (buffer: Uint8Array) => localEcho?.print(buffer.toString()),
-        sendStdout: (buffer: Uint8Array) => localEcho?.print(buffer.toString()),
+        ...(stdIn
+          ? {
+              getStdin() {
+                if (exitStdIn) {
+                  // eslint-disable-next-line unicorn/no-null
+                  this.getStdin = null as unknown as undefined;
+                }
+
+                const argBuffer = Buffer.from(
+                  args.slice(wasiArgs.length).join(" "),
+                  "utf8"
+                );
+
+                return Object.assign(argBuffer, {
+                  copy: () => {
+                    if (readStdIn) return 0;
+
+                    readStdIn = true;
+
+                    return argBuffer.length;
+                  },
+                }) as Buffer;
+              },
+            }
+          : {}),
+        sendStderr: (buffer: Uint8Array) => print(buffer.toString()),
+        sendStdout: (buffer: Uint8Array) => {
+          if (stdIn) exitStdIn = true;
+          print(buffer.toString());
+        },
       });
       const instance = await WebAssembly.instantiate(
         wasmModule,
@@ -184,9 +232,9 @@ const loadWapm = async (
       wasi.start(instance);
     }
   } catch (error) {
-    const { message } = error as WASIError;
+    const { code, message } = error as WASIError;
 
-    localEcho?.println(message);
+    if (code !== 0 && !/^WASI Exit error: \d$/.test(message)) printLn(message);
   }
 };
 
