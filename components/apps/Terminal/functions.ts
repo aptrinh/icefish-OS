@@ -6,21 +6,19 @@ import processDirectory from "contexts/process/directory";
 import { ONE_DAY_IN_MILLISECONDS } from "utils/constants";
 
 export const help = (
-  localEcho: LocalEcho,
+  printLn: (message: string) => void,
   commandList: Record<string, string>,
   aliasList?: Record<string, string[]>
 ): void => {
   Object.entries(commandList).forEach(([command, description]) => {
-    localEcho?.println(`${command.padEnd(14)} ${description}`);
+    printLn(`${command.padEnd(14)} ${description}`);
   });
 
   if (aliasList) {
-    localEcho?.println("\r\nAliases:\r\n");
+    printLn("\r\nAliases:\r\n");
     Object.entries(aliasList).forEach(([baseCommand, aliasCommands]) => {
       aliasCommands.forEach((aliasCommand) => {
-        localEcho?.println(
-          `${aliasCommand.padEnd(14)} ${commandList[baseCommand]}`
-        );
+        printLn(`${aliasCommand.padEnd(14)} ${commandList[baseCommand]}`);
       });
     });
   }
@@ -46,6 +44,7 @@ export const commands: Record<string, string> = {
   ipconfig: "Displays current IP.",
   license: "Displays license.",
   md: "Creates a directory.",
+  mediainfo: "Displays relevant technical data about media files.",
   mount: "Mounts a local file system directory.",
   move: "Moves file or directory.",
   neofetch: "Displays system information.",
@@ -84,7 +83,7 @@ export const aliases: Record<string, string[]> = {
   md: ["mkdir"],
   move: ["mv"],
   neofetch: ["systeminfo"],
-  python: ["py"],
+  python: ["py", "python3"],
   rd: ["rmdir"],
   ren: ["rename"],
   sheep: ["esheep"],
@@ -116,6 +115,7 @@ const directoryCommands = new Set([
   "mv",
   "py",
   "python",
+  "python3",
   "rd",
   "ren",
   "rename",
@@ -164,24 +164,33 @@ export const autoComplete = (
   });
 };
 
-export const parseCommand = (commandString: string): string[] => {
+export const parseCommand = (
+  commandString: string,
+  pipedCommand = ""
+): string[] => {
   let readingQuotedArg = false;
   let currentArg = "";
   const addArg = (acc: string[]): void => {
-    if (currentArg) acc.push(currentArg);
+    acc.push(currentArg);
     currentArg = "";
   };
-  const parsedCommand = [...commandString].reduce<string[]>((acc, char) => {
-    if (char === " " && !readingQuotedArg) addArg(acc);
-    else if (char === '"') {
-      readingQuotedArg = !readingQuotedArg;
-      if (!readingQuotedArg) addArg(acc);
-    } else {
-      currentArg += char;
-    }
+  const parsedCommand = [...commandString].reduce<string[]>(
+    (acc, char, index) => {
+      if (pipedCommand && index > pipedCommand.length) {
+        currentArg += char;
+      } else if (char === " " && !readingQuotedArg && currentArg) {
+        addArg(acc);
+      } else if (char === '"') {
+        readingQuotedArg = !readingQuotedArg;
+        if (!readingQuotedArg) addArg(acc);
+      } else {
+        currentArg += char;
+      }
 
-    return acc;
-  }, []);
+      return acc;
+    },
+    []
+  );
 
   return currentArg ? [...parsedCommand, currentArg] : parsedCommand;
 };
@@ -189,7 +198,7 @@ export const parseCommand = (commandString: string): string[] => {
 export const printTable = (
   headers: [string, number, boolean?, ((value: string) => string)?][],
   data: string[][],
-  localEcho?: LocalEcho,
+  printLn: (message: string) => void,
   hideHeader?: boolean,
   paddingCharacter = "="
 ): void => {
@@ -201,8 +210,8 @@ export const printTable = (
       .map(([, padding]) => paddingCharacter.repeat(padding))
       .join(" ");
 
-    localEcho?.println(header);
-    localEcho?.println(divider);
+    printLn(header);
+    printLn(divider);
   }
 
   const content = data.map((row) =>
@@ -221,7 +230,7 @@ export const printTable = (
       .join(" ")
   );
 
-  if (content.length > 0) content.forEach((entry) => localEcho?.println(entry));
+  if (content.length > 0) content.forEach((entry) => printLn(entry));
 };
 
 export const getFreeSpace = async (): Promise<string> => {

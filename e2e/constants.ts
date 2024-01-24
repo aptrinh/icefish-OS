@@ -42,6 +42,11 @@ export const EXCLUDED_CONSOLE_LOGS = (browserName: string): string[] => {
       // sandbox=allow-presentation is not supported in webkit
       "Error while parsing the 'sandbox' attribute: 'allow-presentation' is an invalid sandbox flag."
     );
+  } else if (browserName === "firefox") {
+    excludedConsoleLogs.push(
+      "Layout was forced before the page was fully loaded",
+      "while rendering a different component (`ForwardRef`)"
+    );
   }
 
   return excludedConsoleLogs;
@@ -252,3 +257,7 @@ export const TERMINAL_BASE_CD = "/Users/Public";
 export const ROOT_PUBLIC_FOLDER = "public";
 
 export const ROOT_PUBLIC_TEST_FILE = "desktop.ini";
+
+export const CURSOR_SPACE_LENGTH = 1;
+
+export const TAB_SPACE_LENGTH = 4;

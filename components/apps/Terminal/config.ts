@@ -18,6 +18,10 @@ export const config: ITerminalOptions & { cols: number; rows: number } = {
   },
 };
 
+export const WAPM_STD_IN_APPS = ["lolcat"];
+
+export const WAPM_STD_IN_EXCLUDE_ARGS = ["--help", "-h", "--version", "-V"];
+
 export const PROMPT_CHARACTER = ">";
 
 export const PI_ASCII = [
