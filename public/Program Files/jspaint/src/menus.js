@@ -126,7 +126,13 @@
 					"show autosaves", "show saves", "show saved documents", "show saved files", "show saved pictures", "show saved images", "show local storage",
 					"autosaves", "autosave", "saved documents", "saved files", "saved pictures", "saved images", "local storage",
 				],
-				action: () => { manage_storage(); },
+				action: () => { 
+try {
+  manage_storage();
+} catch (error) {
+  display_error_message(error.message);
+}
+},
 				description: localize("Manages storage of previously created or opened pictures."),
 			},
 			MENU_DIVIDER,
