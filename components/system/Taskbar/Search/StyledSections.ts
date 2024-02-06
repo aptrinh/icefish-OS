@@ -24,12 +24,17 @@ const StyledSections = styled.div<StyledSectionsProps>`
   @supports (not (scrollbar-gutter: stable)) {
     margin-right: ${THIN_SCROLLBAR_WIDTH}px;
 
-    @supports (scrollbar-width: thin) {
+    @supports not selector(::-webkit-scrollbar) {
       margin-right: 8px;
     }
 
+    @media (hover: hover) {
+      &:hover {
+        margin-right: 0;
+      }
+    }
+
     &:hover {
-      margin-right: 0;
       overflow-y: scroll;
     }
   }

@@ -112,6 +112,7 @@ const useCommandInterpreter = (
     rootFs,
     stat,
     updateFolder,
+    writeFile,
   } = useFileSystem();
   const { closeWithTransition, open, title: changeTitle } = useProcesses();
   const { updateRecentFiles } = useSession();
@@ -765,10 +766,16 @@ const useCommandInterpreter = (
 
           output.push(
             `Uptime: ${getUptime(true)}`,
-            `Packages: ${Object.keys(processDirectory).length}`,
-            `Resolution: ${window.screen.width}x${window.screen.height}`,
-            `Theme: ${themeName}`
+            `Packages: ${Object.keys(processDirectory).length}`
           );
+
+          if (window.screen?.width && window.screen?.height) {
+            output.push(
+              `Resolution: ${window.screen.width}x${window.screen.height}`
+            );
+          }
+
+          output.push(`Theme: ${themeName}`);
 
           if (terminalFont) {
             output.push(`Terminal Font: ${terminalFont}`);
@@ -1002,7 +1009,7 @@ const useCommandInterpreter = (
           const [file] = commandArgs;
           const fullSourcePath = await getFullPath(file);
 
-          await loadWapm(
+          const [wasmName, wasmFile] = await loadWapm(
             commandArgs,
             print,
             printLn,
@@ -1011,6 +1018,14 @@ const useCommandInterpreter = (
               : undefined,
             pipedCommand
           );
+
+          if (wasmName && wasmFile) {
+            writeFile(
+              join(SYSTEM_PATH, `${wasmName}.wasm`),
+              Buffer.from(wasmFile),
+              true
+            );
+          }
 
           break;
         }
@@ -1183,6 +1198,7 @@ const useCommandInterpreter = (
       updateFile,
       updateFolder,
       updateRecentFiles,
+      writeFile,
     ]
   );
   const commandInterpreterRef = useRef<CommandInterpreter>(commandInterpreter);

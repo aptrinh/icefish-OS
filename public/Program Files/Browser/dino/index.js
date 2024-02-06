@@ -35,7 +35,7 @@
         this.distanceMeter = null;
         this.distanceRan = 0;
 
-        this.highestScore = 0;
+        this.highestScore = Number(window.localStorage.getItem("dinoHighestScore") || "0");
 
         this.time = 0;
         this.runningTime = 0;
@@ -90,10 +90,10 @@
     var IS_HIDPI = window.devicePixelRatio > 1;
 
     /** @const */
-    var IS_IOS = /iPad|iPhone|iPod/.test(window.navigator.platform);
+    var IS_SAFARI = /^(?:(?!chrome|android).)*safari/i.test(window.navigator.userAgent);
 
     /** @const */
-    var IS_MOBILE = /Android/.test(window.navigator.userAgent) || IS_IOS;
+    var IS_MOBILE = /Android/.test(window.navigator.userAgent) || IS_SAFARI;
 
     /** @const */
     var IS_TOUCH_ENABLED = 'ontouchstart' in window;
@@ -310,7 +310,7 @@
          * Load and decode base 64 encoded sounds.
          */
         loadSounds: function () {
-            if (!IS_IOS) {
+            if (!IS_SAFARI) {
                 this.audioContext = new AudioContext();
 
                 var resourceTemplate =
@@ -378,6 +378,10 @@
             this.distanceMeter = new DistanceMeter(this.canvas,
                 this.spriteDef.TEXT_SPRITE, this.dimensions.WIDTH);
 
+            if (this.highestScore) {
+              this.distanceMeter.setHighScore(this.highestScore);
+            }
+
             // Draw t-rex
             this.tRex = new Trex(this.canvas, this.spriteDef.TREX);
 
@@ -429,7 +433,7 @@
             if (this.activated) {
                 this.setArcadeModeContainerScale();
             }
-            
+
             // Redraw the elements back onto the canvas.
             if (this.canvas) {
                 this.canvas.width = this.dimensions.WIDTH;
@@ -474,9 +478,9 @@
                     'from { width:' + Trex.config.WIDTH + 'px }' +
                     'to { width: ' + this.dimensions.WIDTH + 'px }' +
                     '}';
-                
-                // create a style sheet to put the keyframe rule in 
-                // and then place the style sheet in the html head    
+
+                // create a style sheet to put the keyframe rule in
+                // and then place the style sheet in the html head
                 var sheet = document.createElement('style');
                 sheet.innerHTML = keyframes;
                 document.head.appendChild(sheet);
@@ -799,6 +803,7 @@
             // Update the high score.
             if (this.distanceRan > this.highestScore) {
                 this.highestScore = Math.ceil(this.distanceRan);
+                window.localStorage.setItem("dinoHighestScore", this.highestScore.toString());
                 this.distanceMeter.setHighScore(this.highestScore);
             }
 
@@ -842,7 +847,7 @@
                 this.update();
             }
         },
-        
+
         /**
          * Hides offline messaging for a fullscreen game only experience.
          */
@@ -871,7 +876,7 @@
             this.containerEl.style.transform =
                 'scale(' + cssScale + ') translateY(' + translateY + 'px)';
         },
-        
+
         /**
          * Pause the game if the tab is not in focus.
          */
@@ -1025,7 +1030,7 @@
      * @return {number}
      */
     function getTimeStamp() {
-        return IS_IOS ? new Date().getTime() : performance.now();
+        return IS_SAFARI ? new Date().getTime() : performance.now();
     }
 
 
