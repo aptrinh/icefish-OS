@@ -9,7 +9,7 @@ const StyledBrowser = styled.div<StyledBrowserProps>`
     background-color: ${({ $hasSrcDoc }) =>
       $hasSrcDoc ? "#FBF1C7" : "initial"};
     border: 0;
-    height: calc(100% - 36px - 33px);
+    height: calc(100% - 42px - 37px);
     width: 100%;
   }
 

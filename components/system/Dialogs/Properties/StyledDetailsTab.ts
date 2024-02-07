@@ -1,15 +1,15 @@
 import styled from "styled-components";
 
 const StyledDetailsTab = styled.div`
-  background-color: #fff;
-  border: 1px solid rgb(217, 217, 217);
+  background-color: #fbf1c7;
+  border: 1px solid rgb(213, 196, 161);
   height: calc(100% - 64px);
   padding: 12px 13px;
   position: relative;
   top: -1px;
 
   table {
-    border: 1px solid rgb(130, 135, 144);
+    border: 1px solid rgb(124, 111, 100);
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -17,7 +17,7 @@ const StyledDetailsTab = styled.div`
     text-align: left;
 
     thead {
-      background-color: #fff;
+      background-color: #fbf1c7;
       display: flex;
       height: 24px;
       padding: 8px 5px;
@@ -27,7 +27,7 @@ const StyledDetailsTab = styled.div`
       z-index: 2;
 
       th {
-        border-right: 1px solid #e0e0e0;
+        border-right: 1px solid #ebdbb2;
         font-size: 12px;
         font-weight: 400;
         padding-left: 4px;
@@ -68,10 +68,14 @@ const StyledDetailsTab = styled.div`
           overflow: hidden;
           text-overflow: ellipsis;
           user-select: text;
+
+          img {
+            width: 100%;
+          }
         }
 
         &.header {
-          color: rgb(0, 45, 135);
+          color: rgb(7, 102, 120);
           display: inline-table;
           margin-top: 4px;
           padding-left: 12px;
@@ -90,7 +94,7 @@ const StyledDetailsTab = styled.div`
             width: 100%;
 
             &::before {
-              background-color: rgb(178, 193, 224);
+              background-color: rgb(69, 133, 136);
               content: "";
               display: block;
               height: 1px;
