@@ -139,6 +139,12 @@ const Metadata: FC = () => {
       <meta content={author.url} property="og:url" />
       <meta content={`${author.url}/screenshot.png`} property="og:image" />
       <meta content={description} property="og:description" />
+      <link
+        href={`${author.url}/rss.xml`}
+        rel="alternate"
+        title={`RSS Feed for ${alias}`}
+        type="application/rss+xml"
+      />
       {desktopIcons.map((icon) => {
         const isSubIcon = icon.includes("/16x16/");
         const dynamicIcon = !isSubIcon && isDynamicIcon(icon);

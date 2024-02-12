@@ -12,7 +12,7 @@ const sizes = {
   fileEntry: {
     fontSize: "12px",
     iconSize: "48px",
-    maxIconTextDisplayWidth: 73,
+    maxIconTextDisplayWidth: 72,
     maxListTextDisplayWidth: 102,
     renamePadding: 5,
     renameWidth: 75,
@@ -53,6 +53,7 @@ const sizes = {
       fontSize: "12px",
       iconSize: "16px",
       maxWidth: "160px",
+      peekControlsHeight: 36,
       peekImage: {
         height: 82,
         margin: 8,
