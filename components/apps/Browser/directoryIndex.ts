@@ -72,6 +72,7 @@ const formatSize = (size?: number): string => {
   if (size === undefined) return " - ";
 
   const units = ["", "K", "M", "G", "T"];
+
   let power = Math.floor((size ? Math.log(size) : 0) / Math.log(1024));
   power = Math.min(power, units.length - 1);
   let newSize = size / 1024 ** power;
@@ -83,7 +84,7 @@ const formatSize = (size?: number): string => {
     newNumber = Number(Math.round(newSize)).toString();
   }
 
-  const addTrailingZero = newSize < 10 && newSize % 1 === 0;
+  const addTrailingZero = newSize !== 0 && newSize < 10 && newSize % 1 === 0;
 
   return newNumber + (addTrailingZero ? ".0" : "") + units[power];
 };
@@ -110,7 +111,7 @@ export const createDirectoryIndex = (
       <h1>Index of ${url}</h1>
       <table>
         <tr>
-          <th valign="top"><img src="${DIRECTORY_INDEX_ICON_PATH}/blank.gif" alt="[ICO]" /></th>
+          <th valign="top"><img decoding="async" src="${DIRECTORY_INDEX_ICON_PATH}/blank.gif" alt="[ICO]" /></th>
           <th><a href="${origin}?C=N;O=${!C || (C === "N" && O === "A") ? "D" : "A"}">Name</a></th><th><a href="${origin}?C=M;O=${C === "M" && O === "A" ? "D" : "A"}">Last modified</a></th>
           <th><a href="${origin}?C=S;O=${C === "S" && O === "A" ? "D" : "A"}">Size</a></th><th><a href="${origin}?C=D;O=${C === "D" && O === "A" ? "D" : "A"}">Description</a></th>
         </tr>
@@ -133,7 +134,7 @@ export const createDirectoryIndex = (
               <tr>
                 <td valign="top">
                   <a href="${origin}${href}" type=${linkType}>
-                    <img src="${DIRECTORY_INDEX_ICON_PATH}/${entryIcon}.gif" alt="[${altIconMap[entryIcon] || alt || "   "}]">
+                    <img decoding="async" src="${DIRECTORY_INDEX_ICON_PATH}/${entryIcon}.gif" alt="[${altIconMap[entryIcon] || alt || "   "}]">
                   </a>
                 </td>
                 <td>
