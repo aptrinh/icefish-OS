@@ -27,6 +27,12 @@ const StyledSidebar = styled.nav`
       background-color: hsla(195, 6.5%, 12.2%, 75%);
     }
   }
+
+  &.collapsed {
+    transition:
+      all 300ms ease,
+      backdrop-filter 600ms;
+  }
 `;
 
 export default StyledSidebar;
