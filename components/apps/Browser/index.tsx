@@ -1,5 +1,7 @@
 import { basename, join, resolve } from "path";
 import { useCallback, useEffect, useRef, useState } from "react";
+import useHistoryMenu from "components/apps/Browser/useHistoryMenu";
+import useBookmarkMenu from "components/apps/Browser/useBookmarkMenu";
 import {
   createDirectoryIndex,
   type DirectoryEntries,
@@ -37,6 +39,7 @@ import {
   getInfoWithExtension,
   getShortcutInfo,
 } from "components/system/Files/FileEntry/functions";
+import { useSession } from "contexts/session";
 
 const Browser: FC<ComponentProcessProps> = ({ id }) => {
   const {
@@ -46,6 +49,7 @@ const Browser: FC<ComponentProcessProps> = ({ id }) => {
     processes: { [id]: process },
     open,
   } = useProcesses();
+  const { setForegroundId } = useSession();
   const { prependFileToTitle } = useTitle(id);
   const { initialTitle = "", url = "" } = process || {};
   const initialUrl = url || HOME_PAGE;
@@ -90,6 +94,12 @@ const Browser: FC<ComponentProcessProps> = ({ id }) => {
     },
     [changeUrl, id]
   );
+  const { backMenu, forwardMenu } = useHistoryMenu(
+    history,
+    position,
+    moveHistory
+  );
+  const bookmarkMenu = useBookmarkMenu();
   const setUrl = useCallback(
     async (addressInput: string): Promise<void> => {
       const { contentWindow } = iframeRef.current || {};
@@ -367,6 +377,7 @@ const Browser: FC<ComponentProcessProps> = ({ id }) => {
             disabled={!canGoBack}
             onClick={() => changeHistory(-1)}
             {...label("Click to go back")}
+            {...backMenu}
           >
             <Arrow direction="left" />
           </Button>
@@ -374,6 +385,7 @@ const Browser: FC<ComponentProcessProps> = ({ id }) => {
             disabled={!canGoForward}
             onClick={() => changeHistory(+1)}
             {...label("Click to go forward")}
+            {...forwardMenu}
           >
             <Arrow direction="right" />
           </Button>
@@ -407,12 +419,19 @@ const Browser: FC<ComponentProcessProps> = ({ id }) => {
         {bookmarks.map(({ name, icon, url: bookmarkUrl }) => (
           <Button
             key={name}
-            onClick={() => goToLink(bookmarkUrl)}
+            onClick={({ ctrlKey }) => {
+              if (ctrlKey) {
+                open("Browser", { url: bookmarkUrl });
+              } else {
+                goToLink(bookmarkUrl);
+              }
+            }}
             {...label(
               `${name}\n${bookmarkUrl
                 .replace(/^http:\/\//, "")
                 .replace(/\/$/, "")}`
             )}
+            {...bookmarkMenu}
           >
             <Icon alt={name} imgSize={16} src={icon} />
           </Button>
@@ -420,7 +439,17 @@ const Browser: FC<ComponentProcessProps> = ({ id }) => {
       </nav>
       <iframe
         ref={iframeRef}
-        onLoad={() => setLoading(false)}
+        onLoad={() => {
+          try {
+            iframeRef.current?.contentWindow?.addEventListener("focus", () =>
+              setForegroundId(id)
+            );
+          } catch {
+            // Ignore failure to add focus event listener
+          }
+
+          if (loading) setLoading(false);
+        }}
         srcDoc={srcDoc || undefined}
         title={id}
         {...IFRAME_CONFIG}
