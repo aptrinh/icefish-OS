@@ -36,8 +36,8 @@ export const CLOCK_CANVAS_BASE_WIDTH = 68;
 export const SMALLEST_PNG_SIZE = 51;
 
 export const DEFAULT_WINDOW_SIZE: Size = {
-  height: 295,
-  width: 405,
+  height: 510,
+  width: 640,
 };
 
 export const DEFAULT_MAPPED_NAME = "Share";
@@ -78,6 +78,15 @@ export const LIST_VIEW_ANIMATION = {
   transition: { duration: 0.15 },
 };
 
+export const HEIF_IMAGE_FORMATS = new Set([
+  ".heic",
+  ".heics",
+  ".heif",
+  ".heifs",
+  ".avci",
+  ".avcs",
+]);
+
 export const TIFF_IMAGE_FORMATS = new Set([
   ".cr2",
   ".dng",
@@ -89,6 +98,7 @@ export const TIFF_IMAGE_FORMATS = new Set([
 export const CLIPBOARD_FILE_EXTENSIONS = new Set([".jpeg", ".jpg", ".png"]);
 
 export const IMAGE_FILE_EXTENSIONS = new Set([
+  ...HEIF_IMAGE_FORMATS,
   ...TIFF_IMAGE_FORMATS,
   ".ani",
   ".apng",
@@ -113,6 +123,7 @@ export const IMAGE_FILE_EXTENSIONS = new Set([
 ]);
 
 export const UNSUPPORTED_BACKGROUND_EXTENSIONS = new Set([
+  ...HEIF_IMAGE_FORMATS,
   ...TIFF_IMAGE_FORMATS,
   ".jxl",
   ".qoi",
@@ -282,9 +293,6 @@ export const COMPRESSED_FOLDER_ICON = `${ICON_PATH}/compressed.webp`;
 export const MOUNTED_FOLDER_ICON = `${ICON_PATH}/mounted.webp`;
 
 export const NEW_FOLDER_ICON = `${ICON_PATH}/new_folder.webp`;
-
-export const SMALLEST_JXL_FILE =
-  "data:image/jxl;base64,/woIAAAMABKIAgC4AF3lEgAAFSqjjBu8nOv58kOHxbSN6wxttW1hSaLIODZJJ3BIEkkaoCUzGM6qJAE=";
 
 export const UNKNOWN_ICON_PATH = `${ICON_PATH}/unknown.webp`;
 
