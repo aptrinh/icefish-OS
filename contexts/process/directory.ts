@@ -48,10 +48,6 @@ const directory: Processes = {
   DXBall: {
     Component: dynamic(() => import("components/apps/DX-Ball")),
     backgroundColor: "#282828",
-    defaultSize: {
-      height: 480,
-      width: 640,
-    },
     icon: "/System/Icons/dxball.webp",
     libs: ["/Program Files/DX-Ball/game.js"],
     lockAspectRatio: true,
@@ -90,6 +86,10 @@ const directory: Processes = {
   FileExplorer: {
     Component: dynamic(() => import("components/apps/FileExplorer")),
     backgroundColor: "#282828",
+    defaultSize: {
+      height: 260,
+      width: 405,
+    },
     icon: FOLDER_ICON,
     title: "File Explorer",
   },
@@ -165,10 +165,6 @@ const directory: Processes = {
   OpenType: {
     Component: dynamic(() => import("components/apps/OpenType")),
     backgroundColor: "#fbf1c7",
-    defaultSize: {
-      height: 480,
-      width: 640,
-    },
     icon: "/System/Icons/opentype.webp",
     preferProcessIcon: true,
     title: "OpenType",
@@ -189,10 +185,6 @@ const directory: Processes = {
   PDF: {
     Component: dynamic(() => import("components/apps/PDF")),
     backgroundColor: "#a89984",
-    defaultSize: {
-      height: 480,
-      width: 640,
-    },
     icon: "/System/Icons/pdf.webp",
     libs: ["/Program Files/PDF.js/pdf.js"],
     title: "PDF",
@@ -200,10 +192,6 @@ const directory: Processes = {
   Paint: {
     Component: dynamic(() => import("components/apps/Paint")),
     backgroundColor: "#7c6f64",
-    defaultSize: {
-      height: 480,
-      width: 640,
-    },
     icon: "/System/Icons/paint.webp",
     libs: ["/Program Files/jspaint/index.html"],
     title: "Paint",
@@ -319,11 +307,7 @@ const directory: Processes = {
   },
   TinyMCE: {
     Component: dynamic(() => import("components/apps/TinyMCE")),
-    backgroundColor: "#1D2021",
-    defaultSize: {
-      height: 480,
-      width: 640,
-    },
+    backgroundColor: "#1d2021",
     dependantLibs: [
       "/Program Files/TinyMCE/themes/silver/theme.min.js",
       "/Program Files/TinyMCE/models/dom/model.min.js",
@@ -365,6 +349,10 @@ const directory: Processes = {
     Component: dynamic(() => import("components/apps/VideoPlayer")),
     autoSizing: true,
     backgroundColor: "#282828",
+    defaultSize: {
+      height: 390,
+      width: 640,
+    },
     icon: "/System/Icons/vlc.webp",
     libs: [
       "/Program Files/Video.js/video-js.min.css",

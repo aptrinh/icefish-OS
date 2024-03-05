@@ -17,17 +17,17 @@ import { useViewport } from "contexts/viewport";
 import useDoubleClick from "hooks/useDoubleClick";
 import Button from "styles/common/Button";
 import {
+  HEIF_IMAGE_FORMATS,
   HIGH_PRIORITY_ELEMENT,
   IMAGE_FILE_EXTENSIONS,
   TIFF_IMAGE_FORMATS,
 } from "utils/constants";
 import {
+  decodeHeic,
   decodeJxl,
   getExtension,
   haltEvent,
-  hasJxlSupport,
   imageToBufferUrl,
-  imgDataToBuffer,
   label,
 } from "utils/functions";
 import { aniToGif } from "components/system/Files/FileEntry/functions";
@@ -56,12 +56,14 @@ const Photos: FC<ComponentProcessProps> = ({ id }) => {
 
     if ([".ani", ".cur"].includes(ext)) {
       fileContents = await aniToGif(fileContents);
-    } else if (ext === ".jxl" && !(await hasJxlSupport())) {
-      fileContents = imgDataToBuffer(await decodeJxl(fileContents));
+    } else if (ext === ".jxl") {
+      fileContents = await decodeJxl(fileContents);
     } else if (ext === ".qoi") {
       const { decodeQoi } = await import("components/apps/Photos/qoi");
 
       fileContents = decodeQoi(fileContents);
+    } else if (HEIF_IMAGE_FORMATS.has(ext)) {
+      fileContents = await decodeHeic(fileContents);
     } else if (TIFF_IMAGE_FORMATS.has(ext)) {
       fileContents = (await import("utif"))
         .bufferToURI(fileContents)

@@ -35,13 +35,13 @@ const StyledNavigation = styled.nav`
     }
 
     &[title="Recent locations"] {
-      left: 56px;
+      left: 55px;
       position: absolute;
 
       svg {
         stroke: currentColor;
         stroke-width: 3px;
-        width: 6px;
+        width: 7px;
       }
     }
 
