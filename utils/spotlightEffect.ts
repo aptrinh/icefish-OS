@@ -1,11 +1,7 @@
 /* eslint-disable no-param-reassign */
 
-import { TRANSITIONS_IN_MILLISECONDS } from "utils/constants";
-
 const CAPTURE = { capture: true, passive: true };
 const PASSIVE = { capture: false, passive: true };
-
-const INIT_DELAY_MS = TRANSITIONS_IN_MILLISECONDS.TASKBAR_ITEM + 100;
 
 export const spotlightEffect = (
   element: HTMLElement | null,
@@ -15,7 +11,7 @@ export const spotlightEffect = (
 ): void => {
   if (!element) return;
 
-  setTimeout(() => {
+  requestAnimationFrame(() => {
     const removeStyle = (): void => {
       if (!onlyBorder) element.style.background = "";
 
@@ -32,8 +28,8 @@ export const spotlightEffect = (
 
           element.style.borderImage = `radial-gradient(75px at ${clientX - x}px ${clientY - y}px, rgba(${hovered ? "255, 255, 255, 80%" : "200, 200, 200, 60%"}), transparent) 1 / ${border}px / 0 stretch`;
         } else {
-          document.removeEventListener("mousemove", mouseMove);
-          document.removeEventListener("mouseleave", removeStyle);
+          document.removeEventListener("mousemove", mouseMove, CAPTURE);
+          document.removeEventListener("mouseleave", removeStyle, CAPTURE);
         }
       };
 
@@ -48,5 +44,5 @@ export const spotlightEffect = (
       element.addEventListener("mousemove", mouseMove, PASSIVE);
       element.addEventListener("mouseleave", removeStyle, PASSIVE);
     }
-  }, INIT_DELAY_MS);
+  });
 };
