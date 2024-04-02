@@ -203,7 +203,7 @@ const Search: FC<SearchProps> = ({ toggleSearch }) => {
   }, []);
 
   useEffect(() => {
-    if (results.length > 1) {
+    if (results.length > 0) {
       results
         .reduce(
           async (acc, result) => {
@@ -281,7 +281,7 @@ const Search: FC<SearchProps> = ({ toggleSearch }) => {
                 onClick={() => changeTab(tab)}
                 {...label(
                   tab === "All"
-                    ? "Find the most relevant results on this PC"
+                    ? "Find the most relevant results"
                     : `Find results in ${tab}`
                 )}
               >
