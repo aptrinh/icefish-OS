@@ -144,7 +144,7 @@ const FileManager: FC<FileManagerProps> = ({
             }
           })
           .catch((error: Error) => {
-            if (error.message === "Permission already granted") {
+            if (error?.message === "Permission already granted") {
               setPermission("granted");
             }
           })
@@ -216,8 +216,8 @@ const FileManager: FC<FileManagerProps> = ({
             {fileKeys.map((file) => (
               <StyledFileEntry
                 key={file}
+                $desktop={isDesktop}
                 $selecting={isSelecting}
-                $shadows={isDesktop}
                 $visible={!isLoading}
                 {...(!readOnly && draggableEntry(url, file, renaming === file))}
                 {...(renaming === "" && { onKeyDown: keyShortcuts(file) })}

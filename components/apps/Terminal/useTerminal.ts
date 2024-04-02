@@ -8,7 +8,10 @@ import {
   useState,
 } from "react";
 import { PROMPT_CHARACTER, config } from "components/apps/Terminal/config";
-import { autoComplete } from "components/apps/Terminal/functions";
+import {
+  autoComplete,
+  readClipboardToTerminal,
+} from "components/apps/Terminal/functions";
 import {
   type FitAddon,
   type LocalEcho,
@@ -111,11 +114,7 @@ const useTerminal = ({
           navigator.clipboard?.writeText(textSelection);
           terminal.clearSelection();
         } else {
-          navigator.clipboard
-            ?.readText?.()
-            .then((clipboardText) =>
-              newLocalEcho.handleCursorInsert(clipboardText)
-            );
+          readClipboardToTerminal(newLocalEcho);
         }
       });
       containerRef.current
@@ -142,11 +141,7 @@ const useTerminal = ({
       currentOnKey = terminal.onKey(
         ({ domEvent: { ctrlKey, code } }: OnKeyEvent) => {
           if (ctrlKey && code === "KeyV") {
-            navigator.clipboard
-              ?.readText?.()
-              .then((clipboardText) =>
-                localEcho.handleCursorInsert(clipboardText)
-              );
+            readClipboardToTerminal(localEcho);
           }
         }
       );

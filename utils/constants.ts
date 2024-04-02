@@ -122,7 +122,7 @@ export const IMAGE_FILE_EXTENSIONS = new Set([
   ".xbm",
 ]);
 
-export const UNSUPPORTED_BACKGROUND_EXTENSIONS = new Set([
+export const UNSUPPORTED_SLIDESHOW_EXTENSIONS = new Set([
   ...HEIF_IMAGE_FORMATS,
   ...TIFF_IMAGE_FORMATS,
   ".jxl",
@@ -358,3 +358,10 @@ export const HIGH_PRIORITY_REQUEST = { priority: "high" } as RequestInit;
 export const HIGH_PRIORITY_ELEMENT = {
   fetchpriority: "high",
 } as React.HTMLAttributes<HTMLElement>;
+
+export const DISBALE_AUTO_INPUT_FEATURES = {
+  autoCapitalize: "off",
+  autoComplete: "off",
+  autoCorrect: "off",
+  spellCheck: false,
+};
