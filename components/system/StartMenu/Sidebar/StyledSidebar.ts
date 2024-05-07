@@ -14,7 +14,7 @@ const StyledSidebar = styled.nav`
   z-index: 1;
 
   &:hover:not(&.collapsed) {
-    backdrop-filter: blur(12px);
+    backdrop-filter: ${({ theme }) => `blur(${theme.sizes.taskbar.panelBlur})`};
     background-color: hsla(195, 6.5%, 12.2%, 95%);
     box-shadow: 8px 0 5px -5px hsla(195, 6.5%, 12.2%, 50%);
     transition:

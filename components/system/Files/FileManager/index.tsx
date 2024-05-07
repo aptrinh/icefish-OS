@@ -1,7 +1,6 @@
 import { basename, join } from "path";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import StyledEmpty from "components/system/Files/FileManager/StyledEmpty";
 import FileEntry from "components/system/Files/FileEntry";
 import StyledSelection from "components/system/Files/FileManager/Selection/StyledSelection";
 import useSelection from "components/system/Files/FileManager/Selection/useSelection";
@@ -26,6 +25,10 @@ import { getExtension, haltEvent } from "utils/functions";
 
 const StatusBar = dynamic(
   () => import("components/system/Files/FileManager/StatusBar")
+);
+
+const StyledEmpty = dynamic(
+  () => import("components/system/Files/FileManager/StyledEmpty")
 );
 
 const StyledLoading = dynamic(
@@ -96,7 +99,12 @@ const FileManager: FC<FileManagerProps> = ({
     directory: url,
     updatePositions: allowMovingDraggableEntries,
   });
-  const folderContextMenu = useFolderContextMenu(url, folderActions, isDesktop);
+  const folderContextMenu = useFolderContextMenu(
+    url,
+    folderActions,
+    isDesktop,
+    isStartMenu
+  );
   const loading = (!hideLoading && isLoading) || url !== currentUrl;
   const keyShortcuts = useFileKeyboardShortcuts(
     files,

@@ -18,6 +18,7 @@ import {
   MAX_ICON_SIZE,
   MAX_RES_ICON_OVERRIDE,
   ONE_TIME_PASSIVE_EVENT,
+  PREVENT_SCROLL,
   SUPPORTED_ICON_SIZES,
   TASKBAR_HEIGHT,
   TIMESTAMP_DATE_FORMAT,
@@ -80,7 +81,7 @@ export const toggleShowDesktop = (
 
   if (restoreWindows) {
     requestAnimationFrame(() =>
-      processes[stackOrder[0]]?.componentWindow?.focus()
+      processes[stackOrder[0]]?.componentWindow?.focus(PREVENT_SCROLL)
     );
   }
 };
@@ -266,9 +267,7 @@ const loadScript = (
       currentScript.remove();
     }
 
-    const script = document.createElement(
-      "script"
-    ) as HTMLElementWithPriority<HTMLScriptElement>;
+    const script = document.createElement("script");
 
     script.async = false;
     if (defer) script.defer = true;
@@ -292,9 +291,7 @@ const loadStyle = (href: string): Promise<Event> =>
       return;
     }
 
-    const link = document.createElement(
-      "link"
-    ) as HTMLElementWithPriority<HTMLLinkElement>;
+    const link = document.createElement("link");
 
     link.rel = "stylesheet";
     link.fetchPriority = "high";
@@ -496,9 +493,10 @@ export const updateIconPositions = (
   sortOrders: SortOrders,
   dragPosition: DragPosition,
   draggedEntries: string[],
-  setIconPositions: React.Dispatch<React.SetStateAction<IconPositions>>
+  setIconPositions: React.Dispatch<React.SetStateAction<IconPositions>>,
+  exists: (path: string) => Promise<boolean>
 ): void => {
-  if (!gridElement) return;
+  if (!gridElement || draggedEntries.length === 0) return;
 
   const currentIconPositions = updateIconPositionsIfEmpty(
     directory,
@@ -507,15 +505,12 @@ export const updateIconPositions = (
     sortOrders
   );
   const gridDropPosition = calcGridDropPosition(gridElement, dragPosition);
-
-  if (
-    draggedEntries.length > 0 &&
-    !Object.values(currentIconPositions).some(
-      ({ gridColumnStart, gridRowStart }) =>
-        gridColumnStart === gridDropPosition.gridColumnStart &&
-        gridRowStart === gridDropPosition.gridRowStart
-    )
-  ) {
+  const conflictingIcon = Object.entries(currentIconPositions).find(
+    ([, { gridColumnStart, gridRowStart }]) =>
+      gridColumnStart === gridDropPosition.gridColumnStart &&
+      gridRowStart === gridDropPosition.gridRowStart
+  );
+  const processIconMove = (): void => {
     const targetFile =
       draggedEntries.find((entry) =>
         entry.startsWith(document.activeElement?.textContent || "")
@@ -566,6 +561,19 @@ export const updateIconPositions = (
         )
       ),
     });
+  };
+
+  if (conflictingIcon) {
+    const [conflictingIconPath] = conflictingIcon;
+
+    exists(conflictingIconPath).then((pathExists) => {
+      if (!pathExists) {
+        delete currentIconPositions[conflictingIconPath];
+        processIconMove();
+      }
+    });
+  } else {
+    processIconMove();
   }
 };
 
@@ -779,9 +787,7 @@ export const preloadLibs = (libs: string[] = []): void => {
       return;
     }
 
-    const link = document.createElement(
-      "link"
-    ) as HTMLElementWithPriority<HTMLLinkElement>;
+    const link = document.createElement("link");
 
     link.fetchPriority = "high";
     link.rel = "preload";
@@ -841,3 +847,6 @@ export const isDynamicIcon = (icon?: string): boolean =>
   typeof icon === "string" &&
   (icon.startsWith(ICON_PATH) ||
     (icon.startsWith(USER_ICON_PATH) && !icon.startsWith(ICON_CACHE)));
+
+export const hasFinePointer = (): boolean =>
+  window.matchMedia("(pointer: fine)").matches;
