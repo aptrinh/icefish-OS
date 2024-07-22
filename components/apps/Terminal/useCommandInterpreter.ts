@@ -273,7 +273,11 @@ const useCommandInterpreter = (
         case "color": {
           const [r, g, b] = commandArgs;
 
-          if (r !== undefined && g !== undefined && b !== undefined) {
+          if (
+            typeof r === "string" &&
+            typeof g === "string" &&
+            typeof b === "string"
+          ) {
             print(rgbAnsi(Number(r), Number(g), Number(b)));
           } else {
             const [[bg, fg] = []] = commandArgs;
@@ -768,7 +772,11 @@ const useCommandInterpreter = (
 
           output.push(
             `Uptime: ${getUptime(true)}`,
-            `Packages: ${Object.keys(processDirectory).length}`
+            `Packages: ${
+              Object.entries(processDirectory).filter(
+                ([, { dialogProcess }]) => !dialogProcess
+              ).length
+            }`
           );
 
           if (window.screen?.width && window.screen?.height) {
@@ -913,7 +921,9 @@ const useCommandInterpreter = (
         }
         case "sheep":
         case "esheep": {
-          const { default: spawnSheep } = await import("utils/spawnSheep");
+          const { countSheep, killSheep, spawnSheep } = await import(
+            "utils/spawnSheep"
+          );
           let [count = 1, duration = 0] = commandArgs;
 
           if (!Number.isNaN(count) && !Number.isNaN(duration)) {
@@ -928,10 +938,12 @@ const useCommandInterpreter = (
             const maxDuration =
               (duration || (count > 1 ? 1 : 0)) * MILLISECONDS_IN_SECOND;
 
-            Array.from({ length: count })
+            Array.from({ length: count === 0 ? countSheep() : count })
               .fill(0)
               .map(() => Math.floor(Math.random() * maxDuration))
-              .forEach((delay) => setTimeout(spawnSheep, delay));
+              .forEach((delay) =>
+                setTimeout(count === 0 ? killSheep : spawnSheep, delay)
+              );
           }
           break;
         }
@@ -1109,10 +1121,11 @@ const useCommandInterpreter = (
         }
         default:
           if (baseCommand) {
-            const pid =
-              Object.keys(processDirectory).find(
-                (process) => process.toLowerCase() === lcBaseCommand
-              ) || resourceAliasMap[lcBaseCommand];
+            const [pid] = Object.entries(processDirectory)
+              .filter(([, { dialogProcess }]) => !dialogProcess)
+              .find(([process]) => process.toLowerCase() === lcBaseCommand) || [
+              resourceAliasMap[lcBaseCommand],
+            ];
 
             if (pid) {
               const [file] = commandArgs;

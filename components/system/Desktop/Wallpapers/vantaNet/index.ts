@@ -8,7 +8,8 @@ import { loadFiles } from "utils/functions";
 
 const vantaNet = (
   el: HTMLElement | null,
-  config: WallpaperConfig = {} as WallpaperConfig
+  config?: WallpaperConfig,
+  fallback?: () => void
 ): void => {
   const { VANTA: { current: currentEffect } = {} } = window;
 
@@ -24,11 +25,15 @@ const vantaNet = (
     const { VANTA: { NET } = {} } = window;
 
     if (NET) {
-      NET({
-        el,
-        ...disableControls,
-        ...(config as VantaNetConfig),
-      });
+      try {
+        NET({
+          el,
+          ...disableControls,
+          ...(config as VantaNetConfig),
+        });
+      } catch {
+        fallback?.();
+      }
     }
   });
 };

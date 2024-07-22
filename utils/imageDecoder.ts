@@ -5,6 +5,7 @@ import {
 } from "utils/constants";
 import { decodeQoi } from "components/apps/Photos/qoi";
 import {
+  blobToBuffer,
   bufferToUrl,
   cleanUpBufferUrl,
   getGifJs,
@@ -39,9 +40,10 @@ const decodeJxl = async (image: Buffer): Promise<Buffer> =>
         const worker = new Worker("System/JXL.js/jxl_dec.js");
 
         worker.postMessage({ image, jxlSrc: "image.jxl" });
-        worker.addEventListener("message", (message: JxlDecodeResponse) =>
-          resolve(imgDataToBuffer(message?.data?.imgData))
-        );
+        worker.addEventListener("message", (message: JxlDecodeResponse) => {
+          resolve(imgDataToBuffer(message?.data?.imgData));
+          worker.terminate();
+        });
       });
 
 const decodeHeic = async (image: Buffer): Promise<Buffer> => {
@@ -55,8 +57,10 @@ const decodeHeic = async (image: Buffer): Promise<Buffer> => {
     worker.postMessage(image);
     worker.addEventListener(
       "message",
-      ({ data: imageData }: { data: ImageData }) =>
-        resolve(imgDataToBuffer(imageData))
+      ({ data: imageData }: { data: ImageData }) => {
+        resolve(imgDataToBuffer(imageData));
+        worker.terminate();
+      }
     );
   });
 };
@@ -95,11 +99,10 @@ const aniToGif = async (aniBuffer: Buffer): Promise<Buffer> => {
 
   return new Promise((resolve) => {
     gif
-      .on("finished", (blob) =>
-        blob
-          .arrayBuffer()
-          .then((arrayBuffer) => resolve(Buffer.from(arrayBuffer)))
-      )
+      .on("finished", (blob) => {
+        blobToBuffer(blob).then(resolve);
+        gif.freeWorkers.forEach((worker) => worker?.terminate());
+      })
       .render();
   });
 };

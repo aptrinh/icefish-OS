@@ -176,6 +176,9 @@ export const blobToBase64 = (blob: Blob): Promise<string> =>
     fileReader.onloadend = () => resolve(fileReader.result as string);
   });
 
+export const blobToBuffer = async (blob?: Blob | null): Promise<Buffer> =>
+  blob ? Buffer.from(await blob.arrayBuffer()) : Buffer.from("");
+
 export const imgDataToBuffer = (imageData: ImageData): Buffer => {
   const canvas = document.createElement("canvas");
 
@@ -815,14 +818,16 @@ export const preloadLibs = (libs: string[] = []): void => {
   });
 };
 
-export const getGifJs = async (): Promise<GIF> => {
+type GIFWithWorkers = GIF & { freeWorkers: Worker[] };
+
+export const getGifJs = async (): Promise<GIFWithWorkers> => {
   const { default: GIFInstance } = await import("gif.js");
 
   return new GIFInstance({
     quality: 10,
     workerScript: "Program Files/gif.js/gif.worker.js",
     workers: Math.max(Math.floor(navigator.hardwareConcurrency / 4), 1),
-  });
+  }) as GIFWithWorkers;
 };
 
 export const jsonFetch = async (
@@ -850,3 +855,25 @@ export const isDynamicIcon = (icon?: string): boolean =>
 
 export const hasFinePointer = (): boolean =>
   window.matchMedia("(pointer: fine)").matches;
+
+export const isBeforeBg = (): boolean =>
+  document.documentElement.style.getPropertyValue(
+    "--before-background-opacity"
+  ) === "1";
+
+export const parseBgPosition = (position?: string): `${number}%` | "center" => {
+  if (typeof position === "string") {
+    const positionNum = Number.parseFloat(position);
+
+    if (!Number.isNaN(positionNum) && positionNum >= 0 && positionNum <= 100) {
+      return `${positionNum}%`;
+    }
+  }
+
+  return "center";
+};
+
+export const toSorted = <T>(
+  array: T[],
+  compareFn?: (a: T, b: T) => number
+): T[] => [...array].sort(compareFn);

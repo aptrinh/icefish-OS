@@ -666,6 +666,7 @@ export const getInfoWithExtension = (
                 () => getInfoByFileExtension(imageIcon.src),
                 { signal, ...ONE_TIME_PASSIVE_EVENT }
               );
+              imageIcon.decoding = "async";
               imageIcon.src = imageToBufferUrl(extension, contents);
             }
           })
@@ -714,9 +715,12 @@ export const getInfoWithExtension = (
 
                     if (framesRemaining === 0) {
                       gif
-                        .on("finished", (blob) =>
-                          blobToBase64(blob).then(getInfoByFileExtension)
-                        )
+                        .on("finished", (blob) => {
+                          blobToBase64(blob).then(getInfoByFileExtension);
+                          gif.freeWorkers.forEach((worker) =>
+                            worker?.terminate()
+                          );
+                        })
                         .render();
                     }
 
