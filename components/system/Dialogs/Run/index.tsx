@@ -23,7 +23,7 @@ import {
 } from "utils/constants";
 import { getExtension, haltEvent } from "utils/functions";
 import { getIpfsFileName, getIpfsResource } from "utils/ipfs";
-import spawnSheep from "utils/spawnSheep";
+import { spawnSheep } from "utils/spawnSheep";
 import Icon from "styles/common/Icon";
 
 const OPEN_ID = "open";
@@ -115,7 +115,10 @@ const Run: FC<ComponentProcessProps> = ({ id }) => {
           }
         }
 
-        if ((await lstat(resourcePath)).isDirectory()) {
+        if (
+          resourcePid === "FileExplorer" &&
+          (await lstat(resourcePath)).isDirectory()
+        ) {
           open("FileExplorer", { url: resourcePath }, "");
           addRunHistoryEntry();
         } else if (
@@ -123,10 +126,13 @@ const Run: FC<ComponentProcessProps> = ({ id }) => {
           resourceUrl.length > 0 &&
           resourcePath !== resource
         ) {
-          const pid = Object.keys(processDirectory).find(
-            (processName) =>
-              processName.toLowerCase() === resourcePid.toLowerCase()
-          );
+          const [pid] =
+            Object.entries(processDirectory)
+              .filter(([, { dialogProcess }]) => !dialogProcess)
+              .find(
+                ([processName]) =>
+                  processName.toLowerCase() === resourcePid.toLowerCase()
+              ) || [];
 
           if (pid) {
             const openUrl =
@@ -163,13 +169,16 @@ const Run: FC<ComponentProcessProps> = ({ id }) => {
           addRunHistoryEntry();
         }
       } else {
-        const pid = Object.keys(processDirectory).find(
-          (processName) =>
-            processName.toLowerCase() ===
-            (
-              resourceAliasMap[resourcePath.toLowerCase()] || resourcePath
-            ).toLowerCase()
-        );
+        const [pid] =
+          Object.entries(processDirectory)
+            .filter(([, { dialogProcess }]) => !dialogProcess)
+            .find(
+              ([processName]) =>
+                processName.toLowerCase() ===
+                (
+                  resourceAliasMap[resourcePath.toLowerCase()] || resourcePath
+                ).toLowerCase()
+            ) || [];
 
         if (pid) {
           open(pid);

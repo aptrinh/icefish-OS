@@ -96,13 +96,13 @@ const useV86 = ({
           await writeFile(iconCachePath, screenshot, true);
         }
 
-        try {
-          emulator[diskImageUrl]?.destroy();
-        } catch {
-          // Ignore failures on destroy
-        } finally {
-          updateFolder(SAVE_PATH, saveName);
-        }
+        updateFolder(SAVE_PATH, saveName);
+      }
+
+      try {
+        emulator[diskImageUrl]?.destroy();
+      } catch {
+        // Ignore failures on destroy
       }
     },
     [emulator, exists, mkdirRecursive, saveStateAsync, updateFolder, writeFile]
@@ -110,7 +110,10 @@ const useV86 = ({
   const loadDiskImage = useCallback(async () => {
     const [currentUrl] = Object.keys(emulator);
 
-    if (currentUrl) await closeDiskImage(currentUrl);
+    if (typeof currentUrl === "string") {
+      await closeDiskImage(currentUrl);
+      setEmulator({ [url]: undefined });
+    }
 
     const imageContents = url ? await readFile(url) : Buffer.from("");
     const ext = getExtension(url);
@@ -200,16 +203,16 @@ const useV86 = ({
 
   useEffect(() => {
     if (process && !closing && !loading && !(url in emulator)) {
-      setEmulator({ [url]: undefined });
       loadDiskImage();
     }
 
     const currentContainer = containerRef.current;
 
     return () => {
-      if (url && closing && !shutdown.current) {
+      if (closing && !shutdown.current) {
         shutdown.current = true;
-        if (emulator[url]) {
+
+        if (url && emulator[url]) {
           const takeScreenshot = async (): Promise<Buffer | undefined> => {
             let screenshot: string | undefined;
 
@@ -244,6 +247,8 @@ const useV86 = ({
           };
 
           takeScreenshot().then(scheduleSaveState).catch(scheduleSaveState);
+        } else {
+          emulator[url]?.destroy();
         }
       }
     };

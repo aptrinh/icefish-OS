@@ -74,9 +74,7 @@ const useDosCI = (
         dosCI[bundleUrl] !== undefined &&
         (await writeFile(
           savePath,
-          Buffer.from(
-            (await (dosCI[bundleUrl] as CommandInterface).persist()) || []
-          ),
+          Buffer.from((await dosCI[bundleUrl].persist()) || []),
           true
         ))
       ) {
@@ -95,16 +93,20 @@ const useDosCI = (
           await writeFile(iconCachePath, screenshot, true);
         }
 
-        if (closeInstance) dosInstance?.stop();
         updateFolder(SAVE_PATH, saveName);
       }
+
+      if (closeInstance) dosInstance?.stop();
     },
     [dosCI, dosInstance, exists, mkdirRecursive, updateFolder, writeFile]
   );
   const loadBundle = useCallback(async () => {
     const [currentUrl] = Object.keys(dosCI);
 
-    if (currentUrl) closeBundle(currentUrl);
+    if (typeof currentUrl === "string") {
+      await closeBundle(currentUrl);
+      setDosCI({ [url]: undefined });
+    }
 
     const urlBuffer = url ? await readFile(url) : Buffer.from("");
     const extension = getExtension(url);
@@ -160,25 +162,28 @@ const useDosCI = (
 
   useEffect(() => {
     if (process && !closing && dosInstance && !(url in dosCI)) {
-      setDosCI({ [url]: undefined });
       loadBundle();
     }
 
     return () => {
-      if (url && closing) {
-        const takeScreenshot = async (): Promise<Buffer | undefined> => {
-          const imageData = await dosCI[url]?.screenshot();
+      if (closing) {
+        if (url) {
+          const takeScreenshot = async (): Promise<Buffer | undefined> => {
+            const imageData = await dosCI[url]?.screenshot();
 
-          return imageData ? imgDataToBuffer(imageData) : undefined;
-        };
-        const scheduleSaveState = (screenshot?: Buffer): void => {
-          window.setTimeout(
-            () => closeBundle(url, screenshot, closing),
-            TRANSITIONS_IN_MILLISECONDS.WINDOW
-          );
-        };
+            return imageData ? imgDataToBuffer(imageData) : undefined;
+          };
+          const scheduleSaveState = (screenshot?: Buffer): void => {
+            window.setTimeout(
+              () => closeBundle(url, screenshot, closing),
+              TRANSITIONS_IN_MILLISECONDS.WINDOW
+            );
+          };
 
-        takeScreenshot().then(scheduleSaveState).catch(scheduleSaveState);
+          takeScreenshot().then(scheduleSaveState).catch(scheduleSaveState);
+        } else {
+          dosInstance?.stop();
+        }
       }
     };
   }, [closeBundle, closing, dosCI, dosInstance, loadBundle, process, url]);

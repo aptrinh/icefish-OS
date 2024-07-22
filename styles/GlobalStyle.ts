@@ -1,6 +1,6 @@
-import { createGlobalStyle } from "styled-components";
+import * as styled from "styled-components";
 
-const GlobalStyle = createGlobalStyle`
+const GlobalStyle = styled.createGlobalStyle`
   *,
   *::before,
   *::after {
@@ -16,7 +16,8 @@ const GlobalStyle = createGlobalStyle`
     user-select: none;
   }
 
-  body, html {
+  body,
+  html {
     font-family: ${({ theme }) => theme.formats.systemFont};
   }
 
@@ -29,12 +30,32 @@ const GlobalStyle = createGlobalStyle`
 
   html {
     background-color: ${({ theme }) => theme.colors.background};
-    background-position: center;
     /* stylelint-disable value-no-vendor-prefix */
     height: -webkit-fill-available;
     height: -moz-available;
     /* stylelint-enable value-no-vendor-prefix */
-    transition: background-image 1.25s linear;
+
+    &::before,
+    &::after {
+      background-blend-mode: var(--background-blend-mode);
+      background-position: center;
+      content: "";
+      height: 100%;
+      position: absolute;
+      transition: opacity 1.25s ease-in-out;
+      width: 100%;
+      z-index: -1;
+    }
+
+    &::before {
+      background: var(--before-background);
+      opacity: var(--before-background-opacity);
+    }
+
+    &::after {
+      background: var(--after-background);
+      opacity: var(--after-background-opacity);
+    }
   }
 
   input::selection,
@@ -43,7 +64,8 @@ const GlobalStyle = createGlobalStyle`
     color: #fbf1c7;
   }
 
-  input, textarea {
+  input,
+  textarea {
     cursor: text;
     user-select: text;
   }
