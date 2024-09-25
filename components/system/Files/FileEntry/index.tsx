@@ -54,6 +54,7 @@ import {
   VIDEO_FILE_EXTENSIONS,
 } from "utils/constants";
 import {
+  blobToBase64,
   bufferToUrl,
   getExtension,
   getFormattedSize,
@@ -333,9 +334,16 @@ const FileEntry: FC<FileEntryProps> = ({
                 if (
                   iconRef.current.currentSrc.startsWith(
                     "data:image/gif;base64,"
+                  ) ||
+                  iconRef.current.currentSrc.startsWith(
+                    "data:image/png;base64,"
                   )
                 ) {
                   generatedIcon = iconRef.current.currentSrc;
+                } else if (iconRef.current.currentSrc.startsWith("blob:")) {
+                  generatedIcon = await blobToBase64(
+                    await (await fetch(iconRef.current.currentSrc)).blob()
+                  );
                 } else {
                   const { clientHeight, clientWidth } = iconRef.current;
                   const { naturalHeight, naturalWidth } = iconRef.current;
@@ -556,6 +564,10 @@ const FileEntry: FC<FileEntryProps> = ({
             [listView]
           )}
           $renaming={renaming}
+          {...(isHeading && {
+            "aria-level": 1,
+            role: "heading",
+          })}
         >
           <Icon
             ref={iconRef}
@@ -566,9 +578,9 @@ const FileEntry: FC<FileEntryProps> = ({
             {...FileEntryIconSize[view]}
           />
           <SubIcons
+            alt={name}
             icon={icon}
             isDesktop={isDesktop}
-            name={name}
             showShortcutIcon={Boolean(hideShortcutIcon || stats.systemShortcut)}
             subIcons={subIcons}
             view={view}
@@ -585,12 +597,7 @@ const FileEntry: FC<FileEntryProps> = ({
               setRenaming={setRenaming}
             />
           ) : (
-            <figcaption
-              {...(isHeading && {
-                "aria-level": 1,
-                role: "heading",
-              })}
-            >
+            <figcaption>
               {!isOnlyFocusedEntry || name.length === truncatedName.length
                 ? truncatedName
                 : name}

@@ -15,11 +15,11 @@ const renderFrame = async (
   callback: (url: string) => void
 ): Promise<void> => {
   if (!animate.current) return;
+
   const nextFrame = (): number =>
     window.requestAnimationFrame(() =>
       renderFrame(previewElement, animate, callback)
     );
-
   const htmlToImage = await getHtmlToImage();
   let dataCanvas: HTMLCanvasElement | undefined;
 

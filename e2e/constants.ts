@@ -7,8 +7,6 @@ declare global {
 
 export const EXCLUDED_CONSOLE_LOGS = (browserName: string): string[] => {
   const excludedConsoleLogs = [
-    // https://github.com/emotion-js/emotion/pull/3093
-    'styled-components: it looks like an unknown prop "fetchpriority" is being sent through to the DOM',
     // Generic messages
     "Download the React DevTools for a better development experience",
     "[HMR] connected",
@@ -33,6 +31,10 @@ export const EXCLUDED_CONSOLE_LOGS = (browserName: string): string[] => {
         "A WebGL context could not be created",
         "Error creating WebGL context",
         "'experimental-webgl' (value of argument 1) is not a valid value"
+      );
+    } else if (browserName === "webkit") {
+      excludedConsoleLogs.push(
+        'THREE.WebGLRenderer: Argument 1 (\'contextType\') to OffscreenCanvas.getContext must be one of: "2d", "webgl", "webgl2", "bitmaprenderer", "webgpu"'
       );
     }
   }

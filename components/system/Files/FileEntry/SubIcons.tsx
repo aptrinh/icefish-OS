@@ -13,8 +13,8 @@ import {
 } from "utils/constants";
 
 type IconProps = {
+  alt: string;
   icon: string;
-  name: string;
   view: FileManagerViewNames;
 };
 
@@ -47,7 +47,7 @@ const SubIcon: FC<SubIconProps> = ({
   imgSize,
   isDesktop,
   isFirstImage,
-  name,
+  alt,
   totalSubIcons,
   view,
 }) => {
@@ -94,7 +94,7 @@ const SubIcon: FC<SubIconProps> = ({
   return (
     <Icon
       $eager={isDesktop || icon === SHORTCUT_ICON}
-      alt={name}
+      alt={alt}
       src={icon}
       style={style}
       {...iconView}
@@ -105,10 +105,10 @@ const SubIcon: FC<SubIconProps> = ({
 const MemoizedSubIcon = memo(SubIcon);
 
 const SubIcons: FC<SubIconsProps> = ({
+  alt,
   icon,
   imgSize,
   isDesktop,
-  name,
   showShortcutIcon,
   subIcons,
   view,
@@ -130,12 +130,12 @@ const SubIcons: FC<SubIconsProps> = ({
       {filteredSubIcons.map((entryIcon, subIconIndex) => (
         <MemoizedSubIcon
           key={entryIcon}
+          alt={alt}
           baseIcon={icon}
           icon={entryIcon}
           imgSize={imgSize}
           isDesktop={isDesktop}
           isFirstImage={subIconIndex === 0}
-          name={name}
           totalSubIcons={filteredSubIcons.length}
           view={view}
         />
