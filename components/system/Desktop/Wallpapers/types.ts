@@ -3,6 +3,13 @@ import { type Size } from "components/system/Window/RndWindow/useResizable";
 import type MatrixConfig from "components/system/Desktop/Wallpapers/Matrix/config";
 import { type VantaNetConfig } from "components/system/Desktop/Wallpapers/vantaNet/types";
 
+declare global {
+  interface Window {
+    DEBUG_DISABLE_WALLPAPER?: boolean;
+    WallpaperDestroy?: () => void;
+  }
+}
+
 export type WallpaperConfig =
   | Partial<StableDiffusionConfig>
   | Partial<typeof MatrixConfig>
@@ -20,3 +27,12 @@ export type OffscreenRenderProps = {
   config?: Partial<StableDiffusionConfig> | VantaNetConfig;
   devicePixelRatio: number;
 };
+
+export type WallpaperMenuItem = {
+  id: string;
+  name?: string;
+  requiresWebGPU?: boolean;
+  startsWith?: boolean;
+};
+
+export type WallpaperMessage = { message: string; type: string };
