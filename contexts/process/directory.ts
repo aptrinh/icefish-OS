@@ -15,7 +15,6 @@ const directory: Processes = {
     icon: "/System/Icons/boxedwine.webp",
     libs: [
       "/Program Files/BoxedWine/browserfs.boxedwine.js",
-      "/Program Files/BoxedWine/jszip.min.js",
       "/Program Files/BoxedWine/boxedwine-shell.js",
       "/Program Files/BoxedWine/boxedwine.js",
     ],
@@ -87,8 +86,8 @@ const directory: Processes = {
     Component: dynamic(() => import("components/apps/FileExplorer")),
     backgroundColor: "#282828",
     defaultSize: {
-      height: 260,
-      width: 405,
+      height: 325,
+      width: 447,
     },
     icon: FOLDER_ICON,
     title: "File Explorer",
@@ -280,14 +279,12 @@ const directory: Processes = {
   },
   StableDiffusion: {
     Component: dynamic(() => import("components/apps/StableDiffusion")),
-    allowResizing: false,
     backgroundColor: "rgb(251, 241, 199)",
     defaultSize: {
-      height: 600,
-      width: 544,
+      height: 644,
+      width: 538,
     },
     icon: "/System/Icons/stablediffusion.webp",
-    lockAspectRatio: true,
     singleton: true,
     title: "Stable Diffusion",
   },

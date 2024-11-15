@@ -1,31 +1,91 @@
 import { basename } from "path";
-import { forwardRef, useEffect, useState } from "react";
-import { Refresh } from "components/apps/FileExplorer/NavigationIcons";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { GoTo, Refresh } from "components/apps/FileExplorer/NavigationIcons";
 import StyledAddressBar from "components/apps/FileExplorer/StyledAddressBar";
 import useAddressBarContextMenu from "components/apps/FileExplorer/useAddressBarContextMenu";
 import { useFileSystem } from "contexts/fileSystem";
 import { useProcesses } from "contexts/process";
 import Button from "styles/common/Button";
 import Icon from "styles/common/Icon";
-import { ROOT_NAME } from "utils/constants";
-import { label } from "utils/functions";
+import {
+  DISBALE_AUTO_INPUT_FEATURES,
+  ROOT_NAME,
+  TRANSITIONS_IN_MILLISECONDS,
+} from "utils/constants";
+import { getExtension, label } from "utils/functions";
+import { getProcessByFileExtension } from "components/system/Files/FileEntry/functions";
+import { useSession } from "contexts/session";
 
 type AddressBarProps = {
   id: string;
 };
+
+export const ADDRESS_INPUT_PROPS = {
+  "aria-label": "Address",
+  enterKeyHint: "go",
+  inputMode: "url",
+  name: "address",
+  ...DISBALE_AUTO_INPUT_FEATURES,
+} as React.DetailedHTMLProps<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  HTMLInputElement
+>;
+
 const AddressBar = forwardRef<HTMLInputElement, AddressBarProps>(
   ({ id }, ref) => {
     const addressBarRef =
       ref as React.MutableRefObject<HTMLInputElement | null>;
+    const actionButtonRef = useRef<HTMLButtonElement | null>(null);
     const {
+      open,
       url: changeUrl,
       processes: {
         [id]: { icon, url = "" },
       },
     } = useProcesses();
-    const displayName = basename(url) || ROOT_NAME;
+    const displayName = useMemo(() => basename(url) || ROOT_NAME, [url]);
     const [addressBar, setAddressBar] = useState(displayName);
-    const { exists, updateFolder } = useFileSystem();
+    const { exists, stat, updateFolder } = useFileSystem();
+    const { updateRecentFiles } = useSession();
+    const inputing = useMemo(
+      () =>
+        addressBar !== displayName &&
+        addressBar !== url &&
+        document.activeElement === addressBarRef.current,
+      [addressBar, addressBarRef, displayName, url]
+    );
+    const goToAddress = useCallback(async () => {
+      if (addressBar && (await exists(addressBar))) {
+        if ((await stat(addressBar)).isDirectory()) changeUrl(id, addressBar);
+        else {
+          const openPid = getProcessByFileExtension(getExtension(addressBar));
+
+          open(openPid || "OpenWith", { url: addressBar });
+
+          if (openPid) {
+            updateRecentFiles(addressBar, openPid);
+          }
+        }
+      }
+
+      addressBarRef.current?.blur();
+    }, [
+      addressBar,
+      addressBarRef,
+      changeUrl,
+      exists,
+      id,
+      open,
+      stat,
+      updateRecentFiles,
+    ]);
 
     useEffect(() => {
       if (addressBarRef.current) {
@@ -44,29 +104,41 @@ const AddressBar = forwardRef<HTMLInputElement, AddressBarProps>(
         <Icon alt={displayName} imgSize={16} src={icon} />
         <input
           ref={addressBarRef}
-          aria-label="Address"
-          enterKeyHint="go"
-          onBlurCapture={() => setAddressBar(displayName)}
-          onChange={({ target }) => setAddressBar(target.value)}
-          onFocusCapture={() => setAddressBar(url)}
-          onKeyDown={async ({ key }) => {
-            if (key === "Enter" && addressBarRef.current) {
-              const { value } = addressBarRef.current;
-              if (value && (await exists(value))) changeUrl(id, value);
-              addressBarRef.current.blur();
+          className={inputing ? "inputing" : ""}
+          onBlurCapture={({ relatedTarget }) => {
+            if (actionButtonRef.current !== relatedTarget) {
+              setAddressBar(displayName);
             }
           }}
-          spellCheck={false}
-          type="text"
+          onChange={({ target }) => setAddressBar(target.value)}
+          onFocusCapture={() => setAddressBar(url)}
+          onKeyDown={({ key }) => {
+            if (key === "Enter") goToAddress();
+          }}
           value={addressBar}
+          {...ADDRESS_INPUT_PROPS}
           {...useAddressBarContextMenu(url)}
         />
         <Button
-          className="refresh"
-          onClick={() => updateFolder(url)}
-          {...label(`Refresh "${displayName}" (F5)`)}
+          ref={actionButtonRef}
+          className="action"
+          onClick={() => {
+            setAddressBar(displayName);
+
+            if (inputing) goToAddress();
+            else updateFolder(url);
+          }}
+          onFocusCapture={() =>
+            setTimeout(
+              () => setAddressBar(displayName),
+              TRANSITIONS_IN_MILLISECONDS.DOUBLE_CLICK / 2
+            )
+          }
+          {...label(
+            inputing ? `Go to "${addressBar}"` : `Refresh "${displayName}" (F5)`
+          )}
         >
-          <Refresh />
+          {inputing ? <GoTo /> : <Refresh />}
         </Button>
       </StyledAddressBar>
     );

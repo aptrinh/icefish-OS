@@ -1,7 +1,14 @@
 import {
+  type ChatCompletion,
+  type ChatCompletionChunk,
   type ChatCompletionMessageParam,
   type MLCEngine,
 } from "@mlc-ai/web-llm";
+import { type StableDiffusionConfig } from "components/apps/StableDiffusion/types";
+import {
+  runStableDiffusion,
+  StableDiffusionLibs,
+} from "components/system/Desktop/Wallpapers/StableDiffusion";
 import {
   type WorkerMessage,
   type ConvoStyles,
@@ -14,7 +21,7 @@ const MARKED_LIBS = [
 
 const CONVO_STYLE_TEMPS: Record<
   ConvoStyles,
-  AIAssistantCreateOptionsWithSystemPrompt
+  AILanguageModelCreateOptionsWithSystemPrompt
 > = {
   balanced: {
     temperature: 0.5,
@@ -44,11 +51,16 @@ const SYSTEM_PROMPT: ChatCompletionMessageParam = {
   role: "system",
 };
 
+const abortController = new AbortController();
 let cancel = false;
 let responding = false;
 
 let sessionId = 0;
-let session: AIAssistant | ChatCompletionMessageParam[] | undefined;
+let session: AILanguageModel | undefined;
+let summarizer: AISummarizer | undefined;
+let prompts:
+  | (AILanguageModelAssistantPrompt | AILanguageModelUserPrompt)[]
+  | ChatCompletionMessageParam[] = [];
 let engine: MLCEngine;
 
 let markedLoaded = false;
@@ -59,7 +71,10 @@ globalThis.addEventListener(
     if (!data || data === "init") return;
 
     if (data === "cancel") {
-      if (responding) cancel = true;
+      if (responding) {
+        cancel = true;
+        abortController.abort();
+      }
     } else if (data.id && data.text && data.style) {
       responding = true;
 
@@ -67,16 +82,19 @@ globalThis.addEventListener(
         sessionId = data.id;
 
         if (data.hasWindowAI) {
-          (session as AIAssistant)?.destroy();
+          prompts = [];
+          summarizer?.destroy();
+          (session as AILanguageModel)?.destroy();
 
-          const config: AIAssistantCreateOptionsWithSystemPrompt = {
+          const config: AILanguageModelCreateOptionsWithSystemPrompt = {
             ...CONVO_STYLE_TEMPS[data.style],
+            signal: abortController.signal,
             systemPrompt: SYSTEM_PROMPT.content,
           };
 
-          session = await globalThis.ai.assistant.create(config);
+          session = await globalThis.ai.languageModel.create(config);
         } else {
-          session = [SYSTEM_PROMPT];
+          prompts = [SYSTEM_PROMPT];
 
           if (!engine) {
             const { CreateMLCEngine } = await import("@mlc-ai/web-llm");
@@ -91,68 +109,196 @@ globalThis.addEventListener(
         }
       }
 
-      let response = "";
+      let response:
+        | string
+        | ReadableStream<string>
+        | AsyncIterable<ChatCompletionChunk> = "";
       let retry = 0;
+      const rebuildSession = async (customResponse?: string): Promise<void> => {
+        (session as AILanguageModel)?.destroy();
+
+        prompts.push(
+          { content: data.text, role: "user" },
+          { content: customResponse || (response as string), role: "assistant" }
+        );
+
+        const config: AILanguageModelCreateOptionsWithSystemPrompt = {
+          ...CONVO_STYLE_TEMPS[data.style],
+          initialPrompts: [
+            SYSTEM_PROMPT as unknown as AILanguageModelAssistantPrompt,
+            ...(prompts as (
+              | AILanguageModelAssistantPrompt
+              | AILanguageModelUserPrompt
+            )[]),
+          ],
+        };
+
+        session = await globalThis.ai.languageModel.create(config);
+      };
 
       try {
-        while (retry++ < 3 && !response) {
-          if (cancel) break;
-
-          try {
-            if (data.hasWindowAI) {
-              response =
-                // eslint-disable-next-line no-await-in-loop
-                (await (session as AIAssistant)?.prompt(data.text)) || "";
-            } else {
-              (session as ChatCompletionMessageParam[]).push({
-                content: data.text,
-                role: "user",
-              });
-
-              const {
-                choices: [{ message }],
-                // eslint-disable-next-line no-await-in-loop
-              } = await engine.chat.completions.create({
-                logprobs: true,
-                messages: session as ChatCompletionMessageParam[],
-                temperature: CONVO_STYLE_TEMPS[data.style].temperature,
-                top_logprobs: CONVO_STYLE_TEMPS[data.style].topK,
-                ...WEB_LLM_MODEL_CONFIG[WEB_LLM_MODEL],
-              });
-
-              (session as ChatCompletionMessageParam[]).push(message);
-
-              response = message.content || "";
-            }
-          } catch (error) {
-            console.error("Failed to get prompt response.", error);
-          }
+        if (
+          data.hasWindowAI &&
+          data.summarizeText &&
+          "summarizer" in globalThis.ai &&
+          (await globalThis.ai.summarizer.capabilities())?.available ===
+            "readily"
+        ) {
+          summarizer = await globalThis.ai.summarizer.create();
         }
 
-        if (!response) console.error("Failed retires to create response.");
+        if (data.imagePrompt && data.offscreenCanvas) {
+          globalThis.tvmjsGlobalEnv = globalThis.tvmjsGlobalEnv || {};
+          globalThis.tvmjsGlobalEnv.logger = (_type: string, message: string) =>
+            globalThis.postMessage({
+              progress: {
+                text: message,
+              },
+            });
+
+          try {
+            globalThis.importScripts(...StableDiffusionLibs);
+          } catch {
+            // Ignore failure to load libs
+          }
+
+          await runStableDiffusion(
+            {
+              prompts: [[data.imagePrompt, ""]],
+            } as StableDiffusionConfig,
+            data.offscreenCanvas,
+            true,
+            false
+          );
+
+          globalThis.tvmjsGlobalEnv.logger("", "");
+
+          if (data.hasWindowAI) {
+            rebuildSession(
+              "I'll try to create that using Stable Diffusion 1.5."
+            );
+          }
+        } else {
+          while (retry++ < 3 && !response) {
+            if (cancel) break;
+
+            try {
+              if (data.hasWindowAI) {
+                const aiAssistant = session as AILanguageModel;
+                const aiOptions:
+                  | AILanguageModelPromptOptions
+                  | AISummarizerSummarizeOptions = {
+                  signal: abortController.signal,
+                };
+
+                if (summarizer && data.summarizeText) {
+                  // eslint-disable-next-line no-await-in-loop
+                  response = await summarizer.summarize(
+                    data.summarizeText,
+                    aiOptions
+                  );
+                  rebuildSession();
+                } else if (aiAssistant) {
+                  response = data.streamId
+                    ? aiAssistant.promptStreaming(data.text, aiOptions)
+                    : // eslint-disable-next-line no-await-in-loop
+                      (await aiAssistant.prompt(data.text, aiOptions)) || "";
+                }
+              } else {
+                prompts.push({
+                  content: data.summarizeText
+                    ? `Summarize:\n\n${data.summarizeText}`
+                    : data.text,
+                  role: "user",
+                });
+
+                const stream = Boolean(data.streamId);
+                // eslint-disable-next-line no-await-in-loop
+                const completions = await engine.chat.completions.create({
+                  logprobs: true,
+                  messages: prompts as ChatCompletionMessageParam[],
+                  stream,
+                  stream_options: { include_usage: false },
+                  temperature: CONVO_STYLE_TEMPS[data.style].temperature,
+                  top_logprobs: CONVO_STYLE_TEMPS[data.style].topK,
+                  ...WEB_LLM_MODEL_CONFIG[WEB_LLM_MODEL],
+                });
+
+                response = stream
+                  ? (completions as AsyncIterable<ChatCompletionChunk>)
+                  : (completions as ChatCompletion).choices[0].message
+                      .content || "";
+              }
+            } catch (error) {
+              console.error("Failed to get prompt response.", error);
+            }
+          }
+
+          if (!response) console.error("Failed retires to create response.");
+        }
       } catch (error) {
         console.error("Failed to create text session.", error);
       }
 
-      if (cancel) {
-        cancel = false;
-        globalThis.postMessage("canceled");
-      } else {
-        if (response && !markedLoaded) {
-          globalThis.importScripts(...MARKED_LIBS);
-          markedLoaded = true;
+      if (!cancel) {
+        if (response) {
+          if (!markedLoaded) {
+            globalThis.importScripts(...MARKED_LIBS);
+            markedLoaded = true;
+          }
+
+          const sendMessage = (message: string, streamId?: number): void => {
+            globalThis.postMessage({
+              formattedResponse: globalThis.marked.parse(message, {
+                headerIds: false,
+                mangle: false,
+              }),
+              response: message,
+              streamId,
+            });
+
+            if (prompts[prompts.length - 1]?.role !== "user") {
+              prompts.push({ content: data.text, role: "user" });
+            }
+
+            prompts.push({ content: message, role: "assistant" });
+          };
+
+          if (typeof response === "string") {
+            sendMessage(response);
+          } else {
+            try {
+              let reply = "";
+              // @ts-expect-error ReadableStream will have an asyncIterator if Prompt API exists
+              for await (const chunk of response) {
+                if (cancel) break;
+
+                if (typeof chunk === "string") {
+                  sendMessage(chunk, data.streamId);
+                } else {
+                  reply +=
+                    (chunk as ChatCompletionChunk).choices[0]?.delta.content ||
+                    "";
+                  sendMessage(reply, data.streamId);
+                }
+              }
+            } catch (error) {
+              console.error("Failed to stream prompt response.", error);
+            }
+          }
         }
 
-        globalThis.postMessage({
-          formattedResponse: globalThis.marked.parse(response, {
-            headerIds: false,
-            mangle: false,
-          }),
-          response,
-        });
+        if (data.streamId) {
+          globalThis.postMessage({ complete: true, streamId: data.streamId });
+        }
       }
 
       responding = false;
+
+      if (cancel) {
+        cancel = false;
+        globalThis.postMessage("canceled");
+      }
     }
   },
   { passive: true }

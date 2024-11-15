@@ -134,6 +134,15 @@ export const TEXT_EDITORS = ["MonacoEditor", "Vim"];
 
 export const CURSOR_FILE_EXTENSIONS = new Set([".ani", ".cur"]);
 
+export const SUMMARIZABLE_FILE_EXTENSIONS = new Set([
+  ".html",
+  ".htm",
+  ".whtml",
+  ".md",
+  ".txt",
+  ".pdf",
+]);
+
 export const EDITABLE_IMAGE_FILE_EXTENSIONS = new Set([
   ".bmp",
   ".gif",
@@ -147,8 +156,6 @@ export const EDITABLE_IMAGE_FILE_EXTENSIONS = new Set([
   ".tiff",
   ".webp",
 ]);
-
-export const MAX_FILE_NAME_LENGTH = 223;
 
 export const MENU_SEPERATOR = { seperator: true };
 

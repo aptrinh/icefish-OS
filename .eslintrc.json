@@ -19,11 +19,9 @@
     "plugin:unicorn/recommended",
     "prettier",
     "next",
-    "next/core-web-vitals",
-    "plugin:@next/next/recommended"
+    "next/core-web-vitals"
   ],
   "plugins": [
-    "@next/next",
     "@typescript-eslint",
     "import",
     "jest",
@@ -176,6 +174,8 @@
     "sonarjs/no-nested-conditional": "off",
     "sonarjs/no-nested-functions": "off",
     "sonarjs/no-nested-template-literals": "off",
+    "sonarjs/no-selector-parameter": "off",
+    "sonarjs/no-skipped-test": "off",
     "sonarjs/no-try-promise": "off",
     "sonarjs/no-var": "off",
     "sonarjs/prefer-nullish-coalescing": "off",
@@ -183,6 +183,7 @@
     "sonarjs/slow-regex": "off",
     "sonarjs/sonar-max-params": "off",
     "sonarjs/sonar-no-unused-vars": "off",
+    "sonarjs/todo-tag": "off",
     "sort-keys-fix/sort-keys-fix": "error",
     "unicorn/filename-case": "off",
     "unicorn/import-style": [
@@ -202,6 +203,7 @@
     "unicorn/no-unused-properties": "error",
     "unicorn/numeric-separators-style": "off",
     "unicorn/prefer-at": "off",
+    "unicorn/prefer-global-this": "off",
     "unicorn/prefer-node-protocol": "off",
     "unicorn/prefer-string-replace-all": "off",
     "unicorn/prefer-switch": "off",

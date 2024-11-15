@@ -5,6 +5,7 @@ import { type FocusEntryFunctions } from "components/system/Files/FileManager/us
 import { type Size } from "components/system/Window/RndWindow/useResizable";
 import { useMenu } from "contexts/menu";
 import { type MenuState } from "contexts/menu/useMenuContextState";
+import { ONE_TIME_PASSIVE_EVENT } from "utils/constants";
 
 export type SelectionRect = Partial<Position> & Partial<Size>;
 
@@ -23,7 +24,8 @@ type Selection = {
 const useSelection = (
   containerRef: React.MutableRefObject<HTMLElement | null>,
   focusedEntries: string[],
-  { blurEntry }: FocusEntryFunctions
+  { blurEntry }: FocusEntryFunctions,
+  isDesktop?: boolean
 ): Selection => {
   const [position, setPosition] = useState<Position>(
     () => Object.create(null) as Position
@@ -32,19 +34,20 @@ const useSelection = (
   const { x, y } = position;
   const { height: h, width: w } = size;
   const animationRequestId = useRef(0);
+  const sizeRef = useRef(size);
   const onMouseMove: React.MouseEventHandler<HTMLElement> = ({
     clientX,
     clientY,
   }) => {
     if (animationRequestId.current) return;
 
-    const { scrollTop = 0 } = containerRef.current || {};
+    const { scrollLeft = 0, scrollTop = 0 } = containerRef.current || {};
     const { x: targetX = 0, y: targetY = 0 } =
       containerRef.current?.getBoundingClientRect() || {};
 
     setSize({
       height: clientY - targetY - (y || 0) + scrollTop,
-      width: clientX - targetX - (x || 0),
+      width: clientX - targetX - (x || 0) + scrollLeft,
     });
 
     animationRequestId.current = window.requestAnimationFrame(() => {
@@ -59,13 +62,13 @@ const useSelection = (
   }) => {
     if ((target as HTMLElement) !== containerRef.current) return;
 
-    const { scrollTop } = containerRef.current;
+    const { scrollLeft = 0, scrollTop = 0 } = containerRef.current;
     const { x: targetX = 0, y: targetY = 0 } =
       containerRef.current.getBoundingClientRect();
 
     setSize(Object.create(null) as Size);
     setPosition({
-      x: clientX - targetX,
+      x: clientX - targetX + scrollLeft,
       y: clientY - targetY + scrollTop,
     });
 
@@ -90,10 +93,43 @@ const useSelection = (
       setSize(Object.create(null) as Size);
       setPosition(Object.create(null) as Position);
     };
+    const originalScrollHeight = containerRef.current?.scrollHeight || 0;
+    const originalScrollWidth = containerRef.current?.scrollWidth || 0;
+    const onMouseLeave = (): void => {
+      if (selection.isSelecting) {
+        const externalMouseMove = (event: MouseEvent): void => {
+          onMouseMove(event as unknown as React.MouseEvent<HTMLElement>);
 
-    selection.selectionEvents.onMouseLeave = resetSelection;
+          if (isDesktop || !containerRef.current) return;
+
+          const diffX = Math.abs(Number(sizeRef.current.width)) / 100 + 1;
+          const diffY = Math.abs(Number(sizeRef.current.height)) / 100 + 1;
+
+          containerRef.current.scrollBy(
+            containerRef.current.scrollLeft + containerRef.current.clientWidth >
+              originalScrollWidth
+              ? 0
+              : Math.round(event.movementX * diffX),
+            containerRef.current.scrollTop + containerRef.current.clientHeight >
+              originalScrollHeight
+              ? 0
+              : Math.round(event.movementY * diffY)
+          );
+        };
+
+        window.addEventListener("mousemove", externalMouseMove);
+        window.addEventListener(
+          "mouseup",
+          () => window.removeEventListener("mousemove", externalMouseMove),
+          ONE_TIME_PASSIVE_EVENT
+        );
+      }
+    };
+
+    selection.selectionEvents.onMouseLeave = onMouseLeave;
     selection.selectionEvents.onMouseMove = onMouseMove;
-    selection.selectionEvents.onMouseUp = resetSelection;
+
+    window.addEventListener("mouseup", resetSelection, ONE_TIME_PASSIVE_EVENT);
   }
 
   if (isSelecting) {
@@ -102,6 +138,7 @@ const useSelection = (
       position,
       size
     );
+    sizeRef.current = size;
   }
 
   return selection;

@@ -103,7 +103,7 @@ export const FILE_EXPLORER_NAV_SELECTOR = `${WINDOW_SELECTOR}>${VIEWPORT_SELECTO
 export const FILE_EXPLORER_SEARCH_BOX_SELECTOR = `${FILE_EXPLORER_NAV_SELECTOR}>div>input[type=search]`;
 export const FILE_EXPLORER_STATUS_BAR_SELECTOR = `${WINDOW_SELECTOR}>${VIEWPORT_SELECTOR}>${APP_CONTAINER_SELECTOR}>footer`;
 export const FILE_EXPLORER_SELECTOR = `${WINDOW_SELECTOR}>${VIEWPORT_SELECTOR}>${APP_CONTAINER_SELECTOR}>ol`;
-export const FILE_EXPLORER_SELECTION_SELECTOR = `${FILE_EXPLORER_SELECTOR}>span`;
+export const FILE_EXPLORER_SELECTION_SELECTOR = `${FILE_EXPLORER_SELECTOR}>span:last-of-type`;
 export const FILE_EXPLORER_ENTRIES_SELECTOR = `${FILE_EXPLORER_SELECTOR}>li`;
 export const FILE_EXPLORER_ENTRIES_FOCUSED_SELECTOR = `${FILE_EXPLORER_SELECTOR}>li${FOCUSED_ENTRY_SELECTOR}`;
 export const FILE_EXPLORER_ENTRIES_RENAMING_SELECTOR = `${FILE_EXPLORER_ENTRIES_SELECTOR}>button>figure>textarea`;
@@ -128,9 +128,13 @@ export const DIRECTORY_PICKER_NOT_SUPPORTED_BROWSERS = new Set([
   "firefox",
 ]);
 export const DRAG_HEADLESS_NOT_SUPPORTED_BROWSERS = new Set(["webkit"]);
-export const WEBGL_OFFSCREEN_NOT_SUPPORTED_BROWSERS = new Set([
-  "webkit", // https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas#browser_compatibility
-]);
+export const WEBGL_OFFSCREEN_NOT_SUPPORTED_BROWSERS = new Set(
+  process.platform === "win32"
+    ? [
+        "webkit", // https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas#browser_compatibility
+      ]
+    : []
+);
 export const MEDIA_RECORDER_HEADLESS_NOT_SUPPORTED_BROWSERS = new Set([
   "webkit",
 ]);
@@ -262,6 +266,12 @@ export const ROOT_PUBLIC_FOLDER = "public";
 
 export const ROOT_PUBLIC_TEST_FILE = "desktop.ini";
 
+export const ROOT_FOLDER_VIEW = "details";
+
 export const CURSOR_SPACE_LENGTH = 1;
 
 export const TAB_SPACE_LENGTH = 4;
+
+export const FILE_EXPLORER_COLUMN_HEIGHT = 25;
+
+export const WINDOW_RESIZE_HANDLE_WIDTH = 6;

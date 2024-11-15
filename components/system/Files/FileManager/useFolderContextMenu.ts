@@ -266,10 +266,9 @@ const useFolderContextMenu = (
       entryName: string,
       data?: Buffer,
       event?: CaptureTriggerEvent
-    ): Promise<void> =>
-      updateDesktopIconPositions(
-        [await newPath(entryName, data, "rename")],
-        event
+    ): Promise<string> =>
+      newPath(entryName, data, "rename", (name) =>
+        updateDesktopIconPositions([name], event)
       ),
     [newPath, updateDesktopIconPositions]
   );
@@ -457,7 +456,7 @@ const useFolderContextMenu = (
                           if (isMusicVisualizationRunning) {
                             stopGlobalMusicVisualization?.();
                           }
-                          if (item.id) setWallpaper(item.id);
+                          setWallpaper(item.id);
                         },
                         label: item.name || item.id,
                         toggle: item.startsWith
@@ -569,9 +568,7 @@ const useFolderContextMenu = (
                     }
 
                     open("MonacoEditor", { url: INDEX_FILE });
-                    if (INDEX_FILE) {
-                      updateRecentFiles(INDEX_FILE, "MonacoEditor");
-                    }
+                    updateRecentFiles(INDEX_FILE, "MonacoEditor");
                   },
                   label: "View page source",
                 },

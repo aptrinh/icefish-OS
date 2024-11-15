@@ -35,6 +35,7 @@ import {
   ROOT_SHORTCUT,
   SHORTCUT_EXTENSION,
   SPREADSHEET_FORMATS,
+  SUMMARIZABLE_FILE_EXTENSIONS,
   TEXT_EDITORS,
   VIDEO_FILE_EXTENSIONS,
 } from "utils/constants";
@@ -52,6 +53,12 @@ import {
 } from "utils/imagemagick/formats";
 import { type ImageMagickConvertFile } from "utils/imagemagick/types";
 import { Share } from "components/system/Menu/MenuIcons";
+import { useWindowAI } from "hooks/useWindowAI";
+import { getNavButtonByTitle } from "hooks/useGlobalKeyboardShortcuts";
+import {
+  AI_DISPLAY_TITLE,
+  AI_STAGE,
+} from "components/system/Taskbar/AI/constants";
 
 const { alias } = PACKAGE_DATA;
 
@@ -75,8 +82,13 @@ const useFileContextMenu = (
 ): ContextMenuCapture => {
   const { minimize, open, url: changeUrl } = useProcesses();
   const processesRef = useProcessesRef();
-  const { setCursor, setForegroundId, setWallpaper, updateRecentFiles } =
-    useSession();
+  const {
+    aiEnabled,
+    setCursor,
+    setForegroundId,
+    setWallpaper,
+    updateRecentFiles,
+  } = useSession();
   const baseName = basename(path);
   const isFocusedEntry = focusedEntries.includes(baseName);
   const openFile = useFile(url, path);
@@ -92,6 +104,7 @@ const useFileContextMenu = (
     updateFolder,
   } = useFileSystem();
   const { contextMenu } = useMenu();
+  const hasWindowAI = useWindowAI();
   const { onContextMenuCapture, ...contextMenuHandlers } = useMemo(
     () =>
       contextMenu?.(() => {
@@ -422,11 +435,11 @@ const useFileContextMenu = (
                   action: () => archiveFiles(absoluteEntries()),
                   label: "Add to archive...",
                 },
-                ...(EXTRACTABLE_EXTENSIONS.has(pathExtension) ||
-                MOUNTABLE_EXTENSIONS.has(pathExtension)
+                ...(EXTRACTABLE_EXTENSIONS.has(urlExtension) ||
+                MOUNTABLE_EXTENSIONS.has(urlExtension)
                   ? [
                       {
-                        action: () => extractFiles(path),
+                        action: () => extractFiles(url),
                         label: "Extract Here",
                       },
                       MENU_SEPERATOR,
@@ -475,48 +488,81 @@ const useFileContextMenu = (
           });
         }
 
-        const hasBackgroundVideoExtension =
-          VIDEO_FILE_EXTENSIONS.has(pathExtension);
-
-        if (CURSOR_FILE_EXTENSIONS.has(pathExtension)) {
+        if (CURSOR_FILE_EXTENSIONS.has(urlExtension)) {
           menuItems.unshift({
-            action: () => setCursor(path),
+            action: () => setCursor(url),
             label: "Set as mouse pointer",
           });
         }
 
         if (
+          (aiEnabled || (hasWindowAI && "summarizer" in window.ai)) &&
+          SUMMARIZABLE_FILE_EXTENSIONS.has(urlExtension)
+        ) {
+          const aiCommand = (command: string): void => {
+            window.initialAiPrompt = `${command}: ${url}`;
+
+            const newTopicButton = document.querySelector<HTMLButtonElement>(
+              "main > section > footer > button.new-topic"
+            );
+
+            if (newTopicButton) {
+              newTopicButton?.click();
+            } else {
+              getNavButtonByTitle(AI_DISPLAY_TITLE)?.click();
+            }
+          };
+
+          menuItems.unshift(MENU_SEPERATOR, {
+            label: `AI (${AI_STAGE})`,
+            menu: [
+              ...(aiEnabled || (hasWindowAI && "summarizer" in window.ai)
+                ? [
+                    {
+                      action: () => aiCommand("Summarize"),
+                      label: "Summarize Text",
+                    },
+                  ]
+                : []),
+            ],
+          });
+        }
+
+        const hasBackgroundVideoExtension =
+          VIDEO_FILE_EXTENSIONS.has(urlExtension);
+
+        if (
           hasBackgroundVideoExtension ||
-          (IMAGE_FILE_EXTENSIONS.has(pathExtension) &&
-            !CURSOR_FILE_EXTENSIONS.has(pathExtension) &&
-            pathExtension !== ".svg")
+          (IMAGE_FILE_EXTENSIONS.has(urlExtension) &&
+            !CURSOR_FILE_EXTENSIONS.has(urlExtension) &&
+            urlExtension !== ".svg")
         ) {
           menuItems.unshift({
             label: "Set as background",
             ...(hasBackgroundVideoExtension
               ? {
-                  action: () => setWallpaper(path),
+                  action: () => setWallpaper(url),
                 }
               : {
                   menu: [
                     {
-                      action: () => setWallpaper(path, "fill"),
+                      action: () => setWallpaper(url, "fill"),
                       label: "Fill",
                     },
                     {
-                      action: () => setWallpaper(path, "fit"),
+                      action: () => setWallpaper(url, "fit"),
                       label: "Fit",
                     },
                     {
-                      action: () => setWallpaper(path, "stretch"),
+                      action: () => setWallpaper(url, "stretch"),
                       label: "Stretch",
                     },
                     {
-                      action: () => setWallpaper(path, "tile"),
+                      action: () => setWallpaper(url, "tile"),
                       label: "Tile",
                     },
                     {
-                      action: () => setWallpaper(path, "center"),
+                      action: () => setWallpaper(url, "center"),
                       label: "Center",
                     },
                   ],
@@ -599,6 +645,7 @@ const useFileContextMenu = (
         return menuItems[0] === MENU_SEPERATOR ? menuItems.slice(1) : menuItems;
       }),
     [
+      aiEnabled,
       archiveFiles,
       baseName,
       changeUrl,
@@ -610,6 +657,7 @@ const useFileContextMenu = (
       extractFiles,
       fileManagerId,
       focusedEntries,
+      hasWindowAI,
       isFocusedEntry,
       lstat,
       mapFs,

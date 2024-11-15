@@ -7,7 +7,8 @@ const StyledAddressBar = styled.div`
   border: 1px solid rgb(80, 73, 69);
   display: flex;
   height: ${({ theme }) => theme.sizes.fileExplorer.navInputHeight}px;
-  margin: 7px 12px 6px 5px;
+  margin: 6px 12px 5px 5px;
+  overflow: hidden;
   padding: 0 22px 2px 25px;
   position: relative;
   width: 100%;
@@ -20,19 +21,24 @@ const StyledAddressBar = styled.div`
     font-size: 12px;
     font-weight: 400;
     height: ${({ theme }) => theme.sizes.fileExplorer.navInputHeight - 2}px;
-    padding-bottom: 1px;
+    padding-bottom: 2px;
     text-overflow: ellipsis;
     white-space: nowrap;
     width: calc(100% - 2px);
+
+    &:focus,
+    &.inputing {
+      height: ${({ theme }) => theme.sizes.fileExplorer.navInputHeight}px;
+    }
   }
 
   img {
     left: 2px;
     position: absolute;
-    top: 3px;
+    top: 1px;
   }
 
-  .refresh {
+  .action {
     background-color: rgb(29, 32, 33);
     display: flex;
     height: ${({ theme }) => theme.sizes.fileExplorer.navInputHeight - 2}px;
@@ -41,8 +47,6 @@ const StyledAddressBar = styled.div`
     place-items: center;
     position: absolute;
     right: 0;
-    stroke: rgb(124, 111, 100);
-    stroke-width: 3;
     top: 0;
     width: 24px;
 
@@ -57,13 +61,37 @@ const StyledAddressBar = styled.div`
     }
 
     svg {
-      position: relative;
-      top: -1px;
+      color: rgb(168, 153, 132);
+      stroke: rgb(168, 153, 132);
+
+      &.refresh {
+        position: relative;
+        stroke-width: 3;
+        top: -1px;
+      }
+
+      &.go-to {
+        height: 12px;
+        stroke-width: 2;
+        width: 12px;
+      }
     }
 
     svg {
-      position: relative;
-      top: -1px;
+      color: rgb(128, 128, 128);
+      stroke: rgb(128, 128, 128);
+
+      &.refresh {
+        position: relative;
+        stroke-width: 3;
+        top: -1px;
+      }
+
+      &.go-to {
+        height: 12px;
+        stroke-width: 2;
+        width: 12px;
+      }
     }
   }
 `;
