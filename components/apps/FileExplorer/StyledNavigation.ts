@@ -5,30 +5,24 @@ const StyledNavigation = styled.nav`
   display: flex;
   height: ${({ theme }) => theme.sizes.fileExplorer.navBarHeight};
 
-  button {
+  svg {
+    color: #fbf1c7;
+    fill: currentColor;
     height: 16px;
-    margin: 11px 9px;
+    transition: color 0.35s ease;
     width: 16px;
+  }
 
-    svg {
-      color: #fbf1c7;
-      fill: currentColor;
-      height: 16px;
-      transition: color 0.35s ease;
-      width: 16px;
-
-      &:hover {
-        color: rgb(69, 133, 136);
-      }
-
-      &:active {
-        color: rgb(131, 165, 152);
-        transition: none;
-      }
-    }
+  > button {
+    height: 16px;
+    max-height: 36px;
+    max-width: 34px;
+    min-height: 36px;
+    min-width: 34px;
 
     &[title^="Up"] {
-      margin-right: 8px;
+      max-width: 33px;
+      min-width: 33px;
       position: relative;
       right: -8px;
       top: -1px;
@@ -45,14 +39,22 @@ const StyledNavigation = styled.nav`
       }
     }
 
+    &:active {
+      svg {
+        color: rgb(7, 102, 120);
+        transition: none;
+      }
+    }
+
+    &:hover {
+      svg {
+        color: rgb(69, 133, 136);
+      }
+    }
+
     &:disabled {
       svg {
         color: rgb(168, 153, 132);
-
-        &:hover,
-        &:active {
-          color: rgb(168, 153, 132);
-        }
       }
     }
   }

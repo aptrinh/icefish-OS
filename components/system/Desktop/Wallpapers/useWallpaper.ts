@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   BASE_CANVAS_SELECTOR,
   BASE_VIDEO_SELECTOR,
+  PRELOAD_ID,
   REDUCED_MOTION_PERCENT,
+  STABLE_DIFFUSION_DELAY_IN_MIN,
   WALLPAPER_PATHS,
   WALLPAPER_WORKERS,
   WALLPAPER_WORKER_NAMES,
@@ -40,6 +42,7 @@ import {
   isYouTubeUrl,
   jsonFetch,
   parseBgPosition,
+  preloadImage,
   viewWidth,
 } from "utils/functions";
 
@@ -84,7 +87,7 @@ const useWallpaper = (
   );
   const loadWallpaper = useCallback(
     async (keepCanvas?: boolean) => {
-      if (!desktopRef.current) return;
+      if (!desktopRef.current || window.DEBUG_DISABLE_WALLPAPER) return;
 
       let config: WallpaperConfig | undefined;
       const { matches: prefersReducedMotion } = window.matchMedia(
@@ -174,7 +177,9 @@ const useWallpaper = (
                 } else if (!data.message) {
                   wallpaperTimerRef.current = window.setTimeout(
                     () => loadWallpaper(true),
-                    MILLISECONDS_IN_MINUTE * 10
+                    MILLISECONDS_IN_MINUTE *
+                      (window.STABLE_DIFFUSION_DELAY_IN_MIN_OVERRIDE ??
+                        STABLE_DIFFUSION_DELAY_IN_MIN)
                   );
                 }
 
@@ -295,22 +300,18 @@ const useWallpaper = (
       do {
         wallpaperUrl = slideshowFiles.shift() || "";
 
-        let [nextWallpaper] = slideshowFiles;
+        const [nextWallpaper] = slideshowFiles;
 
         if (nextWallpaper) {
-          const preloadLink = document.createElement("link");
+          document.querySelector(`#${PRELOAD_ID}`)?.remove();
 
-          if (nextWallpaper.startsWith("/")) {
-            nextWallpaper = `${window.location.origin}${nextWallpaper}`;
-          }
-
-          preloadLink.id = "preloadWallpaper";
-          preloadLink.href = nextWallpaper;
-          preloadLink.rel = "preload";
-          preloadLink.as = "image";
-
-          document.querySelector("#preloadWallpaper")?.remove();
-          document.head.append(preloadLink);
+          preloadImage(
+            nextWallpaper.startsWith("/")
+              ? `${window.location.origin}${nextWallpaper}`
+              : nextWallpaper,
+            PRELOAD_ID,
+            "auto"
+          );
         }
 
         if (wallpaperUrl.startsWith("/")) {
@@ -323,7 +324,8 @@ const useWallpaper = (
 
       newWallpaperFit = "fill";
     } else if (wallpaperName === "APOD") {
-      const [, currentDate] = wallpaperImage.split(" ");
+      // eslint-disable-next-line unicorn/no-unreadable-array-destructuring
+      const [, , currentDate] = wallpaperImage.split(" ");
       const [month, , day, , year] = new Intl.DateTimeFormat(DEFAULT_LOCALE, {
         timeZone: "US/Eastern",
       })
@@ -480,7 +482,7 @@ const useWallpaper = (
   ]);
 
   useEffect(() => {
-    if (sessionLoaded && !window.DEBUG_DISABLE_WALLPAPER) {
+    if (sessionLoaded) {
       if (wallpaperTimerRef.current) {
         window.clearTimeout(wallpaperTimerRef.current);
       }

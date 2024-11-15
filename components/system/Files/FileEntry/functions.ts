@@ -13,6 +13,7 @@ import processDirectory from "contexts/process/directory";
 import {
   AUDIO_FILE_EXTENSIONS,
   BASE_2D_CONTEXT_OPTIONS,
+  DEFAULT_LOCALE,
   DYNAMIC_EXTENSION,
   DYNAMIC_PREFIX,
   FOLDER_BACK_ICON,
@@ -48,6 +49,7 @@ import {
   getExtension,
   getGifJs,
   getHtmlToImage,
+  getMimeType,
   imageToBufferUrl,
   isSafari,
   isYouTubeUrl,
@@ -78,7 +80,13 @@ export const isExistingFile = (
 export const getModifiedTime = (path: string, stats: FileStat): number => {
   const { mtimeMs } = stats;
 
-  return isExistingFile(stats) ? get9pModifiedTime(path) || mtimeMs : mtimeMs;
+  if (isExistingFile(stats)) {
+    const storedMtime = get9pModifiedTime(path);
+
+    if (storedMtime > 0) return storedMtime;
+  }
+
+  return mtimeMs;
 };
 
 export const getIconFromIni = (
@@ -137,61 +145,6 @@ export const getProcessByFileExtension = (extension: string): string => {
       : [getDefaultFileViewer(extension)];
 
   return defaultProcess;
-};
-
-export const getMimeType = (url: string): string => {
-  switch (getExtension(url)) {
-    case ".ani":
-    case ".cur":
-    case ".ico":
-      return "image/vnd.microsoft.icon";
-    case ".jpg":
-    case ".jpeg":
-      return "image/jpeg";
-    case ".json":
-      return "application/json";
-    case ".html":
-    case ".htm":
-    case ".whtml":
-      return "text/html";
-    case ".m3u":
-    case ".m3u8":
-      return "application/x-mpegURL";
-    case ".m4v":
-    case ".mkv":
-    case ".mov":
-    case ".mp4":
-      return "video/mp4";
-    case ".mp3":
-      return "audio/mpeg";
-    case ".oga":
-      return "audio/ogg";
-    case ".ogg":
-    case ".ogm":
-    case ".ogv":
-      return "video/ogg";
-    case ".pdf":
-      return "application/pdf";
-    case ".png":
-      return "image/png";
-    case ".md":
-    case ".txt":
-      return "text/plain";
-    case ".wav":
-      return "audio/wav";
-    case ".webm":
-      return "video/webm";
-    case ".webp":
-      return "image/webp";
-    case ".xml":
-      return "application/xml";
-    case ".wsz":
-    case ".jsdos":
-    case ".zip":
-      return "application/zip";
-    default:
-      return "";
-  }
 };
 
 export const getShortcutInfo = (
@@ -878,4 +831,34 @@ export const getTextWrapData = (
     lines,
     width: Math.min(maxWidth, totalWidth),
   };
+};
+
+export const getDateModified = (
+  path: string,
+  fullStats: Stats,
+  format: Intl.DateTimeFormatOptions
+): string => {
+  const modifiedTime = getModifiedTime(path, fullStats);
+  const date = new Date(modifiedTime).toISOString().slice(0, 10);
+  const time = new Intl.DateTimeFormat(DEFAULT_LOCALE, format).format(
+    modifiedTime
+  );
+
+  return `${date} ${time}`;
+};
+
+export const getFileType = (extension: string): string => {
+  const ext = extension.toUpperCase();
+
+  switch (ext) {
+    case ".URL":
+      return "Shortcut";
+    case ".TXT":
+      return "Text Document";
+    case ".RTF":
+    case ".WHTML":
+      return "Rich Text Document";
+    default:
+      return extensions[extension]?.type || `${ext.replace(".", "")} File`;
+  }
 };

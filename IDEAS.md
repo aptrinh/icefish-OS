@@ -4,16 +4,7 @@
 
 ### High Priority
 
-- Internationalization
 - Accessibility (Structure & Markup)
-- Virtual Assistant
-  - [ClippyJS](https://github.com/pi0/clippyjs)
-  - AI Powered
-    - [Whisper WASM](https://github.com/ggerganov/whisper.cpp/tree/master/examples/talk.wasm)
-    - TTS
-      - [Coqui.ai](https://github.com/coqui-ai/tts)
-      - [speak.js](https://github.com/mtttmpl/speak-js)
-    - [Transformers.js](https://xenova.github.io/transformers.js/)
 - Screen Savers (.scr)
   - [Pipes](https://github.com/1j01/pipes)
   - [3D Maze](https://github.com/ibid-11962/Windows-95-3D-Maze-Screensaver)
@@ -24,7 +15,6 @@
   - [Drift](https://github.com/sandydoo/flux)
 - Add my old personal website
   - [http://surf.to/misc](https://web.archive.org/web/20050826192118if_/http://surf.to:80/misc)
-- File Explorer Details/Column View
 - Progressive Web App
   - Offline
     - [next-offline](https://github.com/hanford/next-offline)
@@ -37,6 +27,15 @@
 
 ### Medium Priority
 
+- Internationalization
+- Virtual Assistant
+  - [ClippyJS](https://github.com/pi0/clippyjs)
+  - AI Powered
+    - [Whisper WASM](https://github.com/ggerganov/whisper.cpp/tree/master/examples/talk.wasm)
+    - TTS
+      - [Coqui.ai](https://github.com/coqui-ai/tts)
+      - [speak.js](https://github.com/mtttmpl/speak-js)
+    - [Transformers.js](https://xenova.github.io/transformers.js/)
 - 3rd Party App Support
 - Email App
   - Open SMTP Server
@@ -45,6 +44,7 @@
 - Batch File Support
 - Compress Images via Context Menu
   - [Squoosh](https://github.com/GoogleChromeLabs/squoosh) ([lib](https://www.npmjs.com/package/@squoosh/lib))
+  - [wasm-vips](https://github.com/kleisauke/wasm-vips)
   - [SVGO](https://github.com/svg/svgo)
 - Set WOFF/TTF as System Font
   - [wasm-ttf2woff](https://github.com/touchifyapp/wasm-ttf2woff)
@@ -61,6 +61,8 @@
 - Tiles in Start Menu
 - Windows 11 Theme
 - Fancy Drag Zones for Windows
+- Calculator
+  - [MCalculator](https://github.com/muzam1l/mcalculator)
 
 ## Features
 

@@ -15,7 +15,6 @@ import {
   type YouTubePlayer,
 } from "components/apps/VideoPlayer/types";
 import { type ContainerHookProps } from "components/system/Apps/AppContainer";
-import { getMimeType } from "components/system/Files/FileEntry/functions";
 import useTitle from "components/system/Window/useTitle";
 import useWindowSize from "components/system/Window/useWindowSize";
 import { useFileSystem } from "contexts/fileSystem";
@@ -24,6 +23,7 @@ import { VIDEO_FALLBACK_MIME_TYPE } from "utils/constants";
 import {
   bufferToUrl,
   cleanUpBufferUrl,
+  getMimeType,
   isSafari,
   isYouTubeUrl,
   loadFiles,
@@ -96,7 +96,10 @@ const useVideoPlayer = ({
             height + (youTubePlayer ? 0 : CONTROL_BAR_HEIGHT);
 
           if (heightWithControlBar > vh || width > vw) {
-            updateWindowSize(vw * (heightWithControlBar / width), vw);
+            updateWindowSize(
+              Math.floor(vw * (heightWithControlBar / width)),
+              Math.min(width, vw)
+            );
           } else {
             updateWindowSize(heightWithControlBar, width);
           }

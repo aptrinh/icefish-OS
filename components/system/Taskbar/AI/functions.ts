@@ -3,12 +3,11 @@ export const formatWebLlmProgress = (text: string): string => {
   if (text.startsWith("Finish loading on WebGPU")) return "";
 
   const [, progressCurrent, progressTotal] =
-    // eslint-disable-next-line unicorn/better-regex
     /\[(\d+)\/(\d+)\]/.exec(text) || [];
 
   let progress = "";
 
-  if (typeof Number(progressTotal) === "number") {
+  if (!Number.isNaN(Number(progressTotal))) {
     progress = `${progressCurrent || 0}/${progressTotal}`;
   }
 
@@ -19,11 +18,11 @@ export const formatWebLlmProgress = (text: string): string => {
   const [, percentComplete] = /(\d+)% completed/.exec(text) || [];
   const [, secsElapsed] = /(\d+) secs elapsed/.exec(text) || [];
 
-  if (typeof Number(percentComplete) === "number") {
+  if (!Number.isNaN(Number(percentComplete))) {
     progress += `${progress ? ", " : ""}${percentComplete}%`;
   }
 
-  if (typeof Number(secsElapsed) === "number") {
+  if (!Number.isNaN(Number(secsElapsed))) {
     progress += `${progress ? ", " : ""}${secsElapsed}s`;
   }
 
@@ -33,7 +32,7 @@ export const formatWebLlmProgress = (text: string): string => {
 
   const [, dataLoaded] = /(\d+)MB (fetched|loaded)/.exec(text) || [];
 
-  if (typeof Number(dataLoaded) === "number") {
+  if (!Number.isNaN(Number(dataLoaded))) {
     progress += `${progress ? ", " : ""}${dataLoaded}MB`;
   }
 

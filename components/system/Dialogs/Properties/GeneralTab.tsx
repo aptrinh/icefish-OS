@@ -2,8 +2,8 @@ import { basename, dirname, extname, join } from "path";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Buttons from "components/system/Dialogs/Properties/Buttons";
 import useStats from "components/system/Dialogs/Properties/useStats";
-import extensions from "components/system/Files/FileEntry/extensions";
 import {
+  getFileType,
   getIconFromIni,
   getModifiedTime,
 } from "components/system/Files/FileEntry/functions";
@@ -21,7 +21,6 @@ import {
   DESKTOP_PATH,
   DISBALE_AUTO_INPUT_FEATURES,
   FOLDER_ICON,
-  MAX_FILE_NAME_LENGTH,
   SHORTCUT_ICON,
 } from "utils/constants";
 import { getExtension, getFormattedSize, haltEvent } from "utils/functions";
@@ -46,8 +45,7 @@ const GeneralTab: FC<TabProps> = ({ icon, id, isShortcut, pid, url }) => {
   const { closeWithTransition, icon: setIcon } = useProcesses();
   const { setIconPositions } = useSession();
   const extension = useMemo(() => getExtension(url || ""), [url]);
-  const { type } = extensions[extension] || {};
-  const extType = type || `${extension.toUpperCase().replace(".", "")} File`;
+  const extType = getFileType(extension);
   const inputRef = useRef<HTMLInputElement>(null);
   const { fs, readdir, rename, stat, updateFolder } = useFileSystem();
   const stats = useStats(url);
@@ -171,7 +169,6 @@ const GeneralTab: FC<TabProps> = ({ icon, id, isShortcut, pid, url }) => {
                   isShortcut ? extname(url) : undefined
                 )}
                 enterKeyHint="done"
-                maxLength={MAX_FILE_NAME_LENGTH}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     haltEvent(event);

@@ -6,10 +6,12 @@ import {
 } from "components/system/Taskbar/AI/functions";
 import {
   AIIcon,
+  BackgroundIcon,
   ChatIcon,
   CopyIcon,
   EditIcon,
   PersonIcon,
+  SaveIcon,
   SendFilledIcon,
   SendIcon,
   SpeakIcon,
@@ -18,7 +20,7 @@ import {
 } from "components/system/Taskbar/AI/icons";
 import useAITransition from "components/system/Taskbar/AI/useAITransition";
 import {
-  AI_STAGE,
+  AI_DISPLAY_TITLE,
   AI_TITLE,
   AI_WORKER,
   DEFAULT_CONVO_STYLE,
@@ -27,8 +29,14 @@ import {
 import StyledAIChat from "components/system/Taskbar/AI/StyledAIChat";
 import { CloseIcon } from "components/system/Window/Titlebar/WindowActionIcons";
 import Button from "styles/common/Button";
-import { label, viewWidth } from "utils/functions";
-import { PREVENT_SCROLL } from "utils/constants";
+import {
+  canvasToBuffer,
+  clsx,
+  getExtension,
+  label,
+  viewWidth,
+} from "utils/functions";
+import { DESKTOP_PATH, PREVENT_SCROLL, SAVE_PATH } from "utils/constants";
 import {
   type MessageTypes,
   type ConvoStyles,
@@ -41,10 +49,14 @@ import useWorker from "hooks/useWorker";
 import useFocusable from "components/system/Window/useFocusable";
 import { useSession } from "contexts/session";
 import { useWindowAI } from "hooks/useWindowAI";
+import { useFileSystem } from "contexts/fileSystem";
+import { readPdfText } from "components/apps/PDF/functions";
 
 type AIChatProps = {
   toggleAI: () => void;
 };
+
+const STREAMING_SUPPORT = true;
 
 const AIChat: FC<AIChatProps> = ({ toggleAI }) => {
   const {
@@ -69,13 +81,29 @@ const AIChat: FC<AIChatProps> = ({ toggleAI }) => {
     (
       text: string | undefined,
       type: MessageTypes,
-      formattedText?: string
+      formattedText?: string,
+      streamId?: number,
+      withCanvas = false
     ): void => {
       if (text) {
-        setConversation((prevMessages) => [
-          ...prevMessages,
-          { formattedText: formattedText || text, text, type },
-        ]);
+        setConversation((prevMessages) => {
+          const newMessage = {
+            formattedText: formattedText || text,
+            text,
+            type,
+            withCanvas,
+          };
+
+          if (streamId) {
+            const newMessages = [...prevMessages];
+
+            newMessages[streamId] = newMessage;
+
+            return newMessages;
+          }
+
+          return [...prevMessages, newMessage];
+        });
       }
     },
     []
@@ -124,7 +152,7 @@ const AIChat: FC<AIChatProps> = ({ toggleAI }) => {
   );
   const [containerElement, setContainerElement] =
     useState<HTMLElement | null>();
-  const { removeFromStack } = useSession();
+  const { removeFromStack, setWallpaper } = useSession();
   const { zIndex, ...focusableProps } = useFocusable(
     WINDOW_ID,
     undefined,
@@ -139,6 +167,91 @@ const AIChat: FC<AIChatProps> = ({ toggleAI }) => {
     textArea.style.height = "auto";
     textArea.style.height = `${textArea.scrollHeight}px`;
   }, []);
+  const { createPath, exists, readFile, stat, updateFolder } = useFileSystem();
+  const canvasRefs = useRef<Record<number, HTMLCanvasElement>>({});
+  const sendMessage = useCallback(async () => {
+    const { text } = conversation[conversation.length - 1];
+
+    setResponding(true);
+
+    sessionIdRef.current ||= Date.now();
+
+    let summarizeText = "";
+    const lcText = text.toLowerCase();
+    const isSummarize = lcText.startsWith("summarize: /");
+    const isGenerate = lcText.startsWith("generate: ");
+
+    if (isSummarize) {
+      const docPath = text.slice(11).trim();
+
+      if ((await exists(docPath)) && !(await stat(docPath)).isDirectory()) {
+        const docText = await readFile(docPath);
+        const extension = getExtension(docPath);
+
+        if ([".html", ".htm", ".whtml"].includes(extension)) {
+          const domContent = new DOMParser().parseFromString(
+            docText.toString(),
+            "text/html"
+          );
+
+          summarizeText = domContent.body.textContent || "";
+        } else if (extension === ".pdf") {
+          summarizeText = await readPdfText(docText);
+        }
+      }
+    } else if (isGenerate) {
+      addMessage(
+        text.slice(10).trim(),
+        "ai",
+        "I'll try to create that.",
+        conversation.length,
+        true
+      );
+
+      return;
+    }
+
+    aiWorker.current?.postMessage({
+      hasWindowAI,
+      id: sessionIdRef.current,
+      streamId: STREAMING_SUPPORT ? conversation.length : undefined,
+      style: convoStyle,
+      summarizeText,
+      text,
+    });
+  }, [
+    addMessage,
+    aiWorker,
+    conversation,
+    convoStyle,
+    exists,
+    hasWindowAI,
+    readFile,
+    stat,
+  ]);
+  const saveCanvasImage = useCallback(
+    async (
+      index: number,
+      saveName: string,
+      savePath: string
+    ): Promise<string> => {
+      const canvas = canvasRefs.current[index];
+      let newFileName = `${saveName}.png`;
+
+      if (canvas) {
+        newFileName = await createPath(
+          newFileName,
+          savePath,
+          canvasToBuffer(canvas)
+        );
+
+        updateFolder(savePath);
+      }
+
+      return newFileName;
+    },
+    [createPath, updateFolder]
+  );
 
   useEffect(() => {
     textAreaRef.current?.focus(PREVENT_SCROLL);
@@ -176,27 +289,33 @@ const AIChat: FC<AIChatProps> = ({ toggleAI }) => {
       conversation.length > 0 &&
       conversation[conversation.length - 1].type === "user"
     ) {
-      const { text } = conversation[conversation.length - 1];
-
-      setResponding(true);
-
-      sessionIdRef.current ||= Date.now();
-
-      aiWorker.current.postMessage({
-        hasWindowAI,
-        id: sessionIdRef.current,
-        style: convoStyle,
-        text,
-      });
+      sendMessage();
     }
-  }, [aiWorker, conversation, convoStyle, hasWindowAI]);
+  }, [aiWorker, conversation, sendMessage]);
+
+  useEffect(() => {
+    if (!window.initialAiPrompt) return;
+
+    if (window.initialAiPrompt === promptText) {
+      if (conversation.length === 0 && aiWorker.current) {
+        window.initialAiPrompt = "";
+        addUserPrompt();
+      }
+    } else {
+      setPromptText(window.initialAiPrompt);
+    }
+  }, [addUserPrompt, aiWorker, conversation.length, promptText]);
 
   useEffect(() => {
     const workerRef = aiWorker.current;
     const workerResponse = ({ data }: WorkerResponse): void => {
-      const doneResponding = typeof data === "string" || "response" in data;
+      const isStreaming = (data as AIResponse).streamId;
 
-      setResponding(!doneResponding);
+      if (!isStreaming) {
+        const doneResponding = typeof data === "string" || "response" in data;
+
+        setResponding(!doneResponding);
+      }
 
       if (data === "canceled") {
         setCanceling(false);
@@ -206,10 +325,12 @@ const AIChat: FC<AIChatProps> = ({ toggleAI }) => {
         } = data as WebLlmProgress;
 
         setProgressMessage(formatWebLlmProgress(text));
-      } else if ((data as AIResponse).response) {
-        const { formattedResponse, response } = data as AIResponse;
+      } else if ((data as AIResponse).response || isStreaming) {
+        const { complete, formattedResponse, response, streamId } =
+          data as AIResponse;
 
-        addMessage(response, "ai", formattedResponse);
+        if (complete) setResponding(false);
+        else addMessage(response, "ai", formattedResponse, streamId);
       } else if ((data as AIResponse).response === "") {
         setFailedSession(true);
       }
@@ -224,6 +345,7 @@ const AIChat: FC<AIChatProps> = ({ toggleAI }) => {
     <StyledAIChat
       ref={setContainerElement}
       $primaryColor={primaryColor}
+      $responding={responding}
       $scrollbarVisible={scrollbarVisible}
       $secondaryColor={secondaryColor}
       $tertiaryColor={tertiaryColor}
@@ -235,7 +357,7 @@ const AIChat: FC<AIChatProps> = ({ toggleAI }) => {
     >
       <div className="header">
         <header>
-          {`${AI_TITLE} (${AI_STAGE})`}
+          {AI_DISPLAY_TITLE}
           <nav>
             <Button
               className="close"
@@ -289,64 +411,151 @@ const AIChat: FC<AIChatProps> = ({ toggleAI }) => {
           </div>
         </div>
         <div className="conversation">
-          {conversation.map(({ formattedText, type, text }, index) => (
-            // eslint-disable-next-line react/no-array-index-key
-            <div key={`${text}-${index}`} className={type}>
-              {(index === 0 || conversation[index - 1].type !== type) && (
-                <div className="avatar">
-                  {type === "user" ? <PersonIcon /> : <AIIcon />}
-                  {type === "user" ? "You" : "AI"}
-                </div>
-              )}
-              <div
-                // eslint-disable-next-line react/no-danger
-                dangerouslySetInnerHTML={{ __html: formattedText }}
-                className="message"
-              />
-              <div
-                className={`controls${index === lastAiMessageIndex ? " last" : ""}${responding && index === conversation.length - 1 ? " hidden" : ""}`}
-              >
-                <button
-                  className="copy"
-                  onClick={() => {
-                    navigator.clipboard?.writeText(text);
-                    setCopiedIndex(index);
-                    setTimeout(() => setCopiedIndex(-1), 5000);
-                  }}
-                  type="button"
-                  {...label(copiedIndex === index ? "Copied" : "Copy")}
+          {conversation.map(
+            ({ formattedText, type, text, withCanvas }, index) => (
+              // eslint-disable-next-line react/no-array-index-key
+              <div key={`${text}-${index}`} className={type}>
+                {(index === 0 || conversation[index - 1].type !== type) && (
+                  <div className="avatar">
+                    {type === "user" ? <PersonIcon /> : <AIIcon />}
+                    {type === "user" ? "You" : "AI"}
+                  </div>
+                )}
+                <div
+                  // eslint-disable-next-line react/no-danger
+                  dangerouslySetInnerHTML={{ __html: formattedText }}
+                  className="message"
+                />
+                <div
+                  className={clsx({
+                    controls: true,
+                    hidden:
+                      responding &&
+                      !withCanvas &&
+                      index === conversation.length - 1,
+                    invisible: responding && !!withCanvas,
+                    last: index === lastAiMessageIndex,
+                  })}
                 >
-                  <CopyIcon />
-                </button>
-                {type === "user" && (
                   <button
-                    className="edit"
+                    className="control"
                     onClick={() => {
-                      if (textAreaRef.current) {
-                        textAreaRef.current.value = text;
-                        textAreaRef.current.focus(PREVENT_SCROLL);
-                        setPromptText(text);
-                      }
+                      navigator.clipboard?.writeText(text);
+                      setCopiedIndex(index);
+                      setTimeout(() => setCopiedIndex(-1), 5000);
                     }}
                     type="button"
-                    {...label("Edit")}
+                    {...label(copiedIndex === index ? "Copied" : "Copy")}
                   >
-                    <EditIcon />
+                    <CopyIcon />
                   </button>
-                )}
-                {"speechSynthesis" in window && type === "ai" && (
-                  <button
-                    className="speak"
-                    onClick={() => speakMessage(text)}
-                    type="button"
-                    {...label("Read aloud")}
+                  {type === "user" && (
+                    <button
+                      className="control"
+                      onClick={() => {
+                        if (textAreaRef.current) {
+                          textAreaRef.current.value = text;
+                          textAreaRef.current.focus(PREVENT_SCROLL);
+                          setPromptText(text);
+                        }
+                      }}
+                      type="button"
+                      {...label("Edit")}
+                    >
+                      <EditIcon />
+                    </button>
+                  )}
+                  {"speechSynthesis" in window && type === "ai" && (
+                    <button
+                      className="control"
+                      onClick={() => speakMessage(text)}
+                      type="button"
+                      {...label("Read aloud")}
+                    >
+                      <SpeakIcon />
+                    </button>
+                  )}
+                  {type === "ai" && withCanvas && (
+                    <>
+                      <button
+                        className="control"
+                        onClick={() =>
+                          saveCanvasImage(index, text, DESKTOP_PATH)
+                        }
+                        type="button"
+                        {...label("Save")}
+                      >
+                        <SaveIcon />
+                      </button>
+                      <button
+                        className="control"
+                        onClick={() =>
+                          saveCanvasImage(index, text, SAVE_PATH).then(
+                            (newFileName) =>
+                              setWallpaper(`${SAVE_PATH}/${newFileName}`)
+                          )
+                        }
+                        type="button"
+                        {...label("Set as background")}
+                      >
+                        <BackgroundIcon />
+                      </button>
+                    </>
+                  )}
+                </div>
+                {withCanvas && (
+                  <div
+                    className={clsx({
+                      generating:
+                        responding && index === conversation.length - 1,
+                      "image-container": true,
+                    })}
                   >
-                    <SpeakIcon />
-                  </button>
+                    <canvas
+                      ref={(canvas) => {
+                        if (
+                          !(canvas instanceof HTMLCanvasElement) ||
+                          canvasRefs.current[index] === canvas
+                        ) {
+                          return;
+                        }
+
+                        canvasRefs.current[index] = canvas;
+
+                        try {
+                          const offscreenCanvas =
+                            canvas.transferControlToOffscreen();
+
+                          aiWorker.current?.postMessage(
+                            {
+                              hasWindowAI,
+                              id: sessionIdRef.current,
+                              imagePrompt: text,
+                              offscreenCanvas,
+                              streamId: STREAMING_SUPPORT
+                                ? conversation.length
+                                : undefined,
+                              style: convoStyle,
+                              text,
+                            },
+                            [offscreenCanvas]
+                          );
+                        } catch {
+                          // Ignore failure to transfer control to offscreen
+                        }
+                      }}
+                      height={512}
+                      width={512}
+                    />
+                    <div className="prompt">&quot;{text}&quot;</div>
+                    <div className="powered-by">
+                      <div>Powered by Stable Diffusion 1.5</div>
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
-          ))}
+            )
+          )}
           {responding && (
             <div className="responding">
               <button

@@ -397,6 +397,10 @@ class StableDiffusionPipeline {
   clearCanvas() {
     this.tvm.clearCanvas();
   }
+
+  reBindCanvas() {
+    this.tvm.bindCanvas(globalThis.tvmjsGlobalEnv.canvas);
+  }
 };
 
 /**
@@ -500,15 +504,15 @@ class StableDiffusionInstance {
     const tstart = performance.now();
     return (stage, counter, numSteps, totalNumSteps) => {
       const timeElapsed = (performance.now() - tstart) / 1000;
-      let text = "At stage " + stage;
+      let text = "Generating image";
       if (stage == "unet") {
         counter += 1;
-        text += " step [" + counter + "/" + numSteps + "]"
+        text += " [" + counter + "/" + numSteps + "]"
       }
       if (stage == "vae") {
         counter = totalNumSteps;
       }
-      text += ", " + Math.ceil(timeElapsed) + " secs elapsed.";
+      text += " (" + Math.ceil(timeElapsed) + " secs)";
       this.logger("[generating]", text);
     }
   }
@@ -517,7 +521,10 @@ class StableDiffusionInstance {
    * Async initialize instance.
    */
   async asyncInit() {
-    if (this.pipeline !== undefined) return;
+    if (this.pipeline !== undefined) {
+      this.pipeline.reBindCanvas();
+      return;
+    }
     await this.#asyncInitConfig();
     await this.#asyncInitTVM(this.config.wasmUrl, this.config.cacheUrl);
     await this.#asyncInitPipeline(this.config.schedulerConstUrl, this.config.tokenizer);

@@ -1,6 +1,10 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import useCanvasContextMenu from "components/apps/StableDiffusion/useCanvasContextMenu";
 import StyledStableDiffusion from "components/apps/StableDiffusion/StyledStableDiffusion";
-import { type StableDiffusionConfig } from "components/apps/StableDiffusion/types";
+import {
+  type Prompt,
+  type StableDiffusionConfig,
+} from "components/apps/StableDiffusion/types";
 import { type ComponentProcessProps } from "components/system/Apps/RenderComponent";
 import { runStableDiffusion } from "components/system/Desktop/Wallpapers/StableDiffusion";
 import { useWebGPUCheck } from "hooks/useWebGPUCheck";
@@ -14,10 +18,15 @@ const SD_WORKER = (): Worker =>
     { name: "Stable Diffusion" }
   );
 
+const DEFAULT_PROMPT: Prompt = [
+  "A photo of an astronaut riding a horse on Mars",
+  "",
+];
+const NO_WEBGPU_SUPPORT = "No WebGPU Support";
+
 const StableDiffusion: FC<ComponentProcessProps> = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const inputPositiveRef = useRef<HTMLInputElement>(null);
-  const inputNegativeRef = useRef<HTMLInputElement>(null);
+  const [prompt, setPrompt] = useState<Prompt>(DEFAULT_PROMPT);
   const generatedAnImage = useRef(false);
   const supportsOffscreenCanvas = useMemo(
     () => typeof window !== "undefined" && "OffscreenCanvas" in window,
@@ -25,21 +34,10 @@ const StableDiffusion: FC<ComponentProcessProps> = () => {
   );
   const sdWorker = useWorker<void>(SD_WORKER);
   const transferedCanvas = useRef(false);
-  const [status, setStatus] = useState<string>("");
-  const statusLogger = useCallback((type: string, message: string) => {
-    setStatus(type && message ? `${type} ${message}` : "");
-  }, []);
+  const [status, setStatus] = useState<string>(NO_WEBGPU_SUPPORT);
   const generateImage = useCallback(async () => {
-    if (
-      canvasRef.current &&
-      inputPositiveRef.current &&
-      inputNegativeRef.current
-    ) {
-      const config: StableDiffusionConfig = {
-        prompts: [
-          [inputPositiveRef.current.value, inputNegativeRef.current.value],
-        ],
-      };
+    if (canvasRef.current) {
+      const config: StableDiffusionConfig = { prompts: [prompt] };
 
       if (supportsOffscreenCanvas && sdWorker.current) {
         if (transferedCanvas.current) {
@@ -54,48 +52,75 @@ const StableDiffusion: FC<ComponentProcessProps> = () => {
           ]);
           sdWorker.current.addEventListener(
             "message",
-            ({ data }: WorkerMessage) => {
-              statusLogger(data.type, data.message);
-            }
+            ({ data }: WorkerMessage) => setStatus(data.message)
           );
         }
       } else {
-        window.tvmjsGlobalEnv.logger = statusLogger;
+        window.tvmjsGlobalEnv.logger = setStatus;
 
         await runStableDiffusion(config, canvasRef.current);
 
-        statusLogger("", "");
+        setStatus("");
       }
 
       generatedAnImage.current = true;
     }
-  }, [sdWorker, statusLogger, supportsOffscreenCanvas]);
+  }, [prompt, sdWorker, supportsOffscreenCanvas]);
   const hasWebGPU = useWebGPUCheck();
+  const { onContextMenuCapture } = useCanvasContextMenu(
+    canvasRef,
+    prompt[0],
+    generatedAnImage.current && !status
+  );
+
+  useEffect(() => {
+    if (hasWebGPU && status === NO_WEBGPU_SUPPORT) setStatus("");
+  }, [hasWebGPU, status]);
 
   return (
-    <StyledStableDiffusion $hasWebGPU={hasWebGPU}>
-      <canvas ref={canvasRef} height={512} width={512} />
+    <StyledStableDiffusion>
       <nav>
-        <div>
-          {status && <div>{status}</div>}
-          <input
-            ref={inputPositiveRef}
-            defaultValue="A photo of an astronaut riding a elephant on jupiter"
+        <div className="prompts">
+          <textarea
+            defaultValue={prompt[0]}
+            onChange={({ target }) =>
+              setPrompt(([, negativePrompt]) => [
+                target.value.trim(),
+                negativePrompt,
+              ])
+            }
             placeholder="Input Prompt"
-            style={{ display: status ? "none" : "block" }}
-            type="text"
           />
-          <input
-            ref={inputNegativeRef}
+          <textarea
+            defaultValue={prompt[1]}
+            onChange={({ target }) =>
+              setPrompt(([positivePrompt]) => [
+                positivePrompt,
+                target.value.trim(),
+              ])
+            }
             placeholder="Negative Prompt"
-            style={{ display: status ? "none" : "block" }}
-            type="text"
           />
         </div>
-        <button disabled={!!status} onClick={generateImage} type="button">
+        <button
+          disabled={
+            !!status || !hasWebGPU || (prompt[0] === "" && prompt[1] === "")
+          }
+          onClick={generateImage}
+          type="button"
+        >
           Generate
         </button>
       </nav>
+      <div className="image">
+        <canvas
+          ref={canvasRef}
+          height={512}
+          onContextMenuCapture={onContextMenuCapture}
+          width={512}
+        />
+        {status && <div className="status">{status}</div>}
+      </div>
     </StyledStableDiffusion>
   );
 };
