@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import dynamic from "next/dynamic";
-import { m as motion } from "framer-motion";
+import { m as motion } from "motion/react";
 import ColumnRow from "components/system/Files/FileEntry/ColumnRow";
 import { type Columns } from "components/system/Files/FileManager/Columns/constants";
 import StyledFigure from "components/system/Files/FileEntry/StyledFigure";
@@ -80,7 +80,7 @@ type FileEntryProps = {
   columns?: Columns;
   fileActions: FileActions;
   fileManagerId?: string;
-  fileManagerRef: React.MutableRefObject<HTMLOListElement | null>;
+  fileManagerRef: React.RefObject<HTMLOListElement | null>;
   focusFunctions: FocusEntryFunctions;
   focusedEntries: string[];
   hasNewFolderIcon?: boolean;
@@ -182,7 +182,7 @@ const FileEntry: FC<FileEntryProps> = ({
     () => (isDirectory ? "" : getExtension(url)),
     [isDirectory, url]
   );
-  const isYTUrl = useMemo(() => isYouTubeUrl(url), [url]);
+  const isYTUrl = useMemo(() => Boolean(url) && isYouTubeUrl(url), [url]);
   const isDynamicIcon = useMemo(
     () =>
       IMAGE_FILE_EXTENSIONS.has(urlExt) ||
@@ -233,7 +233,7 @@ const FileEntry: FC<FileEntryProps> = ({
   const iconRef = useRef<HTMLImageElement | null>(null);
   const isIconCached = useRef(false);
   const isDynamicIconLoaded = useRef(false);
-  const getIconAbortController = useRef<AbortController>();
+  const getIconAbortController = useRef<AbortController>(undefined);
   const createTooltip = useCallback(async (): Promise<string> => {
     if (isDirectory) return "";
 
@@ -617,7 +617,8 @@ const FileEntry: FC<FileEntryProps> = ({
             />
           ) : (
             <figcaption>
-              {!isOnlyFocusedEntry || name.length === truncatedName.length
+              {!showColumn &&
+              (!isOnlyFocusedEntry || name.length === truncatedName.length)
                 ? truncatedName
                 : name}
             </figcaption>

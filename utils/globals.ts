@@ -1,6 +1,23 @@
+const DEFAULT_KEY = "DEFAULT";
+const SET_KEY = "__setter__";
+
+type SharedGlobal = {
+  [key: string]: unknown;
+  [DEFAULT_KEY]: unknown;
+  [SET_KEY]: string;
+};
+
 declare global {
   interface Window {
-    lockedGlobals?: Record<string, boolean>;
+    Module: {
+      SDL2?: {
+        audioContext: AudioContext;
+      };
+      arguments?: string[];
+      canvas: HTMLCanvasElement;
+      postRun: () => void;
+    };
+    sharedGlobals?: Record<string, SharedGlobal>;
   }
 }
 
@@ -19,30 +36,48 @@ export const cleanUpGlobals = (globals: string[]): void =>
     }
   });
 
-const addGlobalLock = (key: string): void => {
-  let currentValue: unknown;
+export const shareGlobal = (
+  key: string,
+  callees: string,
+  assignTimeout: number
+): void => {
+  setTimeout(() => {
+    if (window.sharedGlobals && key in window.sharedGlobals) {
+      window.sharedGlobals[key][SET_KEY] = DEFAULT_KEY;
+    }
+  }, assignTimeout);
 
-  Object.defineProperty(window, key, {
-    get() {
-      return window.lockedGlobals?.[key] ? undefined : currentValue;
-    },
-    set(value: unknown) {
-      if (!window.lockedGlobals?.[key]) currentValue = value;
-    },
-  } as PropertyDescriptor);
-};
+  window.sharedGlobals = window.sharedGlobals || {};
 
-const setGlobalLock = (key: string, locked: boolean): void => {
-  window.lockedGlobals = {
-    ...window.lockedGlobals,
-    [key]: locked,
-  };
-};
+  if (key in window.sharedGlobals) {
+    window.sharedGlobals[key][SET_KEY] = callees;
+  } else {
+    const defaultValue = window[key as keyof Window] as unknown;
 
-export const lockGlobal = (key: string): void => setGlobalLock(key, true);
+    window.sharedGlobals[key] = {
+      [DEFAULT_KEY]: defaultValue,
+      [SET_KEY]: callees,
+    };
 
-export const unlockGlobal = (key: string): void => {
-  if (!Object.getOwnPropertyDescriptor(window, key)) addGlobalLock(key);
+    Object.defineProperty(window, key, {
+      get() {
+        if (window.sharedGlobals && key in window.sharedGlobals) {
+          // eslint-disable-next-line unicorn/error-message
+          const { stack = "" } = new Error();
+          const match = Object.keys(window.sharedGlobals[key])
+            .filter((calleeKey) => ![DEFAULT_KEY, SET_KEY].includes(calleeKey))
+            .find((calleeKey) => new RegExp(calleeKey).test(stack));
 
-  setGlobalLock(key, false);
+          return window.sharedGlobals[key][match || DEFAULT_KEY];
+        }
+
+        return defaultValue;
+      },
+      set(value: unknown) {
+        if (window.sharedGlobals && key in window.sharedGlobals) {
+          window.sharedGlobals[key][window.sharedGlobals[key][SET_KEY]] = value;
+        }
+      },
+    } as PropertyDescriptor);
+  }
 };

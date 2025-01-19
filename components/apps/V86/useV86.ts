@@ -1,4 +1,4 @@
-import { basename, dirname, join } from "path";
+import { basename, join } from "path";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BOOT_CD_FD_HD,
@@ -19,12 +19,7 @@ import { useFileSystem } from "contexts/fileSystem";
 import { fs9pV4ToV3 } from "contexts/fileSystem/core";
 import { useProcesses } from "contexts/process";
 import { useSession } from "contexts/session";
-import {
-  ICON_CACHE,
-  ICON_CACHE_EXTENSION,
-  SAVE_PATH,
-  TRANSITIONS_IN_MILLISECONDS,
-} from "utils/constants";
+import { SAVE_PATH, TRANSITIONS_IN_MILLISECONDS } from "utils/constants";
 import {
   bufferToUrl,
   cleanUpBufferUrl,
@@ -32,6 +27,7 @@ import {
   getHtmlToImage,
   loadFiles,
 } from "utils/functions";
+import { useSnapshots } from "hooks/useSnapshots";
 
 if (typeof window !== "undefined") {
   window.DEBUG = false;
@@ -54,8 +50,7 @@ const useV86 = ({
   const [emulator, setEmulator] = useState<
     Record<string, V86Starter | undefined>
   >({});
-  const { exists, mkdirRecursive, readFile, updateFolder, writeFile } =
-    useFileSystem();
+  const { exists, readFile } = useFileSystem();
   const saveStateAsync = useCallback(
     (diskImageUrl: string): Promise<ArrayBuffer> =>
       new Promise((resolve, reject) => {
@@ -63,41 +58,14 @@ const useV86 = ({
       }),
     [emulator]
   );
+  const { createSnapshot } = useSnapshots();
   const closeDiskImage = useCallback(
     async (diskImageUrl: string, screenshot?: Buffer): Promise<void> => {
-      const saveName = `${basename(diskImageUrl)}${saveExtension}`;
-
-      if (!(await exists(SAVE_PATH))) {
-        await mkdirRecursive(SAVE_PATH);
-        updateFolder(dirname(SAVE_PATH));
-      }
-
-      const savePath = join(SAVE_PATH, saveName);
-
-      if (
-        await writeFile(
-          savePath,
-          Buffer.from(await saveStateAsync(diskImageUrl)),
-          true
-        )
-      ) {
-        if (screenshot) {
-          const iconCacheRootPath = join(ICON_CACHE, SAVE_PATH);
-          const iconCachePath = join(
-            ICON_CACHE,
-            `${savePath}${ICON_CACHE_EXTENSION}`
-          );
-
-          if (!(await exists(iconCacheRootPath))) {
-            await mkdirRecursive(iconCacheRootPath);
-            updateFolder(dirname(SAVE_PATH));
-          }
-
-          await writeFile(iconCachePath, screenshot, true);
-        }
-
-        updateFolder(SAVE_PATH, saveName);
-      }
+      await createSnapshot(
+        `${basename(diskImageUrl)}${saveExtension}`,
+        Buffer.from(await saveStateAsync(diskImageUrl)),
+        screenshot
+      );
 
       try {
         emulator[diskImageUrl]?.destroy();
@@ -105,13 +73,42 @@ const useV86 = ({
         // Ignore failures on destroy
       }
     },
-    [emulator, exists, mkdirRecursive, saveStateAsync, updateFolder, writeFile]
+    [createSnapshot, emulator, saveStateAsync]
+  );
+  const takeScreenshot = useCallback(
+    async (fileUrl: string): Promise<Buffer | undefined> => {
+      let screenshot: string | undefined;
+
+      if (emulator[fileUrl]?.v86.cpu.devices.vga.graphical_mode) {
+        screenshot = (
+          containerRef.current?.querySelector("canvas") as HTMLCanvasElement
+        )?.toDataURL("image/png");
+      } else if (containerRef.current instanceof HTMLElement) {
+        const htmlToImage = await getHtmlToImage();
+
+        try {
+          screenshot = await htmlToImage?.toPng(containerRef.current, {
+            skipAutoScale: true,
+          });
+        } catch {
+          // Ignore failure to capture
+        }
+      }
+
+      return screenshot
+        ? Buffer.from(
+            screenshot.replace("data:image/png;base64,", ""),
+            "base64"
+          )
+        : undefined;
+    },
+    [containerRef, emulator]
   );
   const loadDiskImage = useCallback(async () => {
     const [currentUrl] = Object.keys(emulator);
 
     if (typeof currentUrl === "string") {
-      await closeDiskImage(currentUrl);
+      await closeDiskImage(currentUrl, await takeScreenshot(currentUrl));
       setEmulator({ [url]: undefined });
     }
 
@@ -180,6 +177,7 @@ const useV86 = ({
     emulator,
     exists,
     readFile,
+    takeScreenshot,
     url,
   ]);
 
@@ -206,39 +204,11 @@ const useV86 = ({
       loadDiskImage();
     }
 
-    const currentContainer = containerRef.current;
-
     return () => {
       if (closing && !shutdown.current) {
         shutdown.current = true;
 
         if (url && emulator[url]) {
-          const takeScreenshot = async (): Promise<Buffer | undefined> => {
-            let screenshot: string | undefined;
-
-            if (emulator[url]?.v86.cpu.devices.vga.graphical_mode) {
-              screenshot = (
-                currentContainer?.querySelector("canvas") as HTMLCanvasElement
-              )?.toDataURL("image/png");
-            } else if (currentContainer instanceof HTMLElement) {
-              const htmlToImage = await getHtmlToImage();
-
-              try {
-                screenshot = await htmlToImage?.toPng(currentContainer, {
-                  skipAutoScale: true,
-                });
-              } catch {
-                // Ignore failure to capture
-              }
-            }
-
-            return screenshot
-              ? Buffer.from(
-                  screenshot.replace("data:image/png;base64,", ""),
-                  "base64"
-                )
-              : undefined;
-          };
           const scheduleSaveState = (screenshot?: Buffer): void => {
             window.setTimeout(
               () => closeDiskImage(url, screenshot),
@@ -246,7 +216,7 @@ const useV86 = ({
             );
           };
 
-          takeScreenshot().then(scheduleSaveState).catch(scheduleSaveState);
+          takeScreenshot(url).then(scheduleSaveState).catch(scheduleSaveState);
         } else {
           emulator[url]?.destroy();
         }
@@ -255,11 +225,11 @@ const useV86 = ({
   }, [
     closeDiskImage,
     closing,
-    containerRef,
     emulator,
     loadDiskImage,
     loading,
     process,
+    takeScreenshot,
     url,
   ]);
 };

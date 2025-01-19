@@ -58,9 +58,7 @@ let responding = false;
 let sessionId = 0;
 let session: AILanguageModel | undefined;
 let summarizer: AISummarizer | undefined;
-let prompts:
-  | (AILanguageModelAssistantPrompt | AILanguageModelUserPrompt)[]
-  | ChatCompletionMessageParam[] = [];
+let prompts: AILanguageModelPrompt[] | ChatCompletionMessageParam[] = [];
 let engine: MLCEngine;
 
 let markedLoaded = false;
@@ -125,11 +123,8 @@ globalThis.addEventListener(
         const config: AILanguageModelCreateOptionsWithSystemPrompt = {
           ...CONVO_STYLE_TEMPS[data.style],
           initialPrompts: [
-            SYSTEM_PROMPT as unknown as AILanguageModelAssistantPrompt,
-            ...(prompts as (
-              | AILanguageModelAssistantPrompt
-              | AILanguageModelUserPrompt
-            )[]),
+            SYSTEM_PROMPT as unknown as AILanguageModelPrompt,
+            ...(prompts as AILanguageModelPrompt[]),
           ],
         };
 
@@ -273,14 +268,13 @@ globalThis.addEventListener(
               for await (const chunk of response) {
                 if (cancel) break;
 
-                if (typeof chunk === "string") {
-                  sendMessage(chunk, data.streamId);
-                } else {
-                  reply +=
-                    (chunk as ChatCompletionChunk).choices[0]?.delta.content ||
-                    "";
-                  sendMessage(reply, data.streamId);
-                }
+                reply +=
+                  typeof chunk === "string"
+                    ? chunk
+                    : (chunk as ChatCompletionChunk).choices[0]?.delta
+                        .content || "";
+
+                sendMessage(reply, data.streamId);
               }
             } catch (error) {
               console.error("Failed to stream prompt response.", error);

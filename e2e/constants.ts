@@ -1,8 +1,13 @@
 import { type Locator } from "@playwright/test";
+import { type SessionData } from "contexts/session/types";
 
 declare global {
   // eslint-disable-next-line vars-on-top, no-var
   var capturedConsoleLogs: string[] | undefined;
+
+  interface Window {
+    DEBUG_DEFAULT_SESSION?: SessionData;
+  }
 }
 
 export const EXCLUDED_CONSOLE_LOGS = (browserName: string): string[] => {
@@ -198,6 +203,7 @@ export const START_MENU_APPS = [
   /^DevTools$/,
   /^IRC$/,
   /^Marked$/,
+  /^Messenger$/,
   /^Monaco Editor$/,
   /^Paint$/,
   /^PDF$/,
@@ -254,7 +260,7 @@ export const BASE_APP_TITLE = "icefishOS";
 export const BASE_APP_FAVICON = /^\/favicon.ico$/;
 export const BASE_APP_FAVICON_TEXT = "/favicon.ico";
 
-export const UNKNOWN_ICON_PATH = "/System/Icons/48x48/unknown.png";
+export const UNKNOWN_ICON_PATH = "/System/Icons/48x48/unknown.webp";
 
 const OG_REQUIRED_TAGS = ["title", "image", "url", "type"];
 
@@ -275,3 +281,5 @@ export const TAB_SPACE_LENGTH = 4;
 export const FILE_EXPLORER_COLUMN_HEIGHT = 25;
 
 export const WINDOW_RESIZE_HANDLE_WIDTH = 6;
+
+export const DEFAULT_SESSION = {} as SessionData;

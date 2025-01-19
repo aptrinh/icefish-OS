@@ -6,24 +6,13 @@ import { useProcesses } from "contexts/process";
 import { TRANSITIONS_IN_MILLISECONDS } from "utils/constants";
 import { loadFiles } from "utils/functions";
 
-declare global {
-  interface Window {
-    Module: {
-      SDL2?: {
-        audioContext: AudioContext;
-      };
-      canvas: HTMLCanvasElement;
-      postRun: () => void;
-    };
-  }
-}
-
 const useSpaceCadet = ({
   containerRef,
   id,
   setLoading,
 }: ContainerHookProps): void => {
-  const { processes: { [id]: { libs = [] } = {} } = {} } = useProcesses();
+  const { linkElement, processes: { [id]: { libs = [] } = {} } = {} } =
+    useProcesses();
   const [canvas, setCanvas] = useState<HTMLCanvasElement>();
   const mountEmFs = useEmscriptenMount();
 
@@ -36,11 +25,12 @@ const useSpaceCadet = ({
         postRun: () => {
           setLoading(false);
           mountEmFs(window.FS as EmscriptenFS, "SpaceCadet");
+          linkElement(id, "peekElement", containerCanvas);
         },
       };
       setCanvas(containerCanvas);
     }
-  }, [containerRef, mountEmFs, setLoading]);
+  }, [containerRef, id, linkElement, mountEmFs, setLoading]);
 
   useEffect(() => {
     if (canvas) {

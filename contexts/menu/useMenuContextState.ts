@@ -53,7 +53,7 @@ type MenuContextState = {
 const useMenuContextState = (): MenuContextState => {
   const [menu, setMenu] = useState<MenuState>(Object.create(null) as MenuState);
   const touchTimer = useRef<number>(0);
-  const touchEvent = useRef<React.TouchEvent>();
+  const touchEvent = useRef<React.TouchEvent>(undefined);
   const contextMenu = useCallback(
     (
       getItems: (event?: CaptureTriggerEvent) => MenuItem[]
@@ -106,6 +106,7 @@ const useMenuContextState = (): MenuContextState => {
             window.clearTimeout(touchTimer.current);
           },
           onTouchStart: (event: React.TouchEvent) => {
+            event.preventDefault();
             window.clearTimeout(touchTimer.current);
             touchTimer.current = window.setTimeout(() => {
               touchEvent.current = event;

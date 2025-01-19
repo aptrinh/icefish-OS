@@ -22,7 +22,7 @@ type Selection = {
 };
 
 const useSelection = (
-  containerRef: React.MutableRefObject<HTMLElement | null>,
+  containerRef: React.RefObject<HTMLElement | null>,
   focusedEntries: string[],
   { blurEntry }: FocusEntryFunctions,
   isDesktop?: boolean
@@ -120,7 +120,10 @@ const useSelection = (
         window.addEventListener("mousemove", externalMouseMove);
         window.addEventListener(
           "mouseup",
-          () => window.removeEventListener("mousemove", externalMouseMove),
+          () => {
+            resetSelection();
+            window.removeEventListener("mousemove", externalMouseMove);
+          },
           ONE_TIME_PASSIVE_EVENT
         );
       }
@@ -128,8 +131,7 @@ const useSelection = (
 
     selection.selectionEvents.onMouseLeave = onMouseLeave;
     selection.selectionEvents.onMouseMove = onMouseMove;
-
-    window.addEventListener("mouseup", resetSelection, ONE_TIME_PASSIVE_EVENT);
+    selection.selectionEvents.onMouseUp = resetSelection;
   }
 
   if (isSelecting) {

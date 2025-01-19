@@ -32,9 +32,9 @@ export const bufferToBlob = (buffer: Buffer, type?: string): Blob =>
   new Blob([buffer], type ? { type } : undefined);
 
 export const bufferToUrl = (buffer: Buffer, mimeType?: string): string =>
-  mimeType
-    ? `data:${mimeType};base64,${buffer.toString("base64")}`
-    : URL.createObjectURL(bufferToBlob(buffer));
+  mimeType === "image/svg+xml"
+    ? `data:${mimeType};base64,${window.btoa(buffer.toString())}`
+    : URL.createObjectURL(bufferToBlob(buffer, mimeType));
 
 let dpi: number;
 
@@ -170,16 +170,6 @@ export const createFallbackSrcSet = (
     .join(", ");
 };
 
-export const imageToBufferUrl = (
-  extension: string,
-  buffer: Buffer | string
-): string =>
-  extension === ".svg"
-    ? `data:image/svg+xml;base64,${window.btoa(buffer.toString())}`
-    : `data:image/${
-        extension === ".ani" || extension === ".gif" ? "gif" : "png"
-      };base64,${buffer.toString("base64")}`;
-
 export const blobToBase64 = (blob: Blob): Promise<string> =>
   new Promise((resolve) => {
     const fileReader = new FileReader();
@@ -269,10 +259,11 @@ const loadScript = (
   src: string,
   defer?: boolean,
   force?: boolean,
-  asModule?: boolean
+  asModule?: boolean,
+  contentWindow = window as Window
 ): Promise<Event> =>
   new Promise((resolve, reject) => {
-    const loadedScripts = [...document.scripts];
+    const loadedScripts = [...contentWindow.document.scripts];
     const currentScript = loadedScripts.find((loadedScript) =>
       loadedScript.src.endsWith(src)
     );
@@ -286,7 +277,7 @@ const loadScript = (
       currentScript.remove();
     }
 
-    const script = document.createElement("script");
+    const script = contentWindow.document.createElement("script");
 
     script.async = false;
     if (defer) script.defer = true;
@@ -296,13 +287,16 @@ const loadScript = (
     script.addEventListener("error", reject, ONE_TIME_PASSIVE_EVENT);
     script.addEventListener("load", resolve, ONE_TIME_PASSIVE_EVENT);
 
-    document.head.append(script);
+    contentWindow.document.head.append(script);
   });
 
-const loadStyle = (href: string): Promise<Event> =>
+const loadStyle = (
+  href: string,
+  contentWindow = window as Window
+): Promise<Event> =>
   new Promise((resolve, reject) => {
     const loadedStyles = [
-      ...document.querySelectorAll("link[rel=stylesheet]"),
+      ...contentWindow.document.querySelectorAll("link[rel=stylesheet]"),
     ] as HTMLLinkElement[];
 
     if (loadedStyles.some((loadedStyle) => loadedStyle.href.endsWith(href))) {
@@ -310,7 +304,7 @@ const loadStyle = (href: string): Promise<Event> =>
       return;
     }
 
-    const link = document.createElement("link");
+    const link = contentWindow.document.createElement("link");
 
     link.rel = "stylesheet";
     link.fetchPriority = "high";
@@ -318,21 +312,22 @@ const loadStyle = (href: string): Promise<Event> =>
     link.addEventListener("error", reject, ONE_TIME_PASSIVE_EVENT);
     link.addEventListener("load", resolve, ONE_TIME_PASSIVE_EVENT);
 
-    document.head.append(link);
+    contentWindow.document.head.append(link);
   });
 
 export const loadFiles = async (
   files?: string[],
   defer?: boolean,
   force?: boolean,
-  asModule?: boolean
+  asModule?: boolean,
+  contentWindow?: Window
 ): Promise<void> =>
   !files || files.length === 0
     ? Promise.resolve()
     : files.reduce(async (_promise, file) => {
         await (getExtension(file) === ".css"
-          ? loadStyle(encodeURI(file))
-          : loadScript(encodeURI(file), defer, force, asModule));
+          ? loadStyle(encodeURI(file), contentWindow)
+          : loadScript(encodeURI(file), defer, force, asModule, contentWindow));
       }, Promise.resolve());
 
 export const getHtmlToImage = async (): Promise<
@@ -809,8 +804,8 @@ export const getYouTubeUrlId = (url: string): string => {
   return "";
 };
 
-export const getMimeType = (url: string): string => {
-  switch (getExtension(url)) {
+export const getMimeType = (url: string, ext?: string): string => {
+  switch (ext ? ext.toLowerCase() : getExtension(url)) {
     case ".ani":
     case ".cur":
     case ".ico":
@@ -819,6 +814,8 @@ export const getMimeType = (url: string): string => {
     case ".jpg":
     case ".jpeg":
       return "image/jpeg";
+    case ".gif":
+      return "image/gif";
     case ".json":
       return "application/json";
     case ".html":
@@ -845,6 +842,8 @@ export const getMimeType = (url: string): string => {
       return "application/pdf";
     case ".png":
       return "image/png";
+    case ".svg":
+      return "image/svg+xml";
     case ".md":
     case ".txt":
       return "text/plain";
@@ -873,6 +872,22 @@ export const isDynamicIcon = (icon?: string): boolean =>
 const getPreloadedLinks = (): HTMLLinkElement[] => [
   ...document.querySelectorAll<HTMLLinkElement>("link[rel=preload]"),
 ];
+
+let HAS_MODULE_PRELOAD_SUPPORT = false;
+
+const supportsModulePreload = (): boolean => {
+  if (HAS_MODULE_PRELOAD_SUPPORT) return true;
+
+  try {
+    HAS_MODULE_PRELOAD_SUPPORT = Boolean(
+      document.createElement("link").relList?.supports?.("modulepreload")
+    );
+  } catch {
+    // Ignore failure to check for modulepreload support
+  }
+
+  return HAS_MODULE_PRELOAD_SUPPORT;
+};
 
 let HAS_WEBP_SUPPORT = false;
 
@@ -964,6 +979,11 @@ export const preloadLibs = (libs: string[] = []): void => {
       case ".html":
         link.rel = "prerender";
         break;
+      case ".js":
+        if (supportsModulePreload()) {
+          link.rel = "modulepreload";
+        }
+        break;
       case ".json":
       case ".wasm":
         link.as = "fetch";
@@ -1032,3 +1052,7 @@ export const toSorted = <T>(
   array: T[],
   compareFn?: (a: T, b: T) => number
 ): T[] => [...array].sort(compareFn);
+
+export const notFound = (resource: string): void =>
+  // eslint-disable-next-line no-alert
+  alert(`Can't find '${resource}'. Check the spelling and try again.`);
