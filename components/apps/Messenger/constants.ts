@@ -10,6 +10,8 @@ export const BASE_RW_RELAYS = [
   "wss://damus.io ",
   "wss://nos.lol",
   "wss://nostr.wine",
+  "wss://strfry.iris.to",
+  "wss://relay.nostr.band",
 ];
 
 export const METADATA_KIND = 0;

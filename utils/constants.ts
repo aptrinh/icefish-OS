@@ -345,7 +345,7 @@ export const PACKAGE_DATA = {
   author: {
     email: "aptrinh@protonmail.com",
     name: "Phan Trinh",
-    npub: "npub12snau85hfwecsl58mt7ygl2phc86hycnaz0zm9fxxh8fryalkmfq97vzke",
+    npub: "npub1wd4v4908cmftzjv87e4dx90t2eaykkxmjukzne4rgw3kdssplw9s9jarzq",
     url: "https://icefi.sh",
   },
   description: "A fishy desktop environment in the browser",
