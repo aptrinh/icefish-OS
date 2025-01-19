@@ -44,6 +44,16 @@ const StyledBrowser = styled.div<StyledBrowserProps>`
         width: 20px;
       }
 
+      &.proxy {
+        margin: 0 10px 0 4px;
+        width: 40px;
+
+        svg {
+          height: 15px;
+          width: 15px;
+        }
+      }
+
       &:hover {
         background-color: rgb(102, 92, 84);
       }

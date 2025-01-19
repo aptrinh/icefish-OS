@@ -363,7 +363,7 @@ export const BASE_ZIP_CONFIG: AsyncZipOptions = {
 export const HIGH_PRIORITY_REQUEST = { priority: "high" } as RequestInit;
 
 export const HIGH_PRIORITY_ELEMENT = {
-  fetchpriority: "high",
+  fetchPriority: "high",
 } as React.HTMLAttributes<HTMLElement>;
 
 export const DISBALE_AUTO_INPUT_FEATURES = {

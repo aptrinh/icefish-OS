@@ -1,4 +1,4 @@
-import { m as motion } from "framer-motion";
+import { m as motion } from "motion/react";
 import styled from "styled-components";
 
 type StyledMenuProps = {
@@ -23,11 +23,14 @@ const StyledMenu = styled(motion.nav).attrs<StyledMenuProps>(({ $x, $y }) => ({
   max-height: fit-content;
   max-width: fit-content;
   padding: 4px 2px;
+  pointer-events: none;
   position: fixed;
   width: max-content;
   z-index: ${({ $isSubMenu }) => $isSubMenu && 1};
 
   ol {
+    pointer-events: all;
+
     li.disabled {
       color: rgb(102, 92, 84);
       pointer-events: none;

@@ -1,4 +1,4 @@
-import { basename, dirname, join } from "path";
+import { basename } from "path";
 import { type Options, type Track, type URLTrack } from "webamp";
 import { useCallback, useEffect, useRef } from "react";
 import {
@@ -28,13 +28,12 @@ import {
   AUDIO_PLAYLIST_EXTENSIONS,
   DESKTOP_PATH,
   HIGH_PRIORITY_REQUEST,
-  ICON_CACHE,
-  ICON_CACHE_EXTENSION,
   MILLISECONDS_IN_SECOND,
   SAVE_PATH,
   TRANSITIONS_IN_MILLISECONDS,
 } from "utils/constants";
 import { getExtension, haltEvent } from "utils/functions";
+import { useSnapshots } from "hooks/useSnapshots";
 
 type Webamp = {
   initWebamp: (containerElement: HTMLDivElement, options: Options) => void;
@@ -42,6 +41,7 @@ type Webamp = {
 };
 
 const SKIN_DATA_PATH = `${SAVE_PATH}/webampSkinData.json`;
+const SKIN_DATA_NAME = "webampSkinData.json";
 
 const useWebamp = (id: string): Webamp => {
   const { onClose, onMinimize } = useWindowActions(id);
@@ -49,25 +49,20 @@ const useWebamp = (id: string): Webamp => {
     useSession();
   const { position } = windowState || {};
   const {
+    argument,
     linkElement,
     processes: { [id]: process },
     title,
   } = useProcesses();
   const { closing, componentWindow } = process || {};
-  const webampCI = useRef<WebampCI>();
-  const {
-    createPath,
-    deletePath,
-    exists,
-    readFile,
-    mkdirRecursive,
-    updateFolder,
-    writeFile,
-  } = useFileSystem();
+  const webampCI = useRef<WebampCI>(undefined);
+  const { createPath, deletePath, exists, readFile, updateFolder } =
+    useFileSystem();
   const { onDrop } = useFileDrop({ id });
-  const metadataProviderRef = useRef<number>();
-  const windowPositionDebounceRef = useRef<number>();
+  const metadataProviderRef = useRef(0);
+  const windowPositionDebounceRef = useRef(0);
   const subscriptions = useRef<(() => void)[]>([]);
+  const { createSnapshot } = useSnapshots();
   const onWillClose = useCallback(
     (cancel?: () => void): void => {
       cancel?.();
@@ -141,9 +136,27 @@ const useWebamp = (id: string): Webamp => {
             element?.addEventListener("dragover", haltEvent);
           });
 
-          if (process && !componentWindow && mainWindow) {
-            linkElement(id, "componentWindow", containerElement);
-            linkElement(id, "peekElement", mainWindow);
+          if (process) {
+            if (!componentWindow) {
+              linkElement(id, "componentWindow", containerElement);
+            }
+
+            if (mainWindow) {
+              linkElement(id, "peekElement", mainWindow);
+            }
+
+            argument(id, "play", () => webamp.play());
+            argument(id, "pause", () => webamp.pause());
+            argument(id, "paused", (callback?: (paused: boolean) => void) => {
+              if (callback) {
+                webamp._actionEmitter.on("PLAY", () => callback(false));
+                webamp._actionEmitter.on("PAUSE", () => callback(true));
+                webamp._actionEmitter.on("STOP", () => callback(true));
+                webamp._actionEmitter.on("IS_STOPPED", () => callback(true));
+              }
+
+              return webamp.getMediaStatus() === "PAUSED";
+            });
           }
 
           if (!initialSkin && !process.url?.endsWith(".wsz")) {
@@ -241,47 +254,28 @@ const useWebamp = (id: string): Webamp => {
             title(id, processDirectory.Webamp.title);
           }
         }),
-        webamp._actionEmitter.on("SET_SKIN_DATA", async ({ data }) => {
-          if (!(await exists(SAVE_PATH))) {
-            await mkdirRecursive(SAVE_PATH);
-            updateFolder(dirname(SAVE_PATH));
-          }
+        webamp._actionEmitter.on("SET_SKIN_DATA", ({ data }) =>
+          createSnapshot(
+            SKIN_DATA_NAME,
+            Buffer.from(JSON.stringify(data)),
+            async () => {
+              const { skinUrl } =
+                (webamp.options.availableSkins as { skinUrl?: string }[])?.find(
+                  (skin) => skin.skinUrl
+                ) || {};
 
-          writeFile(SKIN_DATA_PATH, JSON.stringify(data), true);
-
-          try {
-            const { skinUrl } =
-              (webamp.options.availableSkins as { skinUrl?: string }[])?.find(
-                (skin) => skin.skinUrl
-              ) || {};
-
-            if (skinUrl) {
-              const screenshot = Buffer.from(
-                await (
-                  await fetch(
-                    `https://r2.webampskins.org/screenshots/${basename(skinUrl, ".wsz")}.png`
+              return skinUrl
+                ? Buffer.from(
+                    await (
+                      await fetch(
+                        `https://r2.webampskins.org/screenshots/${basename(skinUrl, ".wsz")}.png`
+                      )
+                    ).arrayBuffer()
                   )
-                ).arrayBuffer()
-              );
-              const iconCacheRootPath = join(ICON_CACHE, SAVE_PATH);
-              const iconCachePath = join(
-                ICON_CACHE,
-                `${SKIN_DATA_PATH}${ICON_CACHE_EXTENSION}`
-              );
-
-              if (!(await exists(iconCacheRootPath))) {
-                await mkdirRecursive(iconCacheRootPath);
-                updateFolder(dirname(SAVE_PATH));
-              }
-
-              await writeFile(iconCachePath, screenshot, true);
+                : undefined;
             }
-          } catch {
-            // Ignore failure to get thumbnail screenshots
-          }
-
-          updateFolder(SAVE_PATH, basename(SKIN_DATA_PATH));
-        }),
+          )
+        ),
         webamp._actionEmitter.on("LOAD_DEFAULT_SKIN", () => {
           deletePath(SKIN_DATA_PATH);
         }),
@@ -304,13 +298,14 @@ const useWebamp = (id: string): Webamp => {
       webampCI.current = webamp;
     },
     [
+      argument,
       componentWindow,
       createPath,
+      createSnapshot,
       deletePath,
       exists,
       id,
       linkElement,
-      mkdirRecursive,
       onDrop,
       onMinimize,
       onWillClose,
@@ -320,7 +315,6 @@ const useWebamp = (id: string): Webamp => {
       setWindowStates,
       title,
       updateFolder,
-      writeFile,
     ]
   );
 

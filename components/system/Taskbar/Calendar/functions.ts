@@ -15,10 +15,16 @@ const FIRST_WEEK: Day[] = [
   [7, "curr"],
 ];
 
+export const CELEBRATIONS: Record<number, Record<number, boolean>> = {
+  11: { 26: true },
+};
+
 export const createCalendar = (date: Date): Calendar => {
   const day = date.getDate();
   const month = date.getMonth();
   const year = date.getFullYear();
+  const now = new Date();
+  const isCurrentMonth = now.getMonth() === month && now.getFullYear() === year;
   const firstDay = new Date(year, month, 1).getDay();
   const firstWeek = FIRST_WEEK.slice(0, DAYS_IN_WEEK - firstDay);
   const prevLastRow = Array.from({ length: DAYS_IN_WEEK - firstWeek.length })
@@ -37,7 +43,9 @@ export const createCalendar = (date: Date): Calendar => {
       const [vDay, vType] = value;
 
       acc[acc.length - 1].push(
-        vType === "curr" && vDay === day ? [vDay, "today"] : value
+        isCurrentMonth && vType === "curr" && vDay === day
+          ? [vDay, "today"]
+          : value
       );
 
       return acc;
@@ -72,4 +80,28 @@ export const createCalendar = (date: Date): Calendar => {
   }
 
   return rows;
+};
+
+const randomInRange = (min: number, max: number): number =>
+  Math.random() * (max - min) + min;
+
+export const celebrate = async (x: number, y: number): Promise<void> => {
+  const firingPattern: [number, confetti.Options?][] = [
+    [0.25, { startVelocity: 55 }],
+    [0.2],
+    [0.35, { decay: 0.91, scalar: 0.8 }],
+    [0.1, { decay: 0.92, scalar: 1.2, startVelocity: 25 }],
+    [0.1, { startVelocity: 45 }],
+  ];
+  const { default: confetti } = await import("canvas-confetti");
+
+  firingPattern.forEach(([particleRatio, options]) =>
+    confetti({
+      ...options,
+      angle: randomInRange(55, 125),
+      origin: { x: x / window.innerWidth, y: y / window.innerHeight },
+      particleCount: Math.floor(200 * particleRatio),
+      spread: randomInRange(50, 70),
+    })
+  );
 };

@@ -50,7 +50,6 @@ import {
   getGifJs,
   getHtmlToImage,
   getMimeType,
-  imageToBufferUrl,
   isSafari,
   isYouTubeUrl,
 } from "utils/functions";
@@ -167,10 +166,7 @@ export const getShortcutInfo = (
 
   return {
     comment,
-    icon:
-      !icon && pid && pid !== "FileExplorer"
-        ? processDirectory[pid]?.icon
-        : icon,
+    icon,
     pid,
     type,
     url,
@@ -345,7 +341,7 @@ export const getInfoWithExtension = (
             const image = await decodeImageToBuffer(extension, contents);
 
             if (image && !signal.aborted) {
-              getInfoByFileExtension(imageToBufferUrl(extension, image));
+              getInfoByFileExtension(bufferToUrl(image, getMimeType(path)));
             }
           }
         }
@@ -366,18 +362,25 @@ export const getInfoWithExtension = (
           if (pid !== "ExternalURL") subIcons.push(SHORTCUT_ICON);
 
           if (pid === "FileExplorer" && !icon) {
+            const iconCallback = (newIcon?: string): void => {
+              if (!newIcon) return;
+
+              callback({
+                comment,
+                icon: newIcon,
+                pid,
+                subIcons,
+                url,
+              });
+            };
             const getIcon = (): void => {
-              getIconFromIni(fs, url).then(
-                (iniIcon) =>
-                  iniIcon &&
-                  callback({
-                    comment,
-                    icon: iniIcon,
-                    pid,
-                    subIcons,
-                    url,
-                  })
-              );
+              if (urlExt) {
+                getInfoWithExtension(fs, url, urlExt, ({ icon: extIcon }) =>
+                  iconCallback(extIcon)
+                );
+              } else {
+                getIconFromIni(fs, url).then(iconCallback);
+              }
             };
 
             callback({
@@ -457,7 +460,8 @@ export const getInfoWithExtension = (
               pid,
               url,
             };
-            const isDefaultIcon = icon === processDirectory.VideoPlayer.icon;
+            const isDefaultIcon =
+              !icon || icon === processDirectory.VideoPlayer.icon;
             const videoSubIcons = [processDirectory.VideoPlayer.icon];
 
             callback({
@@ -475,11 +479,23 @@ export const getInfoWithExtension = (
                     )
                 : undefined,
               icon: icon || processDirectory.VideoPlayer.icon,
-              subIcons: icon && !isDefaultIcon ? videoSubIcons : undefined,
+              subIcons: isDefaultIcon ? undefined : videoSubIcons,
             });
           } else {
             callback({
               comment,
+              getIcon: icon
+                ? undefined
+                : () =>
+                    getInfoWithExtension(fs, url, urlExt, ({ icon: extIcon }) =>
+                      callback({
+                        comment,
+                        icon: extIcon || processDirectory[pid]?.icon,
+                        pid,
+                        subIcons,
+                        url,
+                      })
+                    ),
               icon: icon || UNKNOWN_ICON_PATH,
               pid,
               subIcons,
@@ -620,7 +636,7 @@ export const getInfoWithExtension = (
                 { signal, ...ONE_TIME_PASSIVE_EVENT }
               );
               imageIcon.decoding = "async";
-              imageIcon.src = imageToBufferUrl(extension, contents);
+              imageIcon.src = bufferToUrl(contents, getMimeType(path));
             }
           })
         );

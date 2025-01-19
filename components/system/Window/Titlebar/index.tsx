@@ -38,7 +38,7 @@ const Titlebar: FC<TitlebarProps> = ({ id }) => {
     title,
     maximized,
   } = process || {};
-  const { foregroundId } = useSession();
+  const { foregroundId, setForegroundId } = useSession();
   const isForeground = id === foregroundId;
   const { onClose, onMaximize, onMinimize } = useWindowActions(id);
   const onClickClose = useDoubleClick(onClose);
@@ -46,8 +46,8 @@ const Titlebar: FC<TitlebarProps> = ({ id }) => {
   const { menu, setMenu } = useMenu();
   const titlebarContextMenu = useTitlebarContextMenu(id);
   const touchStartTimeRef = useRef<number>(0);
-  const touchStartPositionRef = useRef<DOMRect>();
-  const touchesRef = useRef<TouchList>();
+  const touchStartPositionRef = useRef<DOMRect>(undefined);
+  const touchesRef = useRef<TouchList>(undefined);
   const onTouchEnd = useCallback<React.TouchEventHandler<HTMLButtonElement>>(
     (event) => {
       const { x, y } = componentWindow?.getBoundingClientRect() || {};
@@ -99,7 +99,7 @@ const Titlebar: FC<TitlebarProps> = ({ id }) => {
         }}
         onMouseUpCapture={() => {
           if (componentWindow && componentWindow !== document.activeElement) {
-            componentWindow.focus(PREVENT_SCROLL);
+            setForegroundId(id);
           }
         }}
         onTouchEndCapture={onTouchEnd}
