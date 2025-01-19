@@ -6,11 +6,10 @@ import {
 } from "utils/constants";
 
 export const BASE_RW_RELAYS = [
+  "wss://relay.snort.social",
+  "wss://damus.io ",
   "wss://nos.lol",
-  "wss://nostr.mom",
-  "wss://public.relaying.io",
-  "wss://relay1.nostrchat.io",
-  "wss://relayable.org",
+  "wss://nostr.wine",
 ];
 
 export const METADATA_KIND = 0;
