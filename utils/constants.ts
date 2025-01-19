@@ -1,7 +1,6 @@
 import { type AsyncZipOptions } from "fflate";
 import { type Size } from "components/system/Window/RndWindow/useResizable";
 import { type ClockSource, type WallpaperFit } from "contexts/session/types";
-// eslint-disable-next-line import/order
 import { type ThemeName } from "styles/themes";
 
 export const BASE_2D_CONTEXT_OPTIONS: CanvasRenderingContext2DSettings = {
@@ -346,7 +345,7 @@ export const PACKAGE_DATA = {
   author: {
     email: "aptrinh@protonmail.com",
     name: "Phan Trinh",
-    npub: "npub1wd4v4908cmftzjv87e4dx90t2eaykkxmjukzne4rgw3kdssplw9s9jarzq",
+    npub: "npub12snau85hfwecsl58mt7ygl2phc86hycnaz0zm9fxxh8fryalkmfq97vzke",
     url: "https://icefi.sh",
   },
   description: "A fishy desktop environment in the browser",
