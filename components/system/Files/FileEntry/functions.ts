@@ -13,6 +13,7 @@ import processDirectory from "contexts/process/directory";
 import {
   AUDIO_FILE_EXTENSIONS,
   BASE_2D_CONTEXT_OPTIONS,
+  DECODED_VIDEO_FILE_EXTENSIONS,
   DEFAULT_LOCALE,
   DYNAMIC_EXTENSION,
   DYNAMIC_PREFIX,
@@ -27,7 +28,6 @@ import {
   IMAGE_FILE_EXTENSIONS,
   MAX_ICON_SIZE,
   MOUNTED_FOLDER_ICON,
-  MP3_MIME_TYPE,
   NEW_FOLDER_ICON,
   ONE_TIME_PASSIVE_EVENT,
   PHOTO_ICON,
@@ -119,6 +119,7 @@ export const getIconFromIni = (
 const getDefaultFileViewer = (extension: string): string => {
   if (AUDIO_FILE_EXTENSIONS.has(extension)) return "VideoPlayer";
   if (VIDEO_FILE_EXTENSIONS.has(extension)) return "VideoPlayer";
+  if (DECODED_VIDEO_FILE_EXTENSIONS.has(extension)) return "VideoPlayer";
   if (IMAGE_FILE_EXTENSIONS.has(extension)) return "Photos";
   if (monacoExtensions.has(extension)) return "MonacoEditor";
 
@@ -260,6 +261,33 @@ const getIconsFromCache = (fs: FSModule, path: string): Promise<string[]> =>
       }
     );
   });
+
+export const getCoverArt = async (
+  url: string,
+  buffer: Buffer,
+  signal?: AbortSignal
+): Promise<Buffer | undefined> => {
+  if (signal?.aborted) return undefined;
+
+  try {
+    const { parseBuffer, selectCover } = await import("music-metadata-browser");
+    const { common: { picture } = {} } = await parseBuffer(
+      buffer,
+      { mimeType: getMimeType(url), size: buffer.length },
+      { skipPostHeaders: true }
+    );
+
+    if (signal?.aborted) return undefined;
+
+    const { data: coverPicture } = selectCover(picture) || {};
+
+    return coverPicture;
+  } catch {
+    // Ignore failure to get cover art
+  }
+
+  return undefined;
+};
 
 export const getInfoWithoutExtension = (
   fs: FSModule,
@@ -533,34 +561,21 @@ export const getInfoWithExtension = (
         })
       );
       break;
+    case ".flac":
+    case ".m4a":
     case ".mp3":
       getInfoByFileExtension(
-        `/System/Icons/${extensions[".mp3"].icon as string}.webp`,
+        extension === ".mp3"
+          ? `/System/Icons/${extensions[".mp3"].icon as string}.webp`
+          : undefined,
         (signal) =>
           fs.readFile(path, (error, contents = Buffer.from("")) => {
             if (!error && !signal.aborted) {
-              import("music-metadata-browser").then(
-                ({ parseBuffer, selectCover }) => {
-                  if (signal.aborted) return;
-
-                  parseBuffer(
-                    contents,
-                    {
-                      mimeType: MP3_MIME_TYPE,
-                      size: contents.length,
-                    },
-                    { skipPostHeaders: true }
-                  ).then(({ common: { picture } = {} }) => {
-                    if (signal.aborted) return;
-
-                    const { data: coverPicture } = selectCover(picture) || {};
-
-                    if (coverPicture) {
-                      getInfoByFileExtension(bufferToUrl(coverPicture));
-                    }
-                  });
+              getCoverArt(path, contents, signal).then((coverPicture) => {
+                if (coverPicture) {
+                  getInfoByFileExtension(bufferToUrl(coverPicture));
                 }
-              );
+              });
             }
           })
       );

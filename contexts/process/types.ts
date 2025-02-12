@@ -1,6 +1,7 @@
 import type * as Monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { type ComponentProcessProps } from "components/system/Apps/RenderComponent";
 import {
+  type Operation,
   type FileReaders,
   type ObjectReaders,
 } from "components/system/Dialogs/Transfer/useTransferDialog";
@@ -12,6 +13,7 @@ type BrowserProcessArguments = {
 
 type DialogProcessArguments = {
   fileReaders?: FileReaders | ObjectReaders;
+  operation?: Operation;
   progress?: number;
   shortcutPath?: string;
 };
@@ -48,12 +50,14 @@ type BaseProcessArguments = {
   dependantLibs?: string[];
   hideMaximizeButton?: boolean;
   hideMinimizeButton?: boolean;
+  hidePeek?: boolean;
   hideTaskbarEntry?: boolean;
   hideTitlebar?: boolean;
   hideTitlebarIcon?: boolean;
   initialRelativePosition?: RelativePosition;
   libs?: string[];
   lockAspectRatio?: boolean;
+  peekImage?: string;
   url?: string;
 };
 
