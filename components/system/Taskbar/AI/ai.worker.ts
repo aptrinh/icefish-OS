@@ -12,6 +12,7 @@ import {
 import {
   type WorkerMessage,
   type ConvoStyles,
+  type Prompt,
 } from "components/system/Taskbar/AI/types";
 
 const MARKED_LIBS = [
@@ -24,27 +25,25 @@ const CONVO_STYLE_TEMPS: Record<
   AILanguageModelCreateOptionsWithSystemPrompt
 > = {
   balanced: {
-    temperature: 0.5,
+    temperature: 0.6,
     topK: 3,
   },
   creative: {
-    temperature: 0.8,
+    temperature: 0.7,
     topK: 5,
   },
   precise: {
-    temperature: 0.2,
+    temperature: 0.5,
     topK: 2,
   },
 };
 
-const WEB_LLM_MODEL = "Llama-3.1-8B-Instruct-q4f32_1-MLC";
+const WEB_LLM_MODEL = "DeepSeek-R1-Distill-Llama-8B-q4f32_1-MLC";
 const WEB_LLM_MODEL_CONFIG = {
-  "Llama-3.1-8B-Instruct-q4f32_1-MLC": {
-    frequency_penalty: 0,
-    max_tokens: 4000,
-    presence_penalty: 0,
-    top_p: 0.9,
-  },
+  context_window_size: 131072,
+  frequency_penalty: 0,
+  presence_penalty: 0,
+  top_p: 0.9,
 };
 const SYSTEM_PROMPT: ChatCompletionMessageParam = {
   content: "You are a helpful AI assistant.",
@@ -58,7 +57,7 @@ let responding = false;
 let sessionId = 0;
 let session: AILanguageModel | undefined;
 let summarizer: AISummarizer | undefined;
-let prompts: AILanguageModelPrompt[] | ChatCompletionMessageParam[] = [];
+let prompts: Prompt[] = [];
 let engine: MLCEngine;
 
 let markedLoaded = false;
@@ -92,7 +91,7 @@ globalThis.addEventListener(
 
           session = await globalThis.ai.languageModel.create(config);
         } else {
-          prompts = [SYSTEM_PROMPT];
+          prompts = [];
 
           if (!engine) {
             const { CreateMLCEngine } = await import("@mlc-ai/web-llm");
@@ -114,10 +113,15 @@ globalThis.addEventListener(
       let retry = 0;
       const rebuildSession = async (customResponse?: string): Promise<void> => {
         (session as AILanguageModel)?.destroy();
+        const streamId = 0;
 
         prompts.push(
-          { content: data.text, role: "user" },
-          { content: customResponse || (response as string), role: "assistant" }
+          { content: data.text, role: "user", streamId },
+          {
+            content: customResponse || (response as string),
+            role: "assistant",
+            streamId,
+          }
         );
 
         const config: AILanguageModelCreateOptionsWithSystemPrompt = {
@@ -205,6 +209,7 @@ globalThis.addEventListener(
                     ? `Summarize:\n\n${data.summarizeText}`
                     : data.text,
                   role: "user",
+                  streamId: data.streamId,
                 });
 
                 const stream = Boolean(data.streamId);
@@ -216,7 +221,7 @@ globalThis.addEventListener(
                   stream_options: { include_usage: false },
                   temperature: CONVO_STYLE_TEMPS[data.style].temperature,
                   top_logprobs: CONVO_STYLE_TEMPS[data.style].topK,
-                  ...WEB_LLM_MODEL_CONFIG[WEB_LLM_MODEL],
+                  ...WEB_LLM_MODEL_CONFIG,
                 });
 
                 response = stream
@@ -253,10 +258,26 @@ globalThis.addEventListener(
             });
 
             if (prompts[prompts.length - 1]?.role !== "user") {
-              prompts.push({ content: data.text, role: "user" });
+              const userPrompt = prompts.find(
+                (prompt) =>
+                  prompt.role === "user" && prompt.streamId === streamId
+              );
+
+              if (userPrompt) userPrompt.content = data.text;
+              else {
+                prompts.push({ content: data.text, role: "user", streamId });
+              }
             }
 
-            prompts.push({ content: message, role: "assistant" });
+            const assistantPrompt = prompts.find(
+              (prompt) =>
+                prompt.role === "assistant" && prompt.streamId === streamId
+            );
+
+            if (assistantPrompt) assistantPrompt.content = message;
+            else {
+              prompts.push({ content: message, role: "assistant", streamId });
+            }
           };
 
           if (typeof response === "string") {

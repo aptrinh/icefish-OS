@@ -1,7 +1,9 @@
 import { useTheme } from "styled-components";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  escapeHtml,
   formatWebLlmProgress,
+  responseTweaks,
   speakMessage,
 } from "components/system/Taskbar/AI/functions";
 import {
@@ -89,7 +91,7 @@ const AIChat: FC<AIChatProps> = ({ toggleAI }) => {
       if (text) {
         setConversation((prevMessages) => {
           const newMessage = {
-            formattedText: formattedText || text,
+            formattedText: responseTweaks(formattedText || text),
             text,
             type,
             withCanvas,
@@ -111,7 +113,7 @@ const AIChat: FC<AIChatProps> = ({ toggleAI }) => {
   );
   const addUserPrompt = useCallback(() => {
     if (promptText) {
-      addMessage(promptText, "user");
+      addMessage(escapeHtml(promptText), "user");
       (textAreaRef.current as HTMLTextAreaElement).value = "";
       setPromptText("");
     }
@@ -135,10 +137,21 @@ const AIChat: FC<AIChatProps> = ({ toggleAI }) => {
       setCanceling(true);
     }
   }, [aiWorker, responding]);
+  const [hiddenThoughts, setHiddenThoughts] = useState<number[]>([]);
+  const toggleThought = useCallback((index: number) => {
+    setHiddenThoughts((prevHiddenThoughts) => {
+      if (prevHiddenThoughts.includes(index)) {
+        return prevHiddenThoughts.filter((i) => i !== index);
+      }
+
+      return [...prevHiddenThoughts, index];
+    });
+  }, []);
   const newTopic = useCallback(() => {
     stopResponse();
     sessionIdRef.current = 0;
     setConversation([]);
+    setHiddenThoughts([]);
     setFailedSession(false);
   }, [stopResponse]);
   const changeConvoStyle = useCallback(
@@ -415,17 +428,40 @@ const AIChat: FC<AIChatProps> = ({ toggleAI }) => {
           {conversation.map(
             ({ formattedText, type, text, withCanvas }, index) => (
               // eslint-disable-next-line react/no-array-index-key
-              <div key={`${text}-${index}`} className={type}>
+              <div key={index} className={type}>
                 {(index === 0 || conversation[index - 1].type !== type) && (
                   <div className="avatar">
                     {type === "user" ? <PersonIcon /> : <AIIcon />}
                     {type === "user" ? "You" : "AI"}
                   </div>
                 )}
+                {text.startsWith("<think>") && (
+                  <button
+                    className={clsx({
+                      thinking: true,
+                      "thinking-responding":
+                        responding && index === conversation.length - 1,
+                    })}
+                    type="button"
+                    {...((!responding || index < conversation.length - 1) &&
+                      text.includes("</think>") && {
+                        onClick: () => toggleThought(index),
+                      })}
+                  >
+                    {text.includes("</think>") ||
+                    !responding ||
+                    index < conversation.length - 1
+                      ? "Thoughts"
+                      : "Thinking..."}
+                  </button>
+                )}
                 <div
                   // eslint-disable-next-line react/no-danger
                   dangerouslySetInnerHTML={{ __html: formattedText }}
-                  className="message"
+                  className={clsx({
+                    "hide-think": hiddenThoughts.includes(index),
+                    message: true,
+                  })}
                 />
                 <div
                   className={clsx({

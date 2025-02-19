@@ -19,6 +19,7 @@ import {
   MAX_RES_ICON_OVERRIDE,
   ONE_TIME_PASSIVE_EVENT,
   PREVENT_SCROLL,
+  SHORTCUT_EXTENSION,
   SUPPORTED_ICON_SIZES,
   TASKBAR_HEIGHT,
   TIMESTAMP_DATE_FORMAT,
@@ -180,6 +181,9 @@ export const blobToBase64 = (blob: Blob): Promise<string> =>
 
 export const blobToBuffer = async (blob?: Blob | null): Promise<Buffer> =>
   blob ? Buffer.from(await blob.arrayBuffer()) : Buffer.from("");
+
+export const fetchBlob = async (url: string): Promise<Blob> =>
+  (await fetch(url)).blob();
 
 export const canvasToBuffer = (canvas?: HTMLCanvasElement): Buffer =>
   Buffer.from(
@@ -427,7 +431,9 @@ export const updateIconPositionsIfEmpty = (
 
     if (!iconPositions[entryUrl]) {
       const gridEntry = [...gridElement.children].find((element) =>
-        element.querySelector(`button[aria-label="${entry}"]`)
+        element.querySelector(
+          `button[aria-label="${entry.replace(SHORTCUT_EXTENSION, "")}"]`
+        )
       );
 
       if (gridEntry instanceof HTMLElement) {
@@ -810,6 +816,8 @@ export const getMimeType = (url: string, ext?: string): string => {
     case ".cur":
     case ".ico":
       return "image/vnd.microsoft.icon";
+    case ".flac":
+      return "audio/x-flac";
     case ".cache":
     case ".jpg":
     case ".jpeg":
@@ -825,6 +833,8 @@ export const getMimeType = (url: string, ext?: string): string => {
     case ".m3u":
     case ".m3u8":
       return "application/x-mpegURL";
+    case ".m4a":
+      return "audio/m4a";
     case ".m4v":
     case ".mkv":
     case ".mov":
@@ -855,8 +865,9 @@ export const getMimeType = (url: string, ext?: string): string => {
       return "image/webp";
     case ".xml":
       return "application/xml";
-    case ".wsz":
     case ".jsdos":
+    case ".pk3":
+    case ".wsz":
     case ".zip":
       return "application/zip";
     default:
