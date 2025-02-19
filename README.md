@@ -269,8 +269,8 @@ yarn serve
 ##### Docker
 
 ```
-docker build -t icefishOS .
-docker run -dp 3000:3000 --rm --name icefishOS icefishOS
+docker build -t icefishos .
+docker run -dp 3000:3000 --rm --name icefishos icefishos
 ```
 
 ##### Notes
