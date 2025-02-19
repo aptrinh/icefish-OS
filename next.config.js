@@ -27,7 +27,7 @@ const nextConfig = {
   devIndicators: {
     buildActivityPosition: "top-right",
   },
-  //output: "export",
+  output: "export",
   productionBrowserSourceMaps: false,
   reactStrictMode: true,
   webpack: (config) => {
