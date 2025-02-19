@@ -7,10 +7,12 @@ import {
   getHtmlToImage,
   getMimeType,
   haltEvent,
+  shouldCaptureDragImage,
   trimCanvasToTopLeft,
   updateIconPositions,
 } from "utils/functions";
 import { useFileSystem } from "contexts/fileSystem";
+import { TRANSITIONS_IN_MILLISECONDS } from "utils/constants";
 
 type DraggableEntryProps = {
   draggable: boolean;
@@ -36,7 +38,8 @@ const useDraggableEntries = (
   { focusEntry }: FocusEntryFunctions,
   fileManagerRef: React.RefObject<HTMLOListElement | null>,
   isSelecting: boolean,
-  allowMoving?: boolean
+  allowMoving?: boolean,
+  isDesktop?: boolean
 ): DraggableEntry => {
   const [dropIndex, setDropIndex] = useState(-1);
   const { exists } = useFileSystem();
@@ -56,6 +59,56 @@ const useDraggableEntries = (
   );
   const isMainContainer =
     fileManagerRef.current?.parentElement?.tagName === "MAIN";
+  const updateDragImage = useCallback(async () => {
+    if (fileManagerRef.current) {
+      const focusedElements = [
+        ...fileManagerRef.current.querySelectorAll<HTMLLIElement>(
+          ".focus-within"
+        ),
+      ];
+
+      if (shouldCaptureDragImage(focusedElements.length, isDesktop)) {
+        if (dragImageRef.current) dragImageRef.current.src = "";
+        else dragImageRef.current = new Image();
+
+        const htmlToImage = await getHtmlToImage();
+
+        if (!htmlToImage) return;
+
+        try {
+          const { UNKNOWN_ICON } = await import(
+            "components/system/Files/FileManager/icons"
+          );
+          const elementsHavePositions = focusedElements.every(
+            ({ style }) => style?.gridRowStart && style?.gridColumnStart
+          );
+          const capturedFileManager = await htmlToImage?.toCanvas(
+            fileManagerRef.current,
+            {
+              filter: (element) =>
+                !(element instanceof HTMLSourceElement) &&
+                focusedElements.some((focusedElement) =>
+                  focusedElement.contains(element)
+                ),
+              imagePlaceholder: UNKNOWN_ICON,
+              skipAutoScale: true,
+            }
+          );
+          const trimmedCapture = elementsHavePositions
+            ? trimCanvasToTopLeft(capturedFileManager)
+            : capturedFileManager;
+
+          dragImageRef.current.src = trimmedCapture.toDataURL();
+          capturedImageOffset.current = {
+            x: capturedFileManager.width - trimmedCapture.width,
+            y: capturedFileManager.height - trimmedCapture.height,
+          };
+        } catch {
+          // Ignore failure to capture
+        }
+      }
+    }
+  }, [fileManagerRef, isDesktop]);
   const onDragEnd = useCallback(
     (entryUrl: string): React.DragEventHandler =>
       (event) => {
@@ -72,7 +125,13 @@ const useDraggableEntries = (
             setIconPositions,
             exists
           );
+
           fileManagerRef.current?.removeEventListener("dragover", onDragging);
+
+          setTimeout(() => {
+            adjustedCaptureOffsetRef.current = false;
+            updateDragImage();
+          }, TRANSITIONS_IN_MILLISECONDS.MOUSE_IN_OUT / 2);
         } else if (dropIndex !== -1) {
           setSortOrder(entryUrl, (currentSortOrders) => {
             const sortedEntries = currentSortOrders.filter(
@@ -96,6 +155,7 @@ const useDraggableEntries = (
       setIconPositions,
       setSortOrder,
       sortOrders,
+      updateDragImage,
     ]
   );
   const onDragOver = useCallback(
@@ -144,7 +204,10 @@ const useDraggableEntries = (
           );
         }
 
-        if (!singleFile && dragImageRef.current) {
+        if (
+          dragImageRef.current &&
+          shouldCaptureDragImage(focusedEntries.length, isDesktop)
+        ) {
           if (!adjustedCaptureOffsetRef.current) {
             adjustedCaptureOffsetRef.current = true;
 
@@ -175,13 +238,15 @@ const useDraggableEntries = (
         Object.assign(event.dataTransfer, { effectAllowed: "move" });
 
         if (allowMoving) {
-          dragPositionRef.current =
-            focusedEntries.length > 1
-              ? {
-                  offsetX: event.nativeEvent.offsetX,
-                  offsetY: event.nativeEvent.offsetY,
-                }
-              : (Object.create(null) as DragPosition);
+          dragPositionRef.current = shouldCaptureDragImage(
+            focusedEntries.length,
+            isDesktop
+          )
+            ? {
+                offsetX: event.nativeEvent.offsetX,
+                offsetY: event.nativeEvent.offsetY,
+              }
+            : (Object.create(null) as DragPosition);
           fileManagerRef.current?.addEventListener("dragover", onDragging, {
             passive: true,
           });
@@ -192,67 +257,22 @@ const useDraggableEntries = (
       fileManagerRef,
       focusEntry,
       focusedEntries,
+      isDesktop,
       isMainContainer,
       onDragging,
     ]
   );
-  const updateDragImage = useCallback(async () => {
-    if (fileManagerRef.current) {
-      const focusedElements = [
-        ...fileManagerRef.current.querySelectorAll<HTMLLIElement>(
-          ".focus-within"
-        ),
-      ];
-
-      if (focusedElements.length > 1) {
-        if (dragImageRef.current) dragImageRef.current.src = "";
-        else dragImageRef.current = new Image();
-
-        const htmlToImage = await getHtmlToImage();
-
-        if (!htmlToImage) return;
-
-        try {
-          const { UNKNOWN_ICON } = await import(
-            "components/system/Files/FileManager/icons"
-          );
-          const elementsHavePositions = focusedElements.every(
-            ({ style }) => style?.gridRowStart && style?.gridColumnStart
-          );
-          const capturedFileManager = await htmlToImage?.toCanvas(
-            fileManagerRef.current,
-            {
-              filter: (element) =>
-                !(element instanceof HTMLSourceElement) &&
-                focusedElements.some((focusedElement) =>
-                  focusedElement.contains(element)
-                ),
-              imagePlaceholder: UNKNOWN_ICON,
-              skipAutoScale: true,
-            }
-          );
-          const trimmedCapture = elementsHavePositions
-            ? trimCanvasToTopLeft(capturedFileManager)
-            : capturedFileManager;
-
-          dragImageRef.current.src = trimmedCapture.toDataURL();
-          capturedImageOffset.current = {
-            x: capturedFileManager.width - trimmedCapture.width,
-            y: capturedFileManager.height - trimmedCapture.height,
-          };
-        } catch {
-          // Ignore failure to capture
-        }
-      }
-    }
-  }, [fileManagerRef]);
 
   useEffect(() => {
-    if (!isSelecting && focusedEntries.length > 1) updateDragImage();
-    else if (focusedEntries.length === 0) {
+    if (
+      !isSelecting &&
+      shouldCaptureDragImage(focusedEntries.length, isDesktop)
+    ) {
+      updateDragImage();
+    } else if (focusedEntries.length === 0) {
       adjustedCaptureOffsetRef.current = false;
     }
-  }, [focusedEntries, isSelecting, updateDragImage]);
+  }, [focusedEntries, isDesktop, isSelecting, updateDragImage]);
 
   return (entryUrl: string, file: string, renaming: boolean) => ({
     draggable: true,

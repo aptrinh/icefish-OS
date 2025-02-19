@@ -11,6 +11,7 @@ import {
 } from "contexts/session/types";
 import {
   DEFAULT_LOCALE,
+  DESKTOP_PATH,
   HIGH_PRIORITY_REQUEST,
   ICON_CACHE,
   ICON_PATH,
@@ -36,6 +37,33 @@ export const bufferToUrl = (buffer: Buffer, mimeType?: string): string =>
   mimeType === "image/svg+xml"
     ? `data:${mimeType};base64,${window.btoa(buffer.toString())}`
     : URL.createObjectURL(bufferToBlob(buffer, mimeType));
+
+const RESIZE_IMAGE_TIMEOUT_SECONDS = 60;
+
+export const resizeImage = async (
+  blob: Blob,
+  maxDimension: number
+): Promise<Blob> =>
+  new Promise((resolve) => {
+    const worker = new Worker(
+      new URL("utils/resizeImage.worker", import.meta.url),
+      { name: "Resize Image Worker" }
+    );
+    const timeoutHandle = setTimeout(() => {
+      resolve(blob);
+      worker.terminate();
+    }, RESIZE_IMAGE_TIMEOUT_SECONDS * 1000);
+    const canvas = document
+      .createElement("canvas")
+      .transferControlToOffscreen();
+
+    worker.addEventListener("message", ({ data }: { data: Blob }) => {
+      clearTimeout(timeoutHandle);
+      resolve(data instanceof Blob ? data : blob);
+      worker.terminate();
+    });
+    worker.postMessage({ blob, canvas, maxDimension }, [canvas]);
+  });
 
 let dpi: number;
 
@@ -411,6 +439,60 @@ const calcGridDropPosition = (
   };
 };
 
+export const saveUnpositionedDesktopIcons = (
+  setIconPositions: React.Dispatch<React.SetStateAction<IconPositions>>
+): void => {
+  const desktopIconGrid = document.querySelector<HTMLOListElement>("main > ol");
+
+  if (desktopIconGrid instanceof HTMLOListElement) {
+    const unPositionedIcons = [
+      ...desktopIconGrid.querySelectorAll("li"),
+    ].filter(
+      ({ style: { gridRowStart, gridColumnStart } }) =>
+        !gridRowStart || !gridColumnStart
+    );
+
+    if (unPositionedIcons.length > 0) {
+      const {
+        columnGap,
+        gridTemplateColumns,
+        gridTemplateRows,
+        paddingTop,
+        rowGap,
+      } = window.getComputedStyle(desktopIconGrid);
+      const [entryWidth] = gridTemplateColumns.split(" ");
+      const [entryHeight] = gridTemplateRows.split(" ");
+      const height = pxToNum(entryHeight) + pxToNum(rowGap);
+      const width = pxToNum(entryWidth) + pxToNum(columnGap);
+      const rowTopPadding = pxToNum(paddingTop);
+      const newIconPositions = Object.fromEntries(
+        unPositionedIcons.map((icon) => {
+          const { top, left } = icon.getBoundingClientRect() || {};
+          const button = icon.querySelector("button") as HTMLButtonElement;
+          let name = button?.getAttribute("aria-label") || button?.textContent;
+
+          if (button?.querySelector("img[src*=shortcut]")) {
+            name = `${name}${SHORTCUT_EXTENSION}`;
+          }
+
+          return [
+            name ? join(DESKTOP_PATH, name) : "",
+            {
+              gridColumnStart: Math.round(left / width) + 1,
+              gridRowStart: Math.round((top - rowTopPadding) / height) + 1,
+            },
+          ];
+        })
+      );
+
+      setIconPositions((currentIconPositions) => ({
+        ...currentIconPositions,
+        ...newIconPositions,
+      }));
+    }
+  }
+};
+
 export const updateIconPositionsIfEmpty = (
   url: string,
   gridElement: HTMLElement | null,
@@ -440,8 +522,8 @@ export const updateIconPositionsIfEmpty = (
         const { x, y, height, width } = gridEntry.getBoundingClientRect();
 
         newIconPositions[entryUrl] = calcGridDropPosition(gridElement, {
-          x: x - width,
-          y: y + height,
+          x: x + width / 2,
+          y: y + height / 2,
         });
       } else {
         const position = index + 1;
@@ -506,6 +588,38 @@ const calcGridPositionOffset = (
       };
 };
 
+export const getIteratedNames = (
+  fileEntries: string[],
+  directory: string,
+  iconPositions: IconPositions,
+  exists: (path: string) => Promise<boolean>
+): Promise<string[]> =>
+  Promise.all(
+    fileEntries.map(async (fileEntry) => {
+      let entryIteration = `${directory}/${fileEntry}`;
+
+      if (!iconPositions[entryIteration] || !(await exists(entryIteration))) {
+        return fileEntry;
+      }
+
+      let iteration = 0;
+
+      do {
+        iteration += 1;
+        entryIteration = `${directory}/${basename(
+          fileEntry,
+          extname(fileEntry)
+        )} (${iteration})${extname(fileEntry)}`;
+      } while (
+        iconPositions[entryIteration] &&
+        // eslint-disable-next-line no-await-in-loop
+        (await exists(entryIteration))
+      );
+
+      return basename(entryIteration);
+    })
+  );
+
 export const updateIconPositions = (
   directory: string,
   gridElement: HTMLElement | null,
@@ -518,14 +632,14 @@ export const updateIconPositions = (
 ): void => {
   if (!gridElement || draggedEntries.length === 0) return;
 
-  const currentIconPositions = updateIconPositionsIfEmpty(
+  const updatedIconPositions = updateIconPositionsIfEmpty(
     directory,
     gridElement,
     iconPositions,
     sortOrders
   );
   const gridDropPosition = calcGridDropPosition(gridElement, dragPosition);
-  const conflictingIcon = Object.entries(currentIconPositions).find(
+  const conflictingIcon = Object.entries(updatedIconPositions).find(
     ([, { gridColumnStart, gridRowStart }]) =>
       gridColumnStart === gridDropPosition.gridColumnStart &&
       gridRowStart === gridDropPosition.gridRowStart
@@ -540,7 +654,7 @@ export const updateIconPositions = (
       targetFile,
       ...draggedEntries.filter((entry) => entry !== targetFile),
     ];
-    const newIconPositions = Object.fromEntries(
+    const adjustIconPositions = Object.fromEntries(
       adjustDraggedEntries
         .map<[string, IconPosition]>((entryFile) => {
           const url = join(directory, entryFile);
@@ -552,7 +666,7 @@ export const updateIconPositions = (
               : calcGridPositionOffset(
                   url,
                   targetUrl,
-                  currentIconPositions,
+                  updatedIconPositions,
                   gridDropPosition,
                   adjustDraggedEntries,
                   gridElement
@@ -564,23 +678,28 @@ export const updateIconPositions = (
             gridColumnStart >= 1 && gridRowStart >= 1
         )
     );
+    const newIconPositions = Object.fromEntries(
+      Object.entries(adjustIconPositions).filter(
+        ([entryFile, { gridColumnStart, gridRowStart }]) =>
+          !Object.entries({
+            ...updatedIconPositions,
+            ...adjustIconPositions,
+          }).some(
+            ([
+              compareEntryFile,
+              {
+                gridColumnStart: compareGridColumnStart,
+                gridRowStart: compareGridRowStart,
+              },
+            ]) =>
+              entryFile !== compareEntryFile &&
+              gridColumnStart === compareGridColumnStart &&
+              gridRowStart === compareGridRowStart
+          )
+      )
+    );
 
-    setIconPositions({
-      ...currentIconPositions,
-      ...Object.fromEntries(
-        Object.entries(newIconPositions).filter(
-          ([, { gridColumnStart, gridRowStart }]) =>
-            !Object.values(currentIconPositions).some(
-              ({
-                gridColumnStart: currentGridColumnStart,
-                gridRowStart: currentRowColumnStart,
-              }) =>
-                gridColumnStart === currentGridColumnStart &&
-                gridRowStart === currentRowColumnStart
-            )
-        )
-      ),
-    });
+    setIconPositions({ ...updatedIconPositions, ...newIconPositions });
   };
 
   if (conflictingIcon) {
@@ -588,7 +707,7 @@ export const updateIconPositions = (
 
     exists(conflictingIconPath).then((pathExists) => {
       if (!pathExists) {
-        delete currentIconPositions[conflictingIconPath];
+        delete updatedIconPositions[conflictingIconPath];
         processIconMove();
       }
     });
@@ -1067,3 +1186,8 @@ export const toSorted = <T>(
 export const notFound = (resource: string): void =>
   // eslint-disable-next-line no-alert
   alert(`Can't find '${resource}'. Check the spelling and try again.`);
+
+export const shouldCaptureDragImage = (
+  entryCount: number,
+  isDesktop = false
+): boolean => entryCount > 1 || (!isDesktop && entryCount === 1 && isSafari());

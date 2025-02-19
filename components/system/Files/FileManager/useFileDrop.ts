@@ -1,4 +1,4 @@
-import { basename, extname, join, relative } from "path";
+import { basename, join, relative } from "path";
 import { useCallback } from "react";
 import useTransferDialog from "components/system/Dialogs/Transfer/useTransferDialog";
 import {
@@ -19,7 +19,12 @@ import {
   MOUNTABLE_EXTENSIONS,
   PREVENT_SCROLL,
 } from "utils/constants";
-import { getExtension, haltEvent, updateIconPositions } from "utils/functions";
+import {
+  getExtension,
+  getIteratedNames,
+  haltEvent,
+  updateIconPositions,
+} from "utils/functions";
 import { useProcessesRef } from "hooks/useProcessesRef";
 
 export type FileDrop = {
@@ -90,90 +95,74 @@ const useFileDrop = ({
     (event: DragEvent | React.DragEvent<HTMLElement>): void => {
       if (MOUNTABLE_EXTENSIONS.has(getExtension(directory))) return;
 
-      if (updatePositions && event.target instanceof HTMLElement) {
-        const { files, text } = getEventData(event as React.DragEvent);
+      if (event.target instanceof HTMLElement) {
+        if (event.target.closest(".focus-within")?.contains(event.target)) {
+          return;
+        }
 
-        if (files.length === 0 && text === "") return;
+        if (updatePositions) {
+          const { files, text } = getEventData(event as React.DragEvent);
 
-        const checkUpdatableIcons = async (): Promise<void> => {
-          const dragPosition = {
-            x: event.clientX,
-            y: event.clientY,
-          } as DragPosition;
+          if (files.length === 0 && text === "") return;
 
-          let fileEntries: string[] = [];
+          const checkUpdatableIcons = async (): Promise<void> => {
+            const dragPosition = {
+              x: event.clientX,
+              y: event.clientY,
+            } as DragPosition;
 
-          if (text) {
-            try {
-              fileEntries = JSON.parse(text) as string[];
-            } catch {
-              // Ignore failed JSON parsing
-            }
+            let fileEntries: string[] = [];
 
-            if (!Array.isArray(fileEntries)) return;
-
-            const [firstEntry] = fileEntries;
-
-            if (!firstEntry) return;
-
-            if (
-              firstEntry.startsWith(directory) &&
-              basename(firstEntry) === relative(directory, firstEntry)
-            ) {
-              return;
-            }
-
-            fileEntries = fileEntries.map((entry) => basename(entry));
-          } else if (files instanceof FileList) {
-            fileEntries = [...files].map((file) => file.name);
-          } else {
-            fileEntries = [...files]
-              .map((file) => file.getAsFile()?.name || "")
-              .filter(Boolean);
-          }
-
-          fileEntries = await Promise.all(
-            fileEntries.map(async (fileEntry) => {
-              let entryIteration = `${directory}/${fileEntry}`;
-
-              if (
-                !iconPositions[entryIteration] ||
-                !(await exists(entryIteration))
-              ) {
-                return fileEntry;
+            if (text) {
+              try {
+                fileEntries = JSON.parse(text) as string[];
+              } catch {
+                // Ignore failed JSON parsing
               }
 
-              let iteration = 0;
+              if (!Array.isArray(fileEntries)) return;
 
-              do {
-                iteration += 1;
-                entryIteration = `${directory}/${basename(
-                  fileEntry,
-                  extname(fileEntry)
-                )} (${iteration})${extname(fileEntry)}`;
-              } while (
-                iconPositions[entryIteration] &&
-                // eslint-disable-next-line no-await-in-loop
-                (await exists(entryIteration))
-              );
+              const [firstEntry] = fileEntries;
 
-              return basename(entryIteration);
-            })
-          );
+              if (!firstEntry) return;
 
-          updateIconPositions(
-            directory,
-            event.target as HTMLElement,
-            iconPositions,
-            sortOrders,
-            dragPosition,
-            fileEntries,
-            setIconPositions,
-            exists
-          );
-        };
+              if (
+                firstEntry.startsWith(directory) &&
+                basename(firstEntry) === relative(directory, firstEntry)
+              ) {
+                return;
+              }
 
-        checkUpdatableIcons();
+              fileEntries = fileEntries.map((entry) => basename(entry));
+            } else if (files instanceof FileList) {
+              fileEntries = [...files].map((file) => file.name);
+            } else {
+              fileEntries = [...files]
+                .map((file) => file.getAsFile()?.name || "")
+                .filter(Boolean);
+            }
+
+            fileEntries = await getIteratedNames(
+              fileEntries,
+              directory,
+              iconPositions,
+              exists
+            );
+
+            updateIconPositions(
+              directory,
+              event.target as HTMLElement,
+              iconPositions,
+              sortOrders,
+              dragPosition,
+              fileEntries,
+              setIconPositions,
+              exists
+            );
+          };
+
+          checkUpdatableIcons();
+        }
       }
 
       const hasUpdateId = typeof id === "string";
