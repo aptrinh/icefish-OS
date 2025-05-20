@@ -21,6 +21,7 @@ import {
   contextMenuEntryIsVisible,
   contextMenuHasCount,
   contextMenuIsVisible,
+  didCaptureConsoleLogs,
   disableOffscreenCanvas,
   disableWallpaper,
   fileExplorerEntriesAreVisible,
@@ -42,11 +43,11 @@ import {
   windowIsTransparent,
 } from "e2e/functions";
 
-test.beforeEach(captureConsoleLogs());
+test.beforeEach(captureConsoleLogs);
 test.beforeEach(disableWallpaper);
 
 test.describe("elements", () => {
-  test.beforeEach(loadApp());
+  test.beforeEach(loadApp);
   test.beforeEach(taskbarIsVisible);
 
   test.describe("has start button", () => {
@@ -194,3 +195,5 @@ test.describe("entries", () => {
     });
   });
 });
+
+test.afterEach(didCaptureConsoleLogs);

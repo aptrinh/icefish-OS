@@ -18,7 +18,6 @@ import {
   ICON_RES_MAP,
   MAX_ICON_SIZE,
   MAX_RES_ICON_OVERRIDE,
-  MILLISECONDS_IN_SECOND,
   ONE_TIME_PASSIVE_EVENT,
   PREVENT_SCROLL,
   SHORTCUT_EXTENSION,
@@ -27,6 +26,9 @@ import {
   TIMESTAMP_DATE_FORMAT,
   USER_ICON_PATH,
 } from "utils/constants";
+import { LOCAL_HOST } from "components/apps/Browser/config";
+
+export const GOOGLE_SEARCH_QUERY = "https://www.google.com/search?igu=1&q=";
 
 export const bufferToBlob = (buffer: Buffer, type?: string): Blob =>
   new Blob([buffer], type ? { type } : undefined);
@@ -50,7 +52,7 @@ export const resizeImage = async (
     const timeoutHandle = setTimeout(() => {
       resolve(blob);
       worker.terminate();
-    }, RESIZE_IMAGE_TIMEOUT_SECONDS * MILLISECONDS_IN_SECOND);
+    }, RESIZE_IMAGE_TIMEOUT_SECONDS * 1000);
     const canvas = document
       .createElement("canvas")
       .transferControlToOffscreen();
@@ -795,27 +797,13 @@ export const getFormattedSize = (size = 0, asKB = false): string => {
   return `${size} bytes`;
 };
 
-let timezoneOffset: number;
+export const getTZOffsetISOString = (): string => {
+  const date = new Date();
 
-export const getTZOffsetISOString = (timestamp?: number): string => {
-  let time = timestamp;
-  // eslint-disable-next-line no-undef-init
-  let date: Date | undefined = undefined;
-
-  if (!time) {
-    date = new Date();
-    time = date.getTime();
-  }
-
-  if (typeof timezoneOffset !== "number") {
-    timezoneOffset = (date || new Date()).getTimezoneOffset() * 60000;
-  }
-
-  return new Date(time - timezoneOffset).toISOString();
+  return new Date(
+    date.getTime() - date.getTimezoneOffset() * 60000
+  ).toISOString();
 };
-
-export const LOCAL_HOST = new Set(["127.0.0.1", "localhost"]);
-export const GOOGLE_SEARCH_QUERY = "https://www.google.com/search?igu=1&q=";
 
 export const getUrlOrSearch = async (input: string): Promise<URL> => {
   const isIpfs = input.startsWith("ipfs://");
@@ -880,7 +868,7 @@ export const haltEvent = (
     | React.MouseEvent
 ): void => {
   try {
-    if (event?.cancelable) {
+    if (event.cancelable) {
       event.preventDefault();
       event.stopPropagation();
     }
@@ -1203,16 +1191,3 @@ export const shouldCaptureDragImage = (
   entryCount: number,
   isDesktop = false
 ): boolean => entryCount > 1 || (!isDesktop && entryCount === 1 && isSafari());
-
-export const maybeRequestIdleCallback = (
-  callback: () => void | Promise<void>
-): void => {
-  if (
-    "requestIdleCallback" in window &&
-    typeof window.requestIdleCallback === "function"
-  ) {
-    requestIdleCallback(callback);
-  } else {
-    callback();
-  }
-};

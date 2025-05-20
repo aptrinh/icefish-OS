@@ -1,6 +1,6 @@
 import { basename } from "path";
 import extensions from "components/system/Files/FileEntry/extensions";
-import { getExtension, getTZOffsetISOString } from "utils/functions";
+import { getExtension } from "utils/functions";
 import { ROOT_NAME } from "utils/constants";
 
 export type DirectoryEntries = {
@@ -8,7 +8,7 @@ export type DirectoryEntries = {
   description?: string;
   href: string;
   icon?: string;
-  modified?: number;
+  modified?: Date;
   size?: number;
 };
 
@@ -89,13 +89,8 @@ const formatSize = (size?: number): string => {
   return newNumber + (addTrailingZero ? ".0" : "") + units[power];
 };
 
-const formatDate = (timestamp?: number): string =>
-  timestamp
-    ? getTZOffsetISOString(timestamp)
-        .replace("T", " ")
-        .split(".")[0]
-        .slice(0, -3)
-    : "";
+const formatDate = (date?: Date): string =>
+  date?.toISOString().replace("T", " ").split(".")[0].slice(0, -3) || "";
 
 export const createDirectoryIndex = (
   url: string,

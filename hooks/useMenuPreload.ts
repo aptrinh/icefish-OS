@@ -3,9 +3,7 @@ import { useState, useRef, useCallback } from "react";
 export const useMenuPreload = (
   preloadCallback: () => Promise<unknown>
 ): {
-  onMouseOverCapture?: React.MouseEventHandler<
-    HTMLButtonElement | HTMLDivElement
-  >;
+  onMouseOver?: React.MouseEventHandler<HTMLButtonElement | HTMLDivElement>;
 } => {
   const [preloaded, setPreloaded] = useState(false);
   const initalizedPreload = useRef(false);
@@ -17,5 +15,5 @@ export const useMenuPreload = (
     preloadCallback().then(() => setPreloaded(true));
   }, [preloadCallback]);
 
-  return preloaded ? {} : { onMouseOverCapture: preloadMenu };
+  return preloaded ? {} : { onMouseOver: preloadMenu };
 };

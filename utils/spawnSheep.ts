@@ -43,7 +43,7 @@ const pickRandomPet = (): string => {
   return petPath;
 };
 
-export const spawnSheep = (pickRandom?: boolean): Promise<void> =>
+export const spawnSheep = (): Promise<void> =>
   loadFiles(["/Program Files/eSheep/eSheep.js"]).then(() => {
     if (window.Sheep) {
       const sheep = new window.Sheep({
@@ -53,7 +53,7 @@ export const spawnSheep = (pickRandom?: boolean): Promise<void> =>
         spawnContainer: document.querySelector("main") as HTMLElement,
       });
 
-      if (oneSheepLaunched || pickRandom) {
+      if (oneSheepLaunched) {
         sheep.Start(pickRandomPet());
       } else {
         oneSheepLaunched = true;

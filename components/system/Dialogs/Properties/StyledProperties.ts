@@ -112,8 +112,8 @@ const StyledProperties = styled.div`
         z-index: 2;
 
         &.inactive {
-          background-color: rgb(240 240 240);
-          border-bottom: 1px solid rgb(217 217 217);
+          background-color: rgb(240, 240, 240);
+          border-bottom: 1px solid rgb(217, 217, 217);
           height: 19px;
           left: -1px;
           position: relative;
@@ -125,7 +125,7 @@ const StyledProperties = styled.div`
           }
 
           &:hover {
-            background-color: rgb(216 234 249);
+            background-color: rgb(216, 234, 249);
           }
         }
       }

@@ -4,23 +4,28 @@
 
 ### High Priority
 
-- 3rd Party App Support
 - Accessibility (Structure & Markup)
-- Add my old personal website
-  - [http://surf.to/misc](https://web.archive.org/web/20050826192118if_/http://surf.to:80/misc)
 - Screen Savers (.scr)
+  - [Pipes](https://github.com/1j01/pipes)
+  - [3D Maze](https://github.com/ibid-11962/Windows-95-3D-Maze-Screensaver)
+  - [3D FlowerBox](https://github.com/kevin-shannon/3D-FlowerBox)
   - [After Dark](https://www.bryanbraun.com/after-dark-css/)
+  - [Hackers](https://simone.computer/#/webdesktops) (Shows when site is inactive)
   - [Bouncing DVD Logo](https://www.bouncingdvdlogo.com/)
   - [Drift](https://github.com/sandydoo/flux)
   - [Mystify](https://codepen.io/chrissimmons/pen/rWNJRp)
   - [Johnny Castaway](https://github.com/xesf/castaway)
+- Add my old personal website
+  - [http://surf.to/misc](https://web.archive.org/web/20050826192118if_/http://surf.to:80/misc)
 - Progressive Web App
   - Offline
     - [next-offline](https://github.com/hanford/next-offline)
   - Service Worker (Firewall)
     - [Mock Service Worker](https://github.com/mswjs/msw)
+- System Tray Icons
 - Light Windows 10 Theme
   - [prefers-color-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
+- Single Click Window Icon Opens Context Menu
 
 ### Medium Priority
 
@@ -28,13 +33,12 @@
 - Virtual Assistant
   - [ClippyJS](https://github.com/pi0/clippyjs)
   - AI Powered
-    - [wllama](https://github.com/ngxson/wllama)
     - [Whisper WASM](https://github.com/ggerganov/whisper.cpp/tree/master/examples/talk.wasm)
     - TTS
       - [Coqui.ai](https://github.com/coqui-ai/tts)
-      - speak.js ([1](https://github.com/kripken/speak.js), [2](https://github.com/mtttmpl/speak-js))
+      - [speak.js](https://github.com/mtttmpl/speak-js)
     - [Transformers.js](https://xenova.github.io/transformers.js/)
-- System Tray Icons
+- 3rd Party App Support
 - Email App
   - Open SMTP Server
   - [openpgpjs](https://github.com/openpgpjs/openpgpjs)
@@ -109,7 +113,6 @@
 
 - [native-file-system-adapter](https://github.com/jimmywarting/native-file-system-adapter)
 - [WebDAV](https://github.com/perry-mitchell/webdav-client)
-- [harextract](https://github.com/JC3/harextract)
 
 ### File Information
 
@@ -125,7 +128,6 @@
   - [WebGPUReport.org](https://github.com/webgpu/webgpureport.org)
 - Fonts
   - [Local Font Access API](https://developer.chrome.com/docs/capabilities/web-apis/local-fonts)
-  - [Font Parser](https://www.antvaset.com/font-parser)
 - React
   - [DevTools Inline](https://www.npmjs.com/package/react-devtools-inline)
 - Benchmarks
@@ -187,9 +189,7 @@
 ### Document/Book Viewer
 
 - [WebODF](https://webodf.org/)
-- DOCX
-  - [docx2html](https://github.com/lalalic/docx2html)
-  - [docx](https://github.com/dolanmiu/docx)
+- [docx2html](https://github.com/lalalic/docx2html)
 - [Pandoc](https://github.com/tweag/pandoc-wasm)
 - [gdal3.js](https://github.com/bugra9/gdal3.js)
 - [Epub.js](https://github.com/futurepress/epub.js/)

@@ -6,7 +6,6 @@ export type Emulator = {
     container: HTMLDivElement;
   };
   loadState?: (state: Buffer) => void;
-  muted?: boolean;
 };
 
 export type OnSaveState = (event: {

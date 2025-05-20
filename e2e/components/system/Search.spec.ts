@@ -3,6 +3,7 @@ import { TEST_SEARCH, TEST_SEARCH_RESULT_TITLE } from "e2e/constants";
 import {
   captureConsoleLogs,
   clickSearchButton,
+  didCaptureConsoleLogs,
   disableWallpaper,
   loadApp,
   searchMenuIsHidden,
@@ -11,9 +12,9 @@ import {
   typeInTaskbarSearchBar,
 } from "e2e/functions";
 
-test.beforeEach(captureConsoleLogs());
+test.beforeEach(captureConsoleLogs);
 test.beforeEach(disableWallpaper);
-test.beforeEach(loadApp());
+test.beforeEach(loadApp);
 test.beforeEach(async ({ page }) => clickSearchButton({ page }));
 test.beforeEach(searchMenuIsVisible);
 
@@ -32,3 +33,5 @@ test.describe("can search", () => {
     ).toPass();
   });
 });
+
+test.afterEach(didCaptureConsoleLogs);

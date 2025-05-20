@@ -1,21 +1,19 @@
 import { basename } from "path";
-import {
-  type RefObject,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   type PDFWorker,
   type PDFDocumentProxy,
 } from "pdfjs-dist/types/src/display/api";
 import type * as PdfjsLib from "pdfjs-dist";
 import { type MetadataInfo } from "components/apps/PDF/types";
+import { type ContainerHookProps } from "components/system/Apps/AppContainer";
 import useTitle from "components/system/Window/useTitle";
 import { useFileSystem } from "contexts/fileSystem";
 import { useProcesses } from "contexts/process";
-import { BASE_2D_CONTEXT_OPTIONS } from "utils/constants";
+import {
+  BASE_2D_CONTEXT_OPTIONS,
+  DEFAULT_INTERSECTION_OPTIONS,
+} from "utils/constants";
 import { loadFiles } from "utils/functions";
 
 export const scales = [
@@ -36,17 +34,19 @@ const getInitialScale = (windowWidth = 0, canvasWidth = 0): number => {
   return minScaleIndex > 0 ? scales[minScaleIndex - 1] : 1;
 };
 
-const usePDF = (
-  id: string,
-  containerRef: RefObject<HTMLDivElement | null>
-): HTMLCanvasElement[] => {
+const usePDF = ({
+  containerRef,
+  id,
+  setLoading,
+  url,
+}: ContainerHookProps): void => {
   const { readFile } = useFileSystem();
   const {
     argument,
     processes: { [id]: process } = {},
     url: setUrl,
   } = useProcesses();
-  const { libs = [], scale, url: processUrl } = process || {};
+  const { libs = [], scale } = process || {};
   const [pages, setPages] = useState<HTMLCanvasElement[]>([]);
   const pdfWorker = useRef<PDFWorker | null>(null);
   const renderPage = useCallback(
@@ -86,90 +86,71 @@ const usePDF = (
     [argument, containerRef, id, scale]
   );
   const { prependFileToTitle } = useTitle(id);
-  const currentUrlRef = useRef("");
   const renderingRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const resetApp = useCallback(() => {
-    abortControllerRef.current?.abort();
-    pdfWorker.current?.destroy();
-
-    argument(id, "rendering", false);
-    renderingRef.current = false;
-
+  const renderPages = useCallback(async (): Promise<void> => {
     if (containerRef.current) {
-      // eslint-disable-next-line no-param-reassign
-      containerRef.current.scrollTop = 0;
-    }
-  }, [argument, containerRef, id]);
-  const renderPages = useCallback(
-    async (url: string): Promise<void> => {
-      if (containerRef.current) {
-        setPages([]);
+      setPages([]);
 
-        if (url) {
-          containerRef.current.classList.remove("drop");
+      if (url) {
+        containerRef.current.classList.remove("drop");
 
-          if (window.pdfjsLib && !renderingRef.current) {
-            renderingRef.current = true;
-            argument(id, "rendering", true);
+        if (window.pdfjsLib && !renderingRef.current) {
+          renderingRef.current = true;
+          argument(id, "rendering", true);
 
-            // eslint-disable-next-line no-param-reassign
-            containerRef.current.scrollTop = 0;
+          // eslint-disable-next-line no-param-reassign
+          containerRef.current.scrollTop = 0;
+          setLoading(true);
 
-            const fileData = await readFile(url);
+          const fileData = await readFile(url);
 
-            if (fileData.length === 0) throw new Error("File is empty");
+          if (fileData.length === 0) throw new Error("File is empty");
 
-            const loader = window.pdfjsLib.getDocument(fileData);
-            const doc = await loader.promise;
-            const { info } = await doc.getMetadata();
+          const loader = window.pdfjsLib.getDocument(fileData);
+          const doc = await loader.promise;
+          const { info } = await doc.getMetadata();
 
-            pdfWorker.current = (
-              loader as unknown as { _worker: PDFWorker }
-            )._worker;
+          pdfWorker.current = loader._worker as PDFWorker;
 
-            const { Title } = info as MetadataInfo;
+          argument(id, "subTitle", (info as MetadataInfo).Title);
+          argument(id, "count", doc.numPages);
+          prependFileToTitle(basename(url));
 
-            argument(id, "subTitle", Title);
-            argument(id, "count", doc.numPages);
-            prependFileToTitle(Title || basename(url));
+          abortControllerRef.current = new AbortController();
 
-            abortControllerRef.current = new AbortController();
+          for (let i = 0; i < doc.numPages; i += 1) {
+            if (abortControllerRef.current.signal.aborted) break;
+            if (i === 1) setLoading(false);
 
-            for (let i = 0; i < doc.numPages; i += 1) {
-              if (
-                abortControllerRef.current.signal.aborted ||
-                url !== currentUrlRef.current
-              ) {
-                break;
-              }
+            // eslint-disable-next-line no-await-in-loop
+            const page = await renderPage(i + 1, doc);
 
-              // eslint-disable-next-line no-await-in-loop
-              const page = await renderPage(i + 1, doc);
-
-              if (
-                abortControllerRef.current.signal.aborted ||
-                url !== currentUrlRef.current
-              ) {
-                break;
-              }
-
-              setPages((currentPages) => [...currentPages, page]);
-            }
-
-            argument(id, "rendering", false);
-            renderingRef.current = false;
+            setPages((currentPages) => [...currentPages, page]);
           }
-        } else {
-          containerRef.current.classList.add("drop");
-          argument(id, "subTitle", "");
-          argument(id, "count", 0);
-          prependFileToTitle("");
+
+          argument(id, "rendering", false);
+          renderingRef.current = false;
         }
+      } else {
+        containerRef.current.classList.add("drop");
+        argument(id, "subTitle", "");
+        argument(id, "count", 0);
+        prependFileToTitle("");
       }
-    },
-    [argument, containerRef, id, prependFileToTitle, readFile, renderPage]
-  );
+    }
+
+    setLoading(false);
+  }, [
+    argument,
+    containerRef,
+    id,
+    prependFileToTitle,
+    readFile,
+    renderPage,
+    setLoading,
+    url,
+  ]);
 
   useEffect(() => {
     loadFiles(libs).then(() => {
@@ -177,27 +158,52 @@ const usePDF = (
         window.pdfjsLib.GlobalWorkerOptions.workerSrc =
           "/Program Files/PDF.js/pdf.worker.js";
 
-        if (processUrl) {
-          renderPages(processUrl).catch(() => {
-            setUrl(id, "");
-            argument(id, "rendering", false);
-            renderingRef.current = false;
-          });
-        }
+        renderPages().catch(() => {
+          setUrl(id, "");
+          setLoading(false);
+          argument(id, "rendering", false);
+          renderingRef.current = false;
+        });
       }
     });
-  }, [argument, id, libs, processUrl, renderPages, setUrl]);
-
-  useEffect(() => resetApp, [resetApp]);
+  }, [argument, id, libs, renderPages, setLoading, setUrl]);
 
   useEffect(() => {
-    if (processUrl && currentUrlRef.current !== processUrl) {
-      currentUrlRef.current = processUrl;
-      resetApp();
-    }
-  }, [resetApp, processUrl]);
+    const ol = containerRef.current?.querySelector(
+      "ol.pages"
+    ) as HTMLOListElement;
 
-  return pages;
+    if (ol) {
+      [...ol.children].forEach((li) => li.remove());
+
+      pages?.forEach((page, pageNumber) => {
+        const li = document.createElement("li");
+        const observer = new IntersectionObserver(
+          (entries) =>
+            entries.forEach(({ isIntersecting }) => {
+              if (isIntersecting) argument(id, "page", pageNumber + 1);
+            }),
+          {
+            root: containerRef.current,
+            ...DEFAULT_INTERSECTION_OPTIONS,
+          }
+        );
+
+        li.append(page);
+        ol.append(li);
+
+        observer.observe(li);
+      });
+    }
+  }, [argument, containerRef, id, pages]);
+
+  useEffect(
+    () => () => {
+      abortControllerRef.current?.abort();
+      pdfWorker.current?.destroy();
+    },
+    []
+  );
 };
 
 export default usePDF;

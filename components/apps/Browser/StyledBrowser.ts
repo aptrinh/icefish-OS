@@ -79,7 +79,7 @@ const StyledBrowser = styled.div<StyledBrowserProps>`
 
       button {
         margin-bottom: 4px;
-        margin-right: 4px;
+        margin-right: 8px;
       }
     }
 

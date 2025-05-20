@@ -10,34 +10,18 @@ declare global {
   }
 }
 
-export const EXCLUDED_CONSOLE_LOGS = (
-  browserName: string,
-  testName?: string
-): string[] => {
-  // Generic messages
+export const EXCLUDED_CONSOLE_LOGS = (browserName: string): string[] => {
   const excludedConsoleLogs = [
+    // Generic messages
+    "Download the React DevTools for a better development experience",
     "[HMR] connected",
+    "[Fast Refresh] rebuilding",
+    "chrome://juggler",
     "No available adapters.",
     "not used within a few seconds",
-    "[Fast Refresh] rebuilding",
-    "[Fast Refresh] done in",
-    "[Fast Refresh] performing full reload",
-    "Cannot update a component (`Unknown`) while rendering a different component",
-    "browserContext.",
-    "Web browser doesn't support Web Audio API",
+    // Marked
+    "mangle parameter is enabled by default, but is deprecated",
   ];
-
-  if (browserName === "webkit") {
-    excludedConsoleLogs.push(
-      // sandbox=allow-presentation is not supported in webkit
-      "Error while parsing the 'sandbox' attribute: 'allow-presentation' is an invalid sandbox flag.",
-      'Viewport argument key "interactive-widget" not recognized and ignored.'
-    );
-  } else if (browserName === "firefox") {
-    excludedConsoleLogs.push(
-      "Found a sectioned h1 element with no specified font-size or margin properties."
-    );
-  }
 
   if (process.env.CI) {
     if (browserName === "chromium") {
@@ -60,37 +44,17 @@ export const EXCLUDED_CONSOLE_LOGS = (
     }
   }
 
-  if (testName === "apps") {
+  if (browserName === "webkit") {
     excludedConsoleLogs.push(
-      // Browser
-      "Cookie “AEC” has been rejected because it is in a cross-site context and its “SameSite” is “Lax” or “Strict”.",
-      "Blocked autofocusing on a form control in a cross-origin subframe.",
-      "Failed to load resource: the server responded with a status of 404 (Not Found)",
-      'Error: "Content-Security-Policy:',
-      "an ancestor violates the following Content Security Policy directive",
-      // Messenger
-      "WebSocket connection to 'wss://public.relaying.io/' failed:"
+      // sandbox=allow-presentation is not supported in webkit
+      "Error while parsing the 'sandbox' attribute: 'allow-presentation' is an invalid sandbox flag.",
+      'Viewport argument key "interactive-widget" not recognized and ignored.'
     );
-
-    if (browserName === "firefox") {
-      excludedConsoleLogs.push(
-        // Messenger
-        "Firefox can’t establish a connection to the server at wss://"
-      );
-    } else if (browserName === "webkit") {
-      excludedConsoleLogs.push(
-        // TIC-80
-        "Unable to initialize SDL Audio: -1, No audio context available",
-        "Unable to initialize SDL Game Controller: -1, Gamepads not supported",
-        // Quake 3
-        "WebGL: INVALID_ENUM: texParameter: invalid parameter name"
-      );
-    } else if (browserName === "chromium") {
-      excludedConsoleLogs.push(
-        // Browser
-        "Blocked autofocusing on a <textarea> element in a cross-origin subframe"
-      );
-    }
+  } else if (browserName === "firefox") {
+    excludedConsoleLogs.push(
+      "Layout was forced before the page was fully loaded",
+      "while rendering a different component (`ForwardRef`)"
+    );
   }
 
   return excludedConsoleLogs;
@@ -183,7 +147,6 @@ export const WEBGL_OFFSCREEN_NOT_SUPPORTED_BROWSERS = new Set(
 export const MEDIA_RECORDER_HEADLESS_NOT_SUPPORTED_BROWSERS = new Set([
   "webkit",
 ]);
-export const PYODIDE_HEADLESS_NOT_SUPPORTED_BROWSERS = new Set(["firefox"]);
 
 export const FILE_MENU_ITEMS = [
   /^Open$/,
@@ -276,10 +239,6 @@ export const TEST_APP = "FileExplorer";
 export const TEST_APP_TITLE = /^My PC$/;
 export const TEST_APP_TITLE_TEXT = "My PC";
 export const TEST_APP_ICON = /\/pc\.(webp|png)$/;
-export const TEST_APP_URL: Record<string, string> = {
-  Browser: "http://localhost",
-  Marked: "/CREDITS.md",
-};
 
 export const TEST_IMAGE_NAME = "image.png";
 export const TEST_DESKTOP_FILE = /^Public$/;

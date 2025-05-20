@@ -410,10 +410,7 @@ const useCommandInterpreter = (
                     const mDate = new Date(
                       getModifiedTime(filePath, fileStats)
                     );
-                    const date = getTZOffsetISOString(mDate.getTime()).slice(
-                      0,
-                      10
-                    );
+                    const date = mDate.toISOString().slice(0, 10);
                     const time = timeFormatter.format(mDate).padStart(8, "0");
                     const isDirectory = fileStats.isDirectory();
 

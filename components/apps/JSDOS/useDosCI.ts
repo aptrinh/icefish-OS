@@ -47,7 +47,6 @@ const useDosCI = (
   const { appendFileToTitle } = useTitle(id);
   const { exists, readFile } = useFileSystem();
   const {
-    argument,
     linkElement,
     processes: { [id]: process },
   } = useProcesses();
@@ -61,7 +60,7 @@ const useDosCI = (
       if (dosCI[bundleUrl]) {
         await createSnapshot(
           `${basename(bundleUrl)}${saveExtension}`,
-          Buffer.from(((await dosCI[bundleUrl].persist()) as Uint8Array) || []),
+          Buffer.from((await dosCI[bundleUrl].persist()) || []),
           screenshot
         );
       }
@@ -127,14 +126,6 @@ const useDosCI = (
         linkElement(id, "peekElement", canvas);
         setDosCI({ [url]: ci });
         appendFileToTitle(basename(url));
-        argument(id, "mute", () => {
-          ci.mute();
-          argument(id, "muted", true);
-        });
-        argument(id, "unmute", () => {
-          ci.unmute();
-          argument(id, "muted", false);
-        });
         cleanUpBufferUrl(bundleURL);
         if (stateUrl) cleanUpBufferUrl(stateUrl);
         cleanUpGlobals(globals);
@@ -142,7 +133,6 @@ const useDosCI = (
     }
   }, [
     appendFileToTitle,
-    argument,
     closeBundle,
     containerRef,
     dosCI,

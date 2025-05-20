@@ -50,6 +50,7 @@ import {
   contextMenuIsVisible,
   desktopEntryIsHidden,
   desktopEntryIsVisible,
+  didCaptureConsoleLogs,
   disableWallpaper,
   dragDesktopEntryToFileExplorer,
   dragFileExplorerEntryToDesktop,
@@ -64,7 +65,6 @@ import {
   filterMenuItems,
   focusOnWindow,
   loadApp,
-  mockSaveFilePicker,
   pageHasIcon,
   pageHasTitle,
   pressFileExplorerAddressBarKeys,
@@ -78,9 +78,9 @@ import {
 } from "e2e/functions";
 import { UNKNOWN_ICON } from "components/system/Files/FileManager/icons";
 
-test.beforeEach(captureConsoleLogs());
+test.beforeEach(captureConsoleLogs);
 test.beforeEach(disableWallpaper);
-test.beforeEach(async ({ page }) => loadApp({ app: "FileExplorer" })({ page }));
+test.beforeEach(async ({ page }) => loadApp({ page }, { app: "FileExplorer" }));
 test.beforeEach(windowsAreVisible);
 test.beforeEach(fileExplorerEntriesAreVisible);
 
@@ -147,13 +147,6 @@ test.describe("has files & folders", () => {
 
     test("can download", async ({ page }) => {
       const downloadPromise = page.waitForEvent("download");
-      const supportsSaveFilePicker = await page.evaluate(
-        () => typeof window.showSaveFilePicker === "function"
-      );
-
-      if (supportsSaveFilePicker) {
-        await mockSaveFilePicker({ page }, TEST_ROOT_FILE_TEXT);
-      }
 
       await clickContextMenuEntry(/^Download$/, { page });
 
@@ -265,7 +258,7 @@ test.describe("has files & folders", () => {
     test.skip(
       headless &&
         CLIPBOARD_WRITE_HEADLESS_NOT_SUPPORTED_BROWSERS.has(browserName),
-      "no headless clipboard write support"
+      "no headless drag support"
     );
 
     await page.keyboard.press("Control+KeyV");
@@ -408,8 +401,8 @@ test.describe("has files & folders", () => {
     await fileExplorerEntryIsHidden(TEST_DESKTOP_FILE, { page });
     await desktopEntryIsVisible(TEST_DESKTOP_FILE, { page });
     await dragDesktopEntryToFileExplorer(TEST_DESKTOP_FILE, { page });
-    await fileExplorerEntryIsVisible(TEST_DESKTOP_FILE, { page });
     await desktopEntryIsHidden(TEST_DESKTOP_FILE, { page });
+    await fileExplorerEntryIsVisible(TEST_DESKTOP_FILE, { page });
   });
 });
 
@@ -518,3 +511,5 @@ test.describe("has navigation", () => {
     await windowTitlebarTextIsVisible(/^My PC$/, { page });
   });
 });
+
+test.afterEach(didCaptureConsoleLogs);

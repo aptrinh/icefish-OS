@@ -1,20 +1,19 @@
 import styled from "styled-components";
 
-const StyledEmpty = styled.div`
-  position: absolute;
+const StyledLoading = styled.div`
+  cursor: wait;
+  height: 100%;
   width: 100%;
 
   &::before {
     color: #fbf1c7;
-    content: "This folder is empty.";
+    content: "Working on it...";
     display: flex;
     font-size: 12px;
-    font-weight: 200;
     justify-content: center;
-    letter-spacing: 0.3px;
     mix-blend-mode: difference;
-    padding-top: 14px;
+    padding-top: 18px;
   }
 `;
 
-export default StyledEmpty;
+export default StyledLoading;

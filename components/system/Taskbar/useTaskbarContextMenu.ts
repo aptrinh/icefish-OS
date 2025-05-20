@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { AI_TITLE } from "components/system/Taskbar/AI/constants";
 import { useMenu } from "contexts/menu";
 import {
   type ContextMenuCapture,
@@ -8,7 +9,7 @@ import { useProcesses } from "contexts/process";
 import { useSession } from "contexts/session";
 import { useViewport } from "contexts/viewport";
 import { useProcessesRef } from "hooks/useProcessesRef";
-import { AI_TITLE, MENU_SEPERATOR } from "utils/constants";
+import { MENU_SEPERATOR } from "utils/constants";
 import { toggleShowDesktop } from "utils/functions";
 import { useWebGPUCheck } from "hooks/useWebGPUCheck";
 import { useWindowAI } from "hooks/useWindowAI";

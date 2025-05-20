@@ -6,13 +6,14 @@ import {
   captureConsoleLogs,
   clockCanvasMaybeIsVisible,
   desktopEntriesAreVisible,
+  didCaptureConsoleLogs,
   loadApp,
   startButtonIsVisible,
   taskbarIsVisible,
 } from "e2e/functions";
 
-test.beforeEach(captureConsoleLogs());
-test.beforeEach(loadApp());
+test.beforeEach(captureConsoleLogs);
+test.beforeEach(loadApp);
 test.beforeEach(desktopEntriesAreVisible);
 test.beforeEach(taskbarIsVisible);
 test.beforeEach(startButtonIsVisible);
@@ -27,3 +28,5 @@ test("can pass accessibility scan", async ({ page }) =>
         .analyze()
     ).violations
   ).toEqual([]));
+
+test.afterEach(didCaptureConsoleLogs);

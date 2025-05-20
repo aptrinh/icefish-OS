@@ -80,10 +80,6 @@ const types = {
     process: ["Terminal", ...TEXT_EDITORS],
     type: "Python File",
   },
-  ScreenSaver: {
-    process: ["ScreenSaver"],
-    type: "Screen Saver",
-  },
   ShockwaveFlash: {
     process: ["Ruffle"],
     type: "Shockwave Flash File",
@@ -147,7 +143,6 @@ const extensions: Record<string, Extension> = {
   ".whtml": types.WysiwygHtmlDocument,
   ".woff": types.Font,
   ".wsz": types.WinampSkin,
-  ".xscr": types.ScreenSaver,
   ".zip": types.ZipFile,
 };
 

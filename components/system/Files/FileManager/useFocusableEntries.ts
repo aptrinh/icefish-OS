@@ -1,11 +1,8 @@
 import { useCallback, useRef, useState } from "react";
-import { useTheme } from "styled-components";
-import { getTextWrapData } from "components/system/Files/FileEntry/functions";
-import { PREVENT_SCROLL, SHORTCUT_EXTENSION } from "utils/constants";
-import { haltEvent } from "utils/functions";
+import { PREVENT_SCROLL } from "utils/constants";
+import { clsx, haltEvent } from "utils/functions";
 
 type FocusedEntryProps = {
-  $labelHeightOffset: number;
   className?: string;
   onBlurCapture: React.FocusEventHandler;
   onFocusCapture: React.FocusEventHandler;
@@ -26,8 +23,7 @@ type FocusableEntries = FocusEntryFunctions & {
 };
 
 const useFocusableEntries = (
-  fileManagerRef: React.RefObject<HTMLOListElement | null>,
-  adjustLabelMargin: boolean
+  fileManagerRef: React.RefObject<HTMLOListElement | null>
 ): FocusableEntries => {
   const [focusedEntries, setFocusedEntries] = useState<string[]>([]);
   const blurEntry = useCallback(
@@ -77,11 +73,15 @@ const useFocusableEntries = (
     });
   }, []);
   const mouseDownPositionRef = useRef({ x: 0, y: 0 });
-  const { formats, sizes } = useTheme();
   const focusableEntry = useCallback(
     (file: string): FocusedEntryProps => {
       const isFocused = focusedEntries.includes(file);
-      const className = isFocused ? "focus-within" : undefined;
+      const isOnlyFocusedEntry =
+        focusedEntries.length === 1 && focusedEntries[0] === file;
+      const className = clsx({
+        "focus-within": isFocused,
+        "only-focused": isOnlyFocusedEntry,
+      });
       const onMouseDown: React.MouseEventHandler = ({
         ctrlKey,
         pageX,
@@ -110,11 +110,10 @@ const useFocusableEntries = (
 
         if (
           !ctrlKey &&
+          !isOnlyFocusedEntry &&
           button === 0 &&
           x === pageX &&
-          y === pageY &&
-          focusedEntries.length !== 1 &&
-          focusedEntries[0] !== file
+          y === pageY
         ) {
           blurEntry();
           focusEntry(file);
@@ -122,32 +121,8 @@ const useFocusableEntries = (
 
         mouseDownPositionRef.current = { x: 0, y: 0 };
       };
-      const textLabel = file.replace(SHORTCUT_EXTENSION, "");
-      let $labelHeightOffset = 0;
-
-      if (adjustLabelMargin) {
-        const { lines } = getTextWrapData(
-          textLabel,
-          sizes.fileEntry.fontSize,
-          formats.systemFont,
-          sizes.fileEntry.maxIconTextDisplayWidth
-        );
-
-        if (lines.length > 1) {
-          const element = fileManagerRef.current?.querySelector(
-            `[aria-label='${textLabel}'] figcaption`
-          );
-
-          if (element) {
-            $labelHeightOffset =
-              (lines.length - 1) *
-              Number.parseFloat(window.getComputedStyle(element).lineHeight);
-          }
-        }
-      }
 
       return {
-        $labelHeightOffset,
         className,
         onBlurCapture,
         onFocusCapture,
@@ -155,18 +130,7 @@ const useFocusableEntries = (
         onMouseUp,
       };
     },
-    [
-      adjustLabelMargin,
-      blurEntry,
-      fileManagerRef,
-      focusEntry,
-      focusedEntries,
-      formats.systemFont,
-      onBlurCapture,
-      onFocusCapture,
-      sizes.fileEntry.fontSize,
-      sizes.fileEntry.maxIconTextDisplayWidth,
-    ]
+    [blurEntry, focusEntry, focusedEntries, onBlurCapture, onFocusCapture]
   );
 
   return { blurEntry, focusEntry, focusableEntry, focusedEntries };

@@ -1,6 +1,5 @@
 import { type WallpaperConfig } from "components/system/Desktop/Wallpapers/types";
 import {
-  config as vantaConfig,
   disableControls,
   libs,
 } from "components/system/Desktop/Wallpapers/vantaNet/config";

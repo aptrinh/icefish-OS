@@ -8,6 +8,7 @@ import {
   type SortByOrder,
 } from "components/system/Files/FileManager/useSortBy";
 import { useFileSystem } from "contexts/fileSystem";
+import { getMountUrl, isMountedFolder } from "contexts/fileSystem/functions";
 import { useMenu } from "contexts/menu";
 import {
   type CaptureTriggerEvent,
@@ -36,7 +37,6 @@ import {
   isSafari,
   updateIconPositions,
 } from "utils/functions";
-import { getMountUrl, isMountedFolder } from "contexts/fileSystem/core";
 
 const stopGlobalMusicVisualization = (): void =>
   window.WebampGlobal?.store.dispatch({

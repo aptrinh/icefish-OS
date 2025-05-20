@@ -1,6 +1,7 @@
 import {
   memo,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -43,7 +44,10 @@ const PeekWindow: FC<PeekWindowProps> = ({ id }) => {
   const { onClose } = useWindowActions(id);
   const [offsetX, setOffsetX] = useState(0);
   const image = useWindowPeek(id);
-  const showControls = useMemo(() => Boolean(play && pause), [pause, play]);
+  const showControls = useMemo(
+    () => Boolean(play && pause && paused),
+    [pause, paused, play]
+  );
   const peekTransition = usePeekTransition(showControls);
   const peekRef = useRef<HTMLDivElement | null>(null);
   const onClick = useCallback((): void => {
@@ -51,6 +55,15 @@ const PeekWindow: FC<PeekWindowProps> = ({ id }) => {
 
     setForegroundId(id);
   }, [id, minimize, minimized, setForegroundId]);
+  const [isPaused, setIsPaused] = useState(false);
+  const monitoringPaused = useRef(false);
+
+  useEffect(() => {
+    if (showControls && paused && !monitoringPaused.current) {
+      monitoringPaused.current = true;
+      setIsPaused(paused(setIsPaused));
+    }
+  }, [paused, showControls]);
 
   useLayoutEffect(() => {
     if (image) {
@@ -87,7 +100,7 @@ const PeekWindow: FC<PeekWindowProps> = ({ id }) => {
       </Button>
       {showControls && (
         <div className="controls">
-          {paused && (
+          {isPaused && (
             <Button
               onClick={(event) => {
                 haltEvent(event);
@@ -99,7 +112,7 @@ const PeekWindow: FC<PeekWindowProps> = ({ id }) => {
               <Play />
             </Button>
           )}
-          {!paused && (
+          {!isPaused && (
             <Button
               onClick={(event) => {
                 haltEvent(event);

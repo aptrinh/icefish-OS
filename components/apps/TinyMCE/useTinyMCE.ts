@@ -69,9 +69,7 @@ const useTinyMCE = ({
     if (editor) {
       const setupSaveCallback = (): void => {
         editor.options.set("save_onsavecallback", async () => {
-          const saveSpec: NotificationSpec & {
-            closeButton: boolean; // V6 Spec
-          } = {
+          const saveSpec: NotificationSpec = {
             closeButton: true,
             text: "Successfully saved.",
             timeout: 5000,

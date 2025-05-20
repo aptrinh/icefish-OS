@@ -7,14 +7,13 @@ import {
 import { type StableDiffusionConfig } from "components/apps/StableDiffusion/types";
 import {
   runStableDiffusion,
-  libs as StableDiffusionLibs,
+  StableDiffusionLibs,
 } from "components/system/Desktop/Wallpapers/StableDiffusion";
 import {
   type WorkerMessage,
   type ConvoStyles,
   type Prompt,
 } from "components/system/Taskbar/AI/types";
-import { isAvailable } from "hooks/useWindowAI";
 
 const MARKED_LIBS = [
   "/Program Files/Marked/marked.min.js",
@@ -141,7 +140,8 @@ globalThis.addEventListener(
           data.hasWindowAI &&
           data.summarizeText &&
           "summarizer" in globalThis.ai &&
-          (await isAvailable(globalThis.ai.summarizer))
+          (await globalThis.ai.summarizer.capabilities())?.available ===
+            "readily"
         ) {
           summarizer = await globalThis.ai.summarizer.create();
         }

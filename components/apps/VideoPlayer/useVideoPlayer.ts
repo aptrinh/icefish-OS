@@ -98,28 +98,19 @@ const useVideoPlayer = ({
         "canvas"
       ) as HTMLCanvasElement;
 
-      if (videoElement) {
-        videoElement.style.visibility = enable ? "hidden" : "visible";
-      }
-      if (canvasElement) {
-        canvasElement.style.visibility = enable ? "visible" : "hidden";
-      }
+      videoElement.style.visibility = enable ? "hidden" : "visible";
+      canvasElement.style.visibility = enable ? "visible" : "hidden";
 
-      if (videoPlayer) {
-        videoPlayer.reset();
+      videoPlayer?.reset();
 
-        if (enable) {
-          videoPlayer.controlBar.playToggle.hide();
-          videoPlayer.controlBar.pictureInPictureToggle.hide();
-          videoPlayer.controlBar.fullscreenToggle.hide();
-        } else {
-          videoPlayer.controlBar.playToggle.show();
-          videoPlayer.controlBar.pictureInPictureToggle.show();
-          videoPlayer.controlBar.fullscreenToggle.show();
-        }
-
-        argument(id, "play", enable ? false : () => videoPlayer.play());
-        argument(id, "pause", enable ? false : () => videoPlayer.pause());
+      if (enable) {
+        videoPlayer?.controlBar.playToggle.hide();
+        videoPlayer?.controlBar.pictureInPictureToggle.hide();
+        videoPlayer?.controlBar.fullscreenToggle.hide();
+      } else {
+        videoPlayer?.controlBar.playToggle.show();
+        videoPlayer?.controlBar.pictureInPictureToggle.show();
+        videoPlayer?.controlBar.fullscreenToggle.show();
       }
 
       linkElement(
@@ -132,7 +123,7 @@ const useVideoPlayer = ({
             : videoElement
       );
     },
-    [argument, containerRef, id, isYT, linkElement]
+    [containerRef, id, isYT, linkElement]
   );
   const loadPlayer = useCallback(() => {
     if (playerInitialized.current) return;
@@ -331,8 +322,16 @@ const useVideoPlayer = ({
       setPlayer(videoPlayer as VideoPlayer);
       setLoading(false);
       if (!isYT) linkElement(id, "peekElement", videoElement);
-      videoPlayer.on("pause", () => argument(id, "paused", true));
-      videoPlayer.on("play", () => argument(id, "paused", false));
+      argument(id, "play", () => videoPlayer.play());
+      argument(id, "pause", () => videoPlayer.pause());
+      argument(id, "paused", (callback?: (paused: boolean) => void) => {
+        if (callback) {
+          videoPlayer.on("pause", () => callback(true));
+          videoPlayer.on("play", () => callback(false));
+        }
+
+        return videoPlayer.paused();
+      });
     });
   }, [
     addFile,

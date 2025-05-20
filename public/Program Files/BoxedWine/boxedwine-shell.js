@@ -484,9 +484,6 @@ function syncGet(url, offset, length) {
       }
     }
   };
-  req.onerror = function (event) {
-	  err = event;
-  };
   req.send();
   if (err) {
     throw err;
@@ -562,7 +559,18 @@ function buildFileSystem(writableStorage, isDropBox) {
   buildCDROMFileSystem(Buffer, function (cdromfs) {
     buildExtraFileSystems(Buffer, function (extraFSs) {
       buildAppFileSystems(function (homeAdapter) {
-        const loadWholeRoot = function () {
+        if (Config.useRangeRequests == ONDEMAND_ROOT) {
+          buildRemoteZipFile(Config.rootZipFile, function callback(zipfs) {
+            buildBrowserFileSystem(
+              writableStorage,
+              isDropBox,
+              homeAdapter,
+              extraFSs,
+              zipfs,
+              cdromfs
+            );
+          });
+        } else {
           var rootListingObject = {};
           rootListingObject[Config.rootZipFile] = null;
           BrowserFS.FileSystem.XmlHttpRequest.Create(
@@ -602,24 +610,6 @@ function buildFileSystem(writableStorage, isDropBox) {
               );
             }
           );
-        };
-        if (Config.useRangeRequests === ONDEMAND_ROOT) {
-          buildRemoteZipFile(Config.rootZipFile, function callback(zipfs) {
-            if (zipfs) {
-              buildBrowserFileSystem(
-                writableStorage,
-                isDropBox,
-                homeAdapter,
-                extraFSs,
-                zipfs,
-                cdromfs
-              );
-            } else {
-              loadWholeRoot();
-            }
-          });
-        } else {
-          loadWholeRoot();
         }
       });
     });
@@ -628,37 +618,28 @@ function buildFileSystem(writableStorage, isDropBox) {
 function buildRemoteZipFile(zipFilename, zipFileCallback) {
   var Buffer = BrowserFS.BFSRequire("buffer").Buffer;
   getFileSize(zipFilename).then(function (fileSizeAsString) {
-    let contents = null;
-    try {
-      let fileSizeAsInt = Number(fileSizeAsString);
-      let blockSize = fileSizeAsInt > 100000 ? 100000 : fileSizeAsInt - 22;
-      let lastPartOfFile = syncGet(
-        zipFilename,
-        fileSizeAsInt - blockSize,
-        blockSize
-      );
-      let centralOffset = getCentralOffset(new Uint8Array(lastPartOfFile));
-      let remainingLength = fileSizeAsInt - centralOffset;
-      contents = syncGet(zipFilename, centralOffset, remainingLength);
-    } catch {
-      // Ignore failure to get zip on demand.
-    }
-    if (contents) {
-      BrowserFS.FileSystem.ZipFS.Create(
-        {
-          name: Config.locateRootBaseUrl + zipFilename,
-          zipData: new Buffer(contents),
-        },
-        function (e3, zipfs) {
-          if (e3) {
-            logAndExit(e3);
-          }
-          zipFileCallback(zipfs);
+    let fileSizeAsInt = Number(fileSizeAsString);
+    let blockSize = fileSizeAsInt > 100000 ? 100000 : fileSizeAsInt - 22;
+    let lastPartOfFile = syncGet(
+      zipFilename,
+      fileSizeAsInt - blockSize,
+      blockSize
+    );
+    let centralOffset = getCentralOffset(new Uint8Array(lastPartOfFile));
+    let remainingLength = fileSizeAsInt - centralOffset;
+    let contents = syncGet(zipFilename, centralOffset, remainingLength);
+    BrowserFS.FileSystem.ZipFS.Create(
+      {
+        name: Config.locateRootBaseUrl + zipFilename,
+        zipData: new Buffer(contents),
+      },
+      function (e3, zipfs) {
+        if (e3) {
+          logAndExit(e3);
         }
-      );
-    } else {
-      zipFileCallback();
-    }
+        zipFileCallback(zipfs);
+      }
+    );
   });
 }
 function getBase64Data(base64Data) {

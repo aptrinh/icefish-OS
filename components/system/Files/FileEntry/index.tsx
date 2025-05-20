@@ -10,12 +10,12 @@ import {
 } from "react";
 import dynamic from "next/dynamic";
 import { m as motion } from "motion/react";
+import ColumnRow from "components/system/Files/FileEntry/ColumnRow";
 import { type Columns } from "components/system/Files/FileManager/Columns/constants";
 import StyledFigure from "components/system/Files/FileEntry/StyledFigure";
 import SubIcons from "components/system/Files/FileEntry/SubIcons";
 import {
   getCachedIconUrl,
-  getCachedShortcut,
   getDateModified,
   getFileType,
   getTextWrapData,
@@ -64,15 +64,10 @@ import {
   hasFinePointer,
   isCanvasDrawn,
   isYouTubeUrl,
-  preloadImage,
 } from "utils/functions";
 import { spotlightEffect } from "utils/spotlightEffect";
 import { useIsVisible } from "hooks/useIsVisible";
 import { UNKNOWN_SIZE } from "contexts/fileSystem/core";
-
-const ColumnRow = dynamic(
-  () => import("components/system/Files/FileEntry/ColumnRow")
-);
 
 const Down = dynamic(() =>
   import("components/apps/FileExplorer/NavigationIcons").then((mod) => mod.Down)
@@ -109,10 +104,11 @@ const truncateName = (
   name: string,
   fontSize: string,
   fontFamily: string,
-  maxWidth: number
+  maxWidth: number,
+  alwaysShowPossibleLines = false
 ): string => {
   const nonBreakingName = name.replace(/-/g, NON_BREAKING_HYPHEN);
-  const { lines, truncatedText } = getTextWrapData(
+  const { lines } = getTextWrapData(
     nonBreakingName,
     fontSize,
     fontFamily,
@@ -120,7 +116,10 @@ const truncateName = (
   );
 
   if (lines.length > 2) {
-    const text = name.includes(" ") ? truncatedText : lines[0];
+    const text =
+      alwaysShowPossibleLines || name.includes(" ")
+        ? lines.slice(0, 2).join("")
+        : lines[0];
 
     return `${text.slice(0, -3).trim()}...`;
   }
@@ -172,7 +171,6 @@ const FileEntry: FC<FileEntryProps> = ({
     fs,
     mkdirRecursive,
     pasteList,
-    readdir,
     stat,
     updateFolder,
     writeFile,
@@ -228,9 +226,10 @@ const FileEntry: FC<FileEntryProps> = ({
         formats.systemFont,
         sizes.fileEntry[
           listView ? "maxListTextDisplayWidth" : "maxIconTextDisplayWidth"
-        ]
+        ],
+        !isDesktop
       ),
-    [formats.systemFont, listView, name, sizes.fileEntry]
+    [formats.systemFont, isDesktop, listView, name, sizes.fileEntry]
   );
   const iconRef = useRef<HTMLImageElement | null>(null);
   const isIconCached = useRef(false);
@@ -314,32 +313,6 @@ const FileEntry: FC<FileEntryProps> = ({
         ? columns.name.width - sizes.fileManager.detailsStartPadding
         : 0,
     [columns, showColumn, sizes.fileManager.detailsStartPadding]
-  );
-  const preloadedImages = useRef(false);
-  const preloadImages = useCallback(() => {
-    if (preloadedImages.current) return;
-    preloadedImages.current = true;
-
-    readdir(path).then((files) =>
-      files
-        .map((file) => getCachedShortcut(join(path, file)) || {})
-        .forEach(({ icon: image }) => image && preloadImage(image))
-    );
-  }, [path, readdir]);
-  const onMouseOverButton = useCallback(() => {
-    if (listView && isDirectory) preloadImages();
-    createTooltip().then(setTooltip);
-  }, [createTooltip, isDirectory, listView, preloadImages]);
-  const lockWidthStyle = useMemo(
-    () => ({ maxWidth: columnWidth, minWidth: columnWidth }),
-    [columnWidth]
-  );
-  const renameFile = useCallback(
-    (origPath: string, newName?: string) => {
-      fileActions.renameFile(origPath, newName);
-      setRenaming("");
-    },
-    [fileActions, setRenaming]
   );
 
   useEffect(() => {
@@ -579,7 +552,7 @@ const FileEntry: FC<FileEntryProps> = ({
       <Button
         ref={buttonRef}
         aria-label={name}
-        onMouseOverCapture={onMouseOverButton}
+        onMouseOver={() => createTooltip().then(setTooltip)}
         title={tooltip}
         {...(listView && { ...LIST_VIEW_ANIMATION, as: motion.button })}
         {...useDoubleClick(doubleClickHandler, listView)}
@@ -605,7 +578,11 @@ const FileEntry: FC<FileEntryProps> = ({
             [listView]
           )}
           $renaming={renaming}
-          style={showColumn ? lockWidthStyle : undefined}
+          style={
+            showColumn
+              ? { maxWidth: columnWidth, minWidth: columnWidth }
+              : undefined
+          }
           {...(isHeading && {
             "aria-level": 1,
             role: "heading",
@@ -615,12 +592,12 @@ const FileEntry: FC<FileEntryProps> = ({
             ref={iconRef}
             $eager={loadIconImmediately}
             $moving={pasteList[path] === "move"}
-            alt=""
+            alt={name}
             src={icon}
             {...FileEntryIconSize[view]}
           />
           <SubIcons
-            alt=""
+            alt={name}
             icon={icon}
             isDesktop={isDesktop}
             showShortcutIcon={Boolean(hideShortcutIcon || stats.systemShortcut)}
@@ -632,7 +609,10 @@ const FileEntry: FC<FileEntryProps> = ({
               isDesktop={isDesktop}
               name={name}
               path={path}
-              renameFile={renameFile}
+              renameFile={(origPath, newName) => {
+                fileActions.renameFile(origPath, newName);
+                setRenaming("");
+              }}
               setRenaming={setRenaming}
               view={view}
             />

@@ -84,24 +84,37 @@ type DocumentWithVendorFullscreen = Document & {
   webkitFullscreenElement?: HTMLElement;
 };
 
-export const captureConsoleLogs =
-  (testName = "") =>
-  ({ browserName, page }: TestPropsWithBrowser): void => {
-    page.on("console", (msg) => {
-      if (testName === "apps" && (process.env.CI || msg.type() !== "error")) {
-        return;
-      }
+const captureConsole = (
+  { browserName, page }: TestPropsWithBrowser,
+  logType?: string
+): Page =>
+  page.on("console", (msg) => {
+    if (typeof logType === "string" && msg.type() !== logType) return;
 
-      const text = msg.text().trim();
-      const isExcludedMessage =
-        !text ||
-        EXCLUDED_CONSOLE_LOGS(browserName, testName).some((excluded) =>
-          text.includes(excluded)
-        );
+    const text = msg.text();
 
-      if (!isExcludedMessage) throw new Error(text);
-    });
-  };
+    if (
+      !text ||
+      EXCLUDED_CONSOLE_LOGS(browserName).some((excluded) =>
+        text.includes(excluded)
+      )
+    ) {
+      return;
+    }
+
+    globalThis.capturedConsoleLogs = [
+      ...(globalThis.capturedConsoleLogs || []),
+      text,
+    ];
+  });
+
+export const captureConsoleLogs = ({
+  browserName,
+  page,
+}: TestPropsWithBrowser): Page => captureConsole({ browserName, page });
+
+export const didCaptureConsoleLogs = (): void =>
+  expect(globalThis.capturedConsoleLogs || []).toHaveLength(0);
 
 export const filterMenuItems = (
   menuItems: MenuItems,
@@ -449,30 +462,7 @@ export const triggerFullscreenDetection = async ({
     document.dispatchEvent(new Event("fullscreenchange"));
   }, browserName);
 
-export const mockSaveFilePicker = async (
-  { page }: TestProps,
-  fileName: string
-): Promise<void> =>
-  page.evaluate(
-    ([downloadName]) => {
-      window.showSaveFilePicker = () => {
-        const link = document.createElement("a");
-
-        link.href = "data:null;,";
-        link.download = downloadName;
-
-        link.click();
-
-        return Promise.resolve({} as FileSystemFileHandle);
-      };
-    },
-    [fileName]
-  );
-
-// evaluate
-export const getHostname = async ({ page }: TestProps): Promise<string> =>
-  page.evaluate(() => window.location.hostname);
-
+// expect->evaluate
 export const windowAnimationIsFinished = async ({
   page,
 }: TestProps): Promise<Animation[]> =>
@@ -988,32 +978,33 @@ export const selectArea = async ({
 };
 
 // loaders
-export const loadApp =
-  (queryParams?: Record<string, string>) =>
-  async ({ page }: TestProps): Promise<Response | null> => {
-    await page.addInitScript((session) => {
-      window.DEBUG_DEFAULT_SESSION = session;
-    }, DEFAULT_SESSION);
+export const loadApp = async (
+  { page }: TestProps,
+  queryParams?: Record<string, string>
+): Promise<Response | null> => {
+  await page.addInitScript((session) => {
+    window.DEBUG_DEFAULT_SESSION = session;
+  }, DEFAULT_SESSION);
 
-    return page.goto(
-      queryParams ? `/?${new URLSearchParams(queryParams).toString()}` : "/"
-    );
-  };
+  return page.goto(
+    queryParams ? `/?${new URLSearchParams(queryParams).toString()}` : "/"
+  );
+};
 
 export const loadTestApp = async ({
   page,
-}: TestProps): Promise<Response | null> => loadApp({ app: TEST_APP })({ page });
+}: TestProps): Promise<Response | null> => loadApp({ page }, { app: TEST_APP });
 
 export const loadContainerTestApp = async ({
   page,
 }: TestProps): Promise<Response | null> =>
-  loadApp({ app: TEST_APP_CONTAINER_APP })({ page });
+  loadApp({ page }, { app: TEST_APP_CONTAINER_APP });
 
 export const loadAppWithCanvas = async ({
   headless,
   browserName,
   page,
 }: TestProps): Promise<void> => {
-  await loadApp()({ page });
+  await loadApp({ page });
   await backgroundCanvasMaybeIsVisible({ browserName, headless, page });
 };

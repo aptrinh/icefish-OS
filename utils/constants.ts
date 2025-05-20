@@ -82,7 +82,6 @@ export const HEIF_IMAGE_FORMATS = new Set([
   ".heics",
   ".heif",
   ".heifs",
-  ".hif",
   ".avci",
   ".avcs",
 ]);
@@ -97,10 +96,14 @@ export const TIFF_IMAGE_FORMATS = new Set([
 
 export const CLIPBOARD_FILE_EXTENSIONS = new Set([".jpeg", ".jpg", ".png"]);
 
-export const NATIVE_IMAGE_FORMATS = new Set([
+export const IMAGE_FILE_EXTENSIONS = new Set([
+  ...HEIF_IMAGE_FORMATS,
+  ...TIFF_IMAGE_FORMATS,
+  ".ani",
   ".apng",
   ".avif",
   ".bmp",
+  ".cur",
   ".gif",
   ".ico",
   ".jfif",
@@ -108,22 +111,14 @@ export const NATIVE_IMAGE_FORMATS = new Set([
   ".jpe",
   ".jpeg",
   ".jpg",
+  ".jxl",
   ".pjp",
   ".pjpeg",
   ".png",
   ".svg",
+  ".qoi",
   ".webp",
   ".xbm",
-]);
-
-export const IMAGE_FILE_EXTENSIONS = new Set([
-  ...NATIVE_IMAGE_FORMATS,
-  ...HEIF_IMAGE_FORMATS,
-  ...TIFF_IMAGE_FORMATS,
-  ".ani",
-  ".cur",
-  ".jxl",
-  ".qoi",
 ]);
 
 export const UNSUPPORTED_SLIDESHOW_EXTENSIONS = new Set([
@@ -211,10 +206,6 @@ export const SYSTEM_PATHS = new Set(["/.deletedFiles.log"]);
 export const DESKTOP_PATH = `${HOME}/Desktop`;
 
 export const START_MENU_PATH = `${HOME}/Start Menu`;
-
-export const AI_TITLE = "Talos";
-
-export const AI_WINDOW_ID = "ai-chat-window";
 
 export const SYSTEM_SHORTCUT_DIRECTORIES = new Set([DESKTOP_PATH]);
 
@@ -394,5 +385,3 @@ export const DISBALE_AUTO_INPUT_FEATURES = {
   autoCorrect: "off",
   spellCheck: false,
 };
-
-export const MAX_ZINDEX = 2147483647;
