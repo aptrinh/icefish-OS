@@ -1,6 +1,8 @@
 import { basename, join } from "path";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import StyledLoading from "components/system/Apps/StyledLoading";
+import StatusBar from "components/system/Files/FileManager/StatusBar";
 import {
   DEFAULT_COLUMNS,
   type Columns as ColumnsObject,
@@ -29,16 +31,8 @@ import { getExtension, haltEvent } from "utils/functions";
 import Columns from "components/system/Files/FileManager/Columns";
 import { useSession } from "contexts/session";
 
-const StatusBar = dynamic(
-  () => import("components/system/Files/FileManager/StatusBar")
-);
-
 const StyledEmpty = dynamic(
   () => import("components/system/Files/FileManager/StyledEmpty")
-);
-
-const StyledLoading = dynamic(
-  () => import("components/system/Files/FileManager/StyledLoading")
 );
 
 type FileManagerProps = {
@@ -91,8 +85,12 @@ const FileManager: FC<FileManagerProps> = ({
   const [renaming, setRenaming] = useState("");
   const [mounted, setMounted] = useState<boolean>(false);
   const fileManagerRef = useRef<HTMLOListElement | null>(null);
+  const isFileExplorerIconView = useMemo(
+    () => !isStartMenu && !isDesktop && !isDetailsView,
+    [isDesktop, isDetailsView, isStartMenu]
+  );
   const { focusedEntries, focusableEntry, ...focusFunctions } =
-    useFocusableEntries(fileManagerRef);
+    useFocusableEntries(fileManagerRef, isFileExplorerIconView);
   const { fileActions, files, folderActions, isLoading, updateFiles } =
     useFolder(url, setRenaming, focusFunctions, {
       hideFolders,
@@ -124,7 +122,11 @@ const FileManager: FC<FileManagerProps> = ({
     isDesktop,
     isStartMenu
   );
-  const loading = (!hideLoading && isLoading) || url !== currentUrl;
+  const loading = useMemo(() => {
+    if (hideLoading) return false;
+
+    return isLoading || url !== currentUrl;
+  }, [currentUrl, hideLoading, isLoading, url]);
   const setView = useCallback(
     (newView: FileManagerViewNames) => {
       setViews((currentViews) => ({ ...currentViews, [url]: newView }));
@@ -154,12 +156,10 @@ const FileManager: FC<FileManagerProps> = ({
     [keyShortcuts, renaming]
   );
   const fileKeys = useMemo(() => Object.keys(files), [files]);
-  const isEmptyFolder =
-    !isDesktop &&
-    !isStartMenu &&
-    !loading &&
-    view !== "list" &&
-    fileKeys.length === 0;
+  const isEmptyFolder = useMemo(
+    () => !isDesktop && !isStartMenu && !loading && fileKeys.length === 0,
+    [fileKeys.length, isDesktop, isStartMenu, loading]
+  );
 
   useEffect(() => {
     if (
@@ -234,34 +234,33 @@ const FileManager: FC<FileManagerProps> = ({
 
   return (
     <>
-      {loading ? (
-        <StyledLoading />
-      ) : (
-        <>
-          {isEmptyFolder && <StyledEmpty />}
-          <StyledFileManager
-            ref={fileManagerRef}
-            $isEmptyFolder={isEmptyFolder}
-            $scrollable={!hideScrolling}
-            onKeyDownCapture={onKeyDown}
-            {...(readOnly
-              ? { onContextMenu: haltEvent }
-              : {
-                  $selecting: isSelecting,
-                  ...fileDrop,
-                  ...folderContextMenu,
-                  ...selectionEvents,
-                })}
-            {...FOCUSABLE_ELEMENT}
-          >
-            {isDetailsView && columns && (
-              <Columns
-                columns={columns}
-                directory={url}
-                files={files}
-                setColumns={setColumns}
-              />
-            )}
+      {loading && <StyledLoading $hasColumns={isDetailsView} />}
+      {!loading && isEmptyFolder && <StyledEmpty $hasColumns={isDetailsView} />}
+      <StyledFileManager
+        ref={fileManagerRef}
+        $isEmptyFolder={isEmptyFolder}
+        $scrollable={!hideScrolling}
+        onKeyDownCapture={loading ? undefined : onKeyDown}
+        {...(loading || readOnly
+          ? { onContextMenu: haltEvent }
+          : {
+              $selecting: isSelecting,
+              ...fileDrop,
+              ...folderContextMenu,
+              ...selectionEvents,
+            })}
+        {...FOCUSABLE_ELEMENT}
+      >
+        {isDetailsView && columns && (
+          <Columns
+            columns={columns}
+            directory={url}
+            files={files}
+            setColumns={setColumns}
+          />
+        )}
+        {!loading && (
+          <>
             {isSelecting && <StyledSelection style={selectionStyling} />}
             {fileKeys.map((file) => (
               <StyledFileEntry
@@ -297,9 +296,9 @@ const FileManager: FC<FileManagerProps> = ({
                 />
               </StyledFileEntry>
             ))}
-          </StyledFileManager>
-        </>
-      )}
+          </>
+        )}
+      </StyledFileManager>
       {showStatusBar && (
         <StatusBar
           count={loading ? 0 : fileKeys.length}

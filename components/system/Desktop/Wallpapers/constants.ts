@@ -14,7 +14,7 @@ export const bgPositionSize: Record<WallpaperFit, string> = {
 
 export const WALLPAPER_PATHS: Record<
   string,
-  () => Promise<{ default: WallpaperFunc }>
+  () => Promise<{ default: WallpaperFunc; libs: string[] }>
 > = {
   COASTAL_LANDSCAPE: () =>
     import("components/system/Desktop/Wallpapers/ShaderToy/CoastalLandscape"),
@@ -25,7 +25,7 @@ export const WALLPAPER_PATHS: Record<
   VANTA: () => import("components/system/Desktop/Wallpapers/vantaNet"),
 };
 
-export const WALLPAPER_WORKERS: Record<string, (info?: string) => Worker> = {
+export const WALLPAPER_WORKERS: Record<string, () => Worker> = {
   COASTAL_LANDSCAPE: (): Worker =>
     new Worker(
       new URL(

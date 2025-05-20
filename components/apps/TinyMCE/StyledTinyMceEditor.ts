@@ -11,7 +11,7 @@ const StyledTinyMceEditor = styled.div`
       pointer-events: none;
 
       svg {
-        fill: rgb(255, 255, 255, 50%);
+        fill: rgb(255 255 255 / 50%);
       }
     }
 

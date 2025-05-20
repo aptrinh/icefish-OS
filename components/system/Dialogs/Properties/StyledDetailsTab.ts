@@ -85,7 +85,7 @@ const StyledDetailsTab = styled.div`
           padding-right: 10px;
 
           &:hover {
-            background-color: rgba(0, 140, 255, 10%);
+            background-color: rgb(0 140 255 / 10%);
           }
 
           &:first-child {

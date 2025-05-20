@@ -56,7 +56,7 @@ const StyledFileEntry = styled.li`
 
     @media (pointer: fine) {
       &:hover {
-        background-color: hsla(0, 0%, 35%, 70%);
+        background-color: hsl(0 0% 35% / 70%);
       }
     }
 

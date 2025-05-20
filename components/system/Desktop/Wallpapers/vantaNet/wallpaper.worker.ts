@@ -1,8 +1,9 @@
 import { type OffscreenRenderProps } from "components/system/Desktop/Wallpapers/types";
 import {
-  config,
+  config as vantaConfig,
   disableControls,
   libs,
+  config,
 } from "components/system/Desktop/Wallpapers/vantaNet/config";
 import {
   type VantaNet,

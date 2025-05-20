@@ -15,7 +15,7 @@ const StyledResults = styled.div`
   .list {
     ${ScrollBars(THIN_SCROLLBAR_WIDTH, -2, -1)}
     ${ThinScrollBars}
-    background-color: rgba(40, 40, 40, 95%);
+    background-color: rgb(40 40 40 / 95%);
     overflow-y: auto;
     scrollbar-gutter: auto;
     width: 100%;

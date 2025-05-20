@@ -53,7 +53,7 @@ const StyledChatProfile = styled.li`
       }
 
       div.encryption {
-        background-color: rgb(2251, 241, 199, 15%);
+        background-color: rgb(225, 241, 199, 15%);
         border-radius: 8px;
         display: flex;
         flex-direction: column;

@@ -68,7 +68,7 @@ const StyledSections = styled.div<StyledSectionsProps>`
     padding: 8px 12px;
 
     &:hover {
-      box-shadow: 0 3px 6px rgba(0, 0, 0, 40%);
+      box-shadow: 0 3px 6px rgb(0 0 0 / 40%);
     }
 
     > figcaption {

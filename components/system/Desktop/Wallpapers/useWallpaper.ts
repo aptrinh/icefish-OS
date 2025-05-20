@@ -22,9 +22,11 @@ import { useSession } from "contexts/session";
 import useWorker from "hooks/useWorker";
 import {
   DEFAULT_LOCALE,
+  DEFAULT_WALLPAPER,
   IMAGE_FILE_EXTENSIONS,
   MILLISECONDS_IN_DAY,
   MILLISECONDS_IN_MINUTE,
+  NATIVE_IMAGE_FORMATS,
   PICTURES_FOLDER,
   PROMPT_FILE,
   SLIDESHOW_FILE,
@@ -62,9 +64,7 @@ const useWallpaper = (
   );
   const vantaWireframe = wallpaperImage === "VANTA WIREFRAME";
   const wallpaperWorker = useWorker<void>(
-    WALLPAPER_WORKERS[wallpaperName],
-    undefined,
-    vantaWireframe ? "Wireframe" : ""
+    sessionLoaded ? WALLPAPER_WORKERS[wallpaperName] : undefined
   );
   const wallpaperTimerRef = useRef(0);
   const failedOffscreenContext = useRef(false);
@@ -171,7 +171,7 @@ const useWallpaper = (
               "message",
               ({ data }: { data: WallpaperMessage }) => {
                 if (data.type === "[error]") {
-                  setWallpaper("VANTA");
+                  setWallpaper(DEFAULT_WALLPAPER);
                 } else if (data.type) {
                   loadingStatus.textContent = data.message || "";
                 } else if (!data.message) {
@@ -204,7 +204,11 @@ const useWallpaper = (
         }
       } else if (WALLPAPER_PATHS[wallpaperName]) {
         const fallbackWallpaper = (): void =>
-          setWallpaper(wallpaperName === "VANTA" ? "SLIDESHOW" : "VANTA");
+          setWallpaper(
+            wallpaperName === DEFAULT_WALLPAPER
+              ? "SLIDESHOW"
+              : DEFAULT_WALLPAPER
+          );
 
         WALLPAPER_PATHS[wallpaperName]()
           .then(({ default: wallpaper }) =>
@@ -212,7 +216,7 @@ const useWallpaper = (
           )
           .catch(fallbackWallpaper);
       } else {
-        setWallpaper("VANTA");
+        setWallpaper(DEFAULT_WALLPAPER);
       }
     },
     [
@@ -263,14 +267,14 @@ const useWallpaper = (
       cleanUpBufferUrl(currentWallpaperUrl);
     }
 
-    resetWallpaper();
-
     let wallpaperUrl = "";
     let fallbackBackground = "";
     let newWallpaperFit = wallpaperFit;
     const isSlideshow = wallpaperName === "SLIDESHOW";
 
     if (isSlideshow) {
+      resetWallpaper();
+
       const slideshowFilePath = `${PICTURES_FOLDER}/${SLIDESHOW_FILE}`;
 
       if (!(await exists(slideshowFilePath))) {
@@ -327,12 +331,17 @@ const useWallpaper = (
       // eslint-disable-next-line unicorn/no-unreadable-array-destructuring
       const [, , currentDate] = wallpaperImage.split(" ");
       const [month, , day, , year] = new Intl.DateTimeFormat(DEFAULT_LOCALE, {
+        day: "2-digit",
+        month: "2-digit",
         timeZone: "US/Eastern",
+        year: "numeric",
       })
         .formatToParts(Date.now())
         .map(({ value }) => value);
 
       if (currentDate === `${year}-${month}-${day}`) return;
+
+      resetWallpaper();
 
       const {
         date = "",
@@ -365,14 +374,19 @@ const useWallpaper = (
         }
       }
     } else if (await exists(wallpaperImage)) {
-      const { decodeImageToBuffer } = await import("utils/imageDecoder");
-      const fileData = await readFile(wallpaperImage);
-      const imageBuffer = await decodeImageToBuffer(
-        getExtension(wallpaperImage),
-        fileData
-      );
+      resetWallpaper();
 
-      wallpaperUrl = bufferToUrl(imageBuffer || fileData);
+      let fileData = await readFile(wallpaperImage);
+      const imgExt = getExtension(wallpaperImage);
+
+      if (!NATIVE_IMAGE_FORMATS.has(imgExt)) {
+        const { decodeImageToBuffer } = await import("utils/imageDecoder");
+        const decodedData = await decodeImageToBuffer(imgExt, fileData);
+
+        if (decodedData) fileData = decodedData;
+      }
+
+      wallpaperUrl = bufferToUrl(fileData);
     }
 
     if (wallpaperUrl) {
@@ -417,6 +431,10 @@ const useWallpaper = (
           const isTopWindow = window === window.top;
           const isAfterNextBackground = isBeforeBg();
 
+          document.documentElement.style.setProperty(
+            "--background-transition-timing",
+            isSlideshow ? "1.25s" : "0s"
+          );
           document.documentElement.style.setProperty(
             `--${isAfterNextBackground ? "after" : "before"}-background`,
             `url(${CSS.escape(

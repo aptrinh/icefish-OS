@@ -1,7 +1,15 @@
-import { join } from "path";
-import { openDB } from "idb";
+import { extname, join } from "path";
+import { type openDB } from "idb";
+import {
+  type Mount,
+  type ExtendedEmscriptenFileSystem,
+} from "contexts/fileSystem/useAsyncFs";
 import index from "public/.index/fs.9p.json";
-import { FS_HANDLES, ONE_TIME_PASSIVE_EVENT } from "utils/constants";
+import {
+  FS_HANDLES,
+  MOUNTABLE_EXTENSIONS,
+  ONE_TIME_PASSIVE_EVENT,
+} from "utils/constants";
 
 type BFSFS = { [key: string]: BFSFS | null };
 type FS9PV3 = [
@@ -13,7 +21,7 @@ type FS9PV3 = [
   number,
   FS9PV3[] | string,
 ];
-type FS9PV4 = [string, number, number, FS9PV4[] | string | undefined];
+type FS9PV4 = [string, number, number, FS9PV4[] | undefined];
 type FS9P = {
   fsroot: FS9PV3[];
   size: number;
@@ -26,7 +34,7 @@ export const UNKNOWN_SIZE = -1;
 export const UNKNOWN_STATE_CODES = new Set(["EIO", "ENOENT"]);
 export const KEYVAL_STORE_NAME = "keyval";
 
-const KEYVAL_DB = `${KEYVAL_STORE_NAME}-store`;
+export const KEYVAL_DB = `${KEYVAL_STORE_NAME}-store`;
 
 const IDX_SIZE = 1;
 const IDX_MTIME = 2;
@@ -68,20 +76,20 @@ export const get9pModifiedTime = (path: string): number =>
 
 export const get9pSize = (path: string): number => get9pData(path, IDX_SIZE);
 
-const mapReduce9pArray = (
-  array: FS9PV4[],
-  mapper: (entry: FS9PV4) => BFSFS
-  // eslint-disable-next-line unicorn/no-array-callback-reference
-): BFSFS => array.map(mapper).reduce((a, b) => Object.assign(a, b), {});
+const parseDirectory = (array: FS9PV4[]): BFSFS => {
+  const directory: BFSFS = {};
 
-// eslint-disable-next-line unicorn/no-unreadable-array-destructuring
-const parse9pEntry = ([name, , , pathOrArray]: FS9PV4): BFSFS => ({
-  [name]: Array.isArray(pathOrArray)
-    ? mapReduce9pArray(pathOrArray, parse9pEntry)
-    : FILE_ENTRY,
-});
+  // eslint-disable-next-line unicorn/no-unreadable-array-destructuring
+  for (const [name, , , pathOrArray] of array) {
+    directory[name] = Array.isArray(pathOrArray)
+      ? parseDirectory(pathOrArray)
+      : FILE_ENTRY;
+  }
 
-export const fs9pToBfs = (): BFSFS => mapReduce9pArray(fsroot, parse9pEntry);
+  return directory;
+};
+
+export const fs9pToBfs = (): BFSFS => parseDirectory(fsroot);
 
 const parse9pV4ToV3 = (fs9p: FS9PV4[], path = "/"): FS9PV3[] =>
   fs9p.map(([name, mtime, size, target]) => {
@@ -150,8 +158,28 @@ export const supportsIndexedDB = (): Promise<boolean> =>
     }
   });
 
-export const getKeyValStore = (): ReturnType<typeof openDB> =>
-  openDB(KEYVAL_DB, 1, {
+export const hasIndexedDB = async (name: string): Promise<boolean> =>
+  new Promise((resolve) => {
+    try {
+      const db = window.indexedDB.open(name);
+
+      db.addEventListener("upgradeneeded", () => {
+        db.transaction?.abort();
+        resolve(false);
+      });
+      db.addEventListener("success", () => {
+        db.result.close();
+        resolve(true);
+      });
+      db.addEventListener("error", () => resolve(false));
+      db.addEventListener("blocked", () => resolve(false));
+    } catch {
+      resolve(false);
+    }
+  });
+
+export const getKeyValStore = async (): ReturnType<typeof openDB> =>
+  (await import("idb")).openDB(KEYVAL_DB, 1, {
     upgrade: (db) => db.createObjectStore(KEYVAL_STORE_NAME),
   });
 
@@ -169,4 +197,23 @@ export const getFileSystemHandles = async (): Promise<FileSystemHandles> => {
     ) as Promise<FileSystemHandles>)) ||
     (Object.create(null) as FileSystemHandles)
   );
+};
+
+export const isMountedFolder = (mount?: Mount): boolean =>
+  typeof mount === "object" &&
+  (mount.getName() === "FileSystemAccess" ||
+    (mount as ExtendedEmscriptenFileSystem)._FS?.DB_STORE_NAME === "FILE_DATA");
+
+export const getMountUrl = (
+  url: string,
+  mntMap: Record<string, Mount>
+): string | undefined => {
+  if (url === "/") return "";
+  if (mntMap[url] || MOUNTABLE_EXTENSIONS.has(extname(url))) return url;
+
+  return Object.keys(mntMap)
+    .filter((mountedUrl) => mountedUrl !== "/")
+    .find(
+      (mountedUrl) => url === mountedUrl || url.startsWith(`${mountedUrl}/`)
+    );
 };

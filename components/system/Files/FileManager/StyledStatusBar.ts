@@ -3,13 +3,14 @@ import styled from "styled-components";
 const StyledStatusBar = styled.footer`
   align-items: center;
   background-color: rgb(40, 40, 40);
+  bottom: 0;
   color: rgb(251, 241, 199);
   display: flex;
   font-size: 12px;
   font-weight: 200;
   height: ${({ theme }) => theme.sizes.fileExplorer.statusBarHeight};
   padding: 0 4px 0 5px;
-  position: relative;
+  position: absolute;
   white-space: nowrap;
   width: 100%;
 
@@ -55,13 +56,13 @@ const StyledStatusBar = styled.footer`
       }
 
       &:hover {
-        background-color: rgb(77, 77, 77);
-        border: 1px solid rgb(99, 99, 99);
+        background-color: rgb(77 77 77);
+        border: 1px solid rgb(99 99 99);
       }
 
       &.active {
-        background-color: rgb(102, 102, 102);
-        border: 1px solid rgb(131, 131, 131);
+        background-color: rgb(102 102 102);
+        border: 1px solid rgb(131 131 131);
 
         picture {
           padding-left: 1px;

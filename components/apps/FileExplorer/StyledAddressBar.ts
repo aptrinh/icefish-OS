@@ -61,25 +61,8 @@ const StyledAddressBar = styled.div`
     }
 
     svg {
-      color: rgb(168, 153, 132);
-      stroke: rgb(168, 153, 132);
-
-      &.refresh {
-        position: relative;
-        stroke-width: 3;
-        top: -1px;
-      }
-
-      &.go-to {
-        height: 12px;
-        stroke-width: 2;
-        width: 12px;
-      }
-    }
-
-    svg {
-      color: rgb(128, 128, 128);
-      stroke: rgb(128, 128, 128);
+      color: rgb(128 128 128);
+      stroke: rgb(128 128 128);
 
       &.refresh {
         position: relative;
