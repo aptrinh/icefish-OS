@@ -1,8 +1,8 @@
 import styled from "styled-components";
 
 const StyledProfileBanner = styled.div`
-  background: linear-gradient(hsla(157, 16%, 58%, 50%), rgba(29, 32, 33, 100%));
-  border-bottom: 1px solid rgb(60, 56, 54);
+  background: linear-gradient(hsl(157 16% 58% / 50%), rgb(29 32 33 / 100%));
+  border-bottom: 1px solid rgb(60 56 54);
   color: #fbf1c7;
   display: flex;
   font-size: 24px;
@@ -61,20 +61,20 @@ const StyledProfileBanner = styled.div`
     width: 30px;
 
     svg:first-child {
-      background-color: rgb(29, 32, 33, 50%);
+      background-color: rgb(29 32 33 / 50%);
       border-radius: 5px;
       color: #fbf1c7;
       fill: #fbf1c7;
       height: 24px;
-      outline: 4px solid rgb(29, 32, 33, 50%);
+      outline: 4px solid rgb(29 32 33 / 50%);
       pointer-events: none;
       width: 24px;
     }
 
     &:hover {
       svg:first-child {
-        background-color: rgb(29, 32, 33, 75%);
-        outline: 4px solid rgb(29, 32, 33, 75%);
+        background-color: rgb(29 32 33 / 75%);
+        outline: 4px solid rgb(29 32 33 / 75%);
       }
     }
   }
@@ -90,7 +90,7 @@ const StyledProfileBanner = styled.div`
     width: 100%;
 
     ol {
-      background-color: rgb(29, 32, 33, 50%);
+      background-color: rgb(29 32 33 / 50%);
       border-radius: 10px;
       display: flex;
       gap: 3px;

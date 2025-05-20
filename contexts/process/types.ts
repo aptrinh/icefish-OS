@@ -19,9 +19,12 @@ type DialogProcessArguments = {
 };
 
 type MediaPlayerProcessArguments = {
+  mute?: () => void;
+  muted?: boolean;
   pause?: () => void;
-  paused?: (callback?: (paused: boolean) => void) => boolean;
+  paused?: boolean;
   play?: () => void;
+  unmute?: () => void;
 };
 
 type MonacoProcessArguments = {
@@ -46,6 +49,7 @@ export type RelativePosition = {
 type BaseProcessArguments = {
   allowResizing?: boolean;
   autoSizing?: boolean;
+  backgroundBlur?: string;
   backgroundColor?: string;
   dependantLibs?: string[];
   hideMaximizeButton?: boolean;

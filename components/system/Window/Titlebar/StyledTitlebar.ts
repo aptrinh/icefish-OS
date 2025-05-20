@@ -106,10 +106,10 @@ const StyledTitlebar = styled.header<StyledTitlebarProps>`
       }
       /* For when you click on a titlebar button */
       &:active {
-        background-color: rgb(102, 92, 84);
+        background-color: rgb(102 92 84);
 
         &.close {
-          background-color: rgb(204, 36, 29);
+          background-color: rgb(204 36 29);
         }
       }
 

@@ -27,13 +27,20 @@ import {
   DEFAULT_WALLPAPER,
   DEFAULT_WALLPAPER_FIT,
   DESKTOP_PATH,
+  MILLISECONDS_IN_MINUTE,
   SESSION_FILE,
   SHORTCUT_EXTENSION,
   SYSTEM_FILES,
   TRANSITIONS_IN_MILLISECONDS,
 } from "utils/constants";
-import { getExtension, updateIconPositionsIfEmpty } from "utils/functions";
+import {
+  getExtension,
+  maybeRequestIdleCallback,
+  preloadLibs,
+  updateIconPositionsIfEmpty,
+} from "utils/functions";
 import { getShortcutInfo } from "components/system/Files/FileEntry/functions";
+import { WALLPAPER_PATHS } from "components/system/Desktop/Wallpapers/constants";
 
 const DEFAULT_SESSION = (
   typeof window === "object" && "DEBUG_DEFAULT_SESSION" in window
@@ -51,8 +58,9 @@ const useSessionContextState = (): SessionContextState => {
   const [stackOrder, setStackOrder] = useState<string[]>([]);
   const [themeName, setThemeName] = useState(DEFAULT_THEME);
   const [clockSource, setClockSource] = useState(DEFAULT_CLOCK_SOURCE);
-  const [cursor, setCursor] = useState("");
+  const [cursor, setCursor] = useState<string | undefined>();
   const [aiEnabled, setAiEnabled] = useState(false);
+  const [lazySheep, setLazySheep] = useState(false);
   const [windowStates, setWindowStates] = useState(
     Object.create(null) as WindowStates
   );
@@ -202,7 +210,7 @@ const useSessionContextState = (): SessionContextState => {
 
   useEffect(() => {
     if (!loadingDebounceRef.current && sessionLoaded && !haltSession) {
-      const updateSessionFile = (): void => {
+      maybeRequestIdleCallback(() => {
         writeFile(
           SESSION_FILE,
           JSON.stringify({
@@ -210,6 +218,7 @@ const useSessionContextState = (): SessionContextState => {
             clockSource,
             cursor,
             iconPositions,
+            lazySheep,
             recentFiles,
             runHistory,
             sortOrders,
@@ -221,16 +230,7 @@ const useSessionContextState = (): SessionContextState => {
           }),
           true
         );
-      };
-
-      if (
-        "requestIdleCallback" in window &&
-        typeof window.requestIdleCallback === "function"
-      ) {
-        requestIdleCallback(updateSessionFile);
-      } else {
-        updateSessionFile();
-      }
+      });
     }
   }, [
     aiEnabled,
@@ -238,6 +238,7 @@ const useSessionContextState = (): SessionContextState => {
     cursor,
     haltSession,
     iconPositions,
+    lazySheep,
     recentFiles,
     runHistory,
     sessionLoaded,
@@ -268,6 +269,15 @@ const useSessionContextState = (): SessionContextState => {
           } catch {
             session = DEFAULT_SESSION;
           }
+
+          // const sessionWallpaperImage =
+          //   session.wallpaperImage || DEFAULT_WALLPAPER;
+
+          // if (sessionWallpaperImage in WALLPAPER_PATHS) {
+          //   WALLPAPER_PATHS[sessionWallpaperImage]().then(({ libs }) =>
+          //     preloadLibs(libs)
+          //   );
+          // }
 
           if (session.clockSource) setClockSource(session.clockSource);
           if (session.cursor) setCursor(session.cursor);
@@ -346,6 +356,18 @@ const useSessionContextState = (): SessionContextState => {
             setRecentFiles(session.recentFiles);
           } else if (!Array.isArray(session.recentFiles)) {
             setRecentFiles(DEFAULT_SESSION?.recentFiles || []);
+          }
+          if (session.lazySheep) {
+            setLazySheep(session.lazySheep);
+
+            maybeRequestIdleCallback(async () => {
+              const { spawnSheep } = await import("utils/spawnSheep");
+
+              window.setTimeout(
+                () => spawnSheep(true),
+                MILLISECONDS_IN_MINUTE * 60
+              );
+            });
           }
         } catch (error) {
           if ((error as ApiError)?.code === "ENOENT") {

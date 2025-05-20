@@ -87,7 +87,7 @@ export const aliases: Record<string, string[]> = {
   move: ["mv"],
   neofetch: ["systeminfo"],
   python: ["py", "python3"],
-  qjs: ["node", "quickjs"],
+  qjs: ["eval", "node", "quickjs"],
   rd: ["rmdir"],
   ren: ["rename"],
   sheep: ["esheep"],
@@ -98,6 +98,7 @@ export const aliases: Record<string, string[]> = {
   ver: ["version"],
   wapm: ["wasmer", "wax"],
   weather: ["wttr"],
+  whoami: ["logname"],
   wsl: ["linux"],
 };
 

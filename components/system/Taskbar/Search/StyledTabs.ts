@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 const StyledTabs = styled.ol`
-  border-bottom: 1px solid hsla(0, 0%, 13%, 40%);
+  border-bottom: 1px solid hsl(0 0% 13% / 40%);
   color: #fbf1c7;
   display: flex;
   font-size: 12px;
@@ -11,11 +11,11 @@ const StyledTabs = styled.ol`
   position: absolute;
 
   li {
-    color: rgb(213, 196, 161);
+    color: rgb(213 196 161);
     padding: 15px 13px 14px;
 
     &.active {
-      border-bottom: 4px solid rgb(66, 123, 88);
+      border-bottom: 4px solid rgb(66 123 88);
       color: #fbf1c7;
     }
 

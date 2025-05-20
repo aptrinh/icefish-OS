@@ -41,8 +41,9 @@ export type IconPositions = Record<string, IconPosition>;
 export type SessionData = {
   aiEnabled: boolean;
   clockSource: ClockSource;
-  cursor: string;
+  cursor: string | undefined;
   iconPositions: IconPositions;
+  lazySheep?: boolean;
   recentFiles: RecentFiles;
   runHistory: string[];
   sortOrders: SortOrders;
@@ -60,7 +61,7 @@ export type SessionContextState = SessionData & {
   sessionLoaded: boolean;
   setAiEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   setClockSource: React.Dispatch<React.SetStateAction<ClockSource>>;
-  setCursor: React.Dispatch<React.SetStateAction<string>>;
+  setCursor: React.Dispatch<React.SetStateAction<string | undefined>>;
   setForegroundId: React.Dispatch<React.SetStateAction<string>>;
   setHaltSession: React.Dispatch<React.SetStateAction<boolean>>;
   setIconPositions: React.Dispatch<React.SetStateAction<IconPositions>>;

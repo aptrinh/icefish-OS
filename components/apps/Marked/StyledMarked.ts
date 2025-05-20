@@ -130,7 +130,7 @@ const StyledMarked = styled.div`
     }
 
     code:not([class]) {
-      background-color: rgba(29, 32, 33, 5%);
+      background-color: rgb(29 32 33 / 5%);
       border-radius: 3px;
       font-size: 85%;
       margin: 0;

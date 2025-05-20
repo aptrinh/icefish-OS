@@ -6,8 +6,8 @@ import { THIN_SCROLLBAR_WIDTH } from "utils/constants";
 const StyledDetails = styled.div`
   ${ScrollBars(THIN_SCROLLBAR_WIDTH, -2, -1)}
   ${ThinScrollBars}
-  background-color: rgba(29, 32, 33, 95%);
-  border: 8px solid rgba(40, 40, 40, 95%);
+  background-color: rgb(29 32 33 / 95%);
+  border: 8px solid rgb(40 40 40 / 95%);
   border-bottom: none;
   box-sizing: content-box;
   display: flex;
@@ -63,7 +63,7 @@ const StyledDetails = styled.div`
 
   table {
     border-collapse: collapse;
-    border-top: 2px solid rgb(146, 131, 116);
+    border-top: 2px solid rgb(146 131 116);
     display: grid;
     font-size: 12px;
     gap: 10px;
@@ -82,7 +82,7 @@ const StyledDetails = styled.div`
     }
 
     td {
-      color: rgb(235, 219, 178);
+      color: rgb(235 219 178);
       padding-right: 5px;
       word-break: break-all;
     }
@@ -99,7 +99,7 @@ const StyledDetails = styled.div`
   }
 
   ol {
-    border-top: 2px solid rgb(146, 131, 116);
+    border-top: 2px solid rgb(146 131 116);
     margin-bottom: 7px;
     margin-top: 15px;
     padding: 10px 0;
@@ -122,7 +122,7 @@ const StyledDetails = styled.div`
       }
 
       &:hover {
-        background-color: rgb(50, 48, 47);
+        background-color: rgb(50 48 47);
       }
     }
   }
@@ -147,7 +147,7 @@ const StyledDetails = styled.div`
     }
 
     &:hover {
-      background-color: rgba(251, 241, 199, 20%);
+      background-color: rgb(251 241 199 / 20%);
     }
   }
 `;

@@ -19,8 +19,8 @@ const StyledProperties = styled.div`
   padding: 0 ${rightPadding}px 0 ${leftPadding}px;
 
   table.general {
-    background-color: rgb(249, 245, 215);
-    border: 1px solid rgb(235, 219, 178);
+    background-color: rgb(249 245 215);
+    border: 1px solid rgb(235 219 178);
     height: calc(100% - 36px - 28px);
     padding-top: 14px;
     position: relative;
@@ -68,14 +68,14 @@ const StyledProperties = styled.div`
         width: calc(100% - 70px);
 
         &.spacer {
-          border-bottom: 1px solid rgb(242, 229, 188);
+          border-bottom: 1px solid rgb(242 229 188);
           display: block;
           max-width: unset;
           width: 100%;
         }
 
         input {
-          border: 1px solid rgb(124, 111, 100);
+          border: 1px solid rgb(124 111 100);
           font-size: 11px;
           height: 23px;
           padding: 3px;
@@ -99,7 +99,7 @@ const StyledProperties = styled.div`
 
       button {
         background-color: #fbf1c7;
-        border: 1px solid rgb(235, 219, 178);
+        border: 1px solid rgb(235 219 178);
         border-bottom-width: 0;
         display: flex;
         font-size: 11.5px;
@@ -112,8 +112,8 @@ const StyledProperties = styled.div`
         z-index: 2;
 
         &.inactive {
-          background-color: rgb(240, 240, 240);
-          border-bottom: 1px solid rgb(217, 217, 217);
+          background-color: rgb(240 240 240);
+          border-bottom: 1px solid rgb(217 217 217);
           height: 19px;
           left: -1px;
           position: relative;
@@ -125,7 +125,7 @@ const StyledProperties = styled.div`
           }
 
           &:hover {
-            background-color: rgb(216, 234, 249);
+            background-color: rgb(216 234 249);
           }
         }
       }

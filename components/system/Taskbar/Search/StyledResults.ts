@@ -15,14 +15,14 @@ const StyledResults = styled.div`
   .list {
     ${ScrollBars(THIN_SCROLLBAR_WIDTH, -2, -1)}
     ${ThinScrollBars}
-    background-color: rgba(40, 40, 40, 95%);
+    background-color: rgb(40 40 40 / 95%);
     overflow-y: auto;
     scrollbar-gutter: auto;
     width: 100%;
 
     li {
       &.active-item {
-        background-color: rgba(69, 133, 136, 75%);
+        background-color: rgb(69 133 136 / 75%);
       }
 
       position: relative;
@@ -117,26 +117,26 @@ const StyledResults = styled.div`
       }
 
       &:hover {
-        background-color: rgba(102, 92, 84, 95%);
+        background-color: rgb(102 92 84 / 95%);
 
         div.select {
-          background-color: rgba(60, 56, 54, 95%);
-          border-left: 1px solid rgba(40, 40, 40, 95%);
+          background-color: rgb(60 56 54 / 95%);
+          border-left: 1px solid rgb(40 40 40 / 95%);
         }
 
         figure {
           &:not(:hover) {
-            background-color: rgba(60, 56, 54, 95%);
+            background-color: rgb(60 56 54 / 95%);
           }
         }
 
         &.active-item {
-          background-color: rgba(7, 102, 120, 95%);
+          background-color: rgb(7 102 120 / 95%);
         }
       }
 
       div.select:hover {
-        background-color: rgba(102, 92, 84, 95%);
+        background-color: rgb(102 92 84 / 95%);
       }
     }
   }

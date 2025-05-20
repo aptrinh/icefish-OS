@@ -52,11 +52,6 @@ export const bookmarks: Bookmark[] = [
     url: "https://skins.webamp.org/",
   },
   {
-    icon: "/System/Icons/Favicons/win96.webp",
-    name: "Windows 96",
-    url: "https://windows96.net/",
-  },
-  {
     icon: "/System/Icons/Favicons/aos.webp",
     name: "AaronOS",
     url: "https://aaronos.dev/",
@@ -64,8 +59,6 @@ export const bookmarks: Bookmark[] = [
 ];
 
 export const HOME_PAGE = "https://www.google.com/webhp?igu=1";
-
-export const LOCAL_HOST = new Set(["127.0.0.1", "localhost"]);
 
 export const NOT_FOUND =
   '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN"><html><head><title>404 Not Found</title><style>h1{display:inline;}</style></head><body><h1>Not Found</h1><p>The requested URL was not found on this server.</p></body></html>';
@@ -85,7 +78,6 @@ export const PROXIES: Record<
   ((url: string) => Promise<string> | string) | undefined
 > = {
   ALL_ORIGINS: (url) => `https://api.allorigins.win/raw?url=${url}`,
-  CHAINFLARE: (url) => `https://x.xxlxx.co/?url=${url}`,
   CORS: undefined,
   WAYBACK_MACHINE: async (url) => {
     try {

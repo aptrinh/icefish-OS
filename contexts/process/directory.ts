@@ -60,7 +60,10 @@ const directory: Processes = {
       width: 545,
     },
     icon: "/System/Icons/eruda.webp",
-    libs: ["/Program Files/Eruda/eruda.js"],
+    libs: [
+      "/Program Files/Eruda/eruda.js",
+      "/Program Files/Eruda/eruda-monitor.js",
+    ],
     singleton: true,
     title: "DevTools",
   },
@@ -261,6 +264,16 @@ const directory: Processes = {
     singleton: true,
     title: "Run",
   },
+  ScreenSaver: {
+    Component: dynamic(() => import("components/system/Dialogs/ScreenSaver")),
+    allowResizing: false,
+    dialogProcess: true,
+    hasWindow: false,
+    hideTaskbarEntry: true,
+    icon: "/System/Icons/screensaver.webp",
+    singleton: true,
+    title: "Screen Saver",
+  },
   SpaceCadet: {
     Component: dynamic(() => import("components/apps/SpaceCadet")),
     backgroundColor: "#282828",
@@ -287,6 +300,7 @@ const directory: Processes = {
   },
   Terminal: {
     Component: dynamic(() => import("components/apps/Terminal")),
+    backgroundBlur: "8px",
     backgroundColor: "rgba(29, 32, 33, 0.5)",
     defaultSize: {
       height: 374,

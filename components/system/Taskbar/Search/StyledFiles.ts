@@ -10,8 +10,8 @@ const StyledFiles = styled.figure`
     padding-top: 9px;
 
     li {
-      background-color: rgba(60, 56, 54, 85%);
-      border: 1px solid rgba(80, 73, 69, 85%);
+      background-color: rgb(60 56 54 / 85%);
+      border: 1px solid rgb(80 73 69 / 85%);
       border-radius: 15px;
       display: flex;
       padding: 4px 10px;
@@ -41,7 +41,7 @@ const StyledFiles = styled.figure`
       }
 
       &:hover {
-        background-color: rgba(80, 73, 69, 85%);
+        background-color: rgb(80 73 69 / 85%);
       }
     }
   }

@@ -21,7 +21,7 @@ const StyledFileEntry = styled.li`
     }
 
     svg {
-      fill: rgb(213, 196, 161);
+      fill: rgb(213 196 161);
       height: 8px;
       margin-left: auto;
       margin-right: 8px;
@@ -56,14 +56,14 @@ const StyledFileEntry = styled.li`
 
     @media (pointer: fine) {
       &:hover {
-        background-color: hsla(0, 0%, 35%, 70%);
+        background-color: hsl(0 0% 35% / 70%);
       }
     }
 
     @media (pointer: coarse) {
       &:active {
-        background-color: hsla(20, 5.3%, 22.4%, 70%);
-        border: 1px solid hsla(22, 7.4%, 29.2%, 70%);
+        background-color: hsl(20 5.3% 22.4% / 70%);
+        border: 1px solid hsl(22 7.4% 29.2% / 70%);
       }
     }
   }

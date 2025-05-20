@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 const StyledSearch = styled.div`
-  border: 1px solid rgb(80, 73, 69);
+  border: 1px solid rgb(80 73 69);
   display: flex;
   height: ${({ theme }) => theme.sizes.fileExplorer.navInputHeight}px;
   margin: 6px 12px 6px 0;
@@ -17,7 +17,7 @@ const StyledSearch = styled.div`
 
   input {
     appearance: none;
-    background-color: rgb(29, 32, 33);
+    background-color: rgb(29 32 33);
     color: #fbf1c7;
     font-family: ${({ theme }) => theme.formats.systemFont};
     font-size: 12px;
@@ -45,12 +45,12 @@ const StyledSearch = styled.div`
 
   input:placeholder-shown ~ svg {
     display: block;
-    fill: rgb(102, 92, 84);
+    fill: rgb(102 92 84);
     height: 12px;
     pointer-events: none;
     position: absolute;
     right: 6px;
-    stroke: rgb(102, 92, 84);
+    stroke: rgb(102 92 84);
     stroke-width: 1;
     top: 5px;
     width: 12px;
