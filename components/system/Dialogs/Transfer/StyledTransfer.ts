@@ -22,14 +22,14 @@ const StyledTransfer = styled.div`
     padding: 0 22px;
 
     progress {
-      border: 1px solid rgb(168, 153, 132);
+      border: 1px solid rgb(168 153 132);
       height: 15px;
       overflow: hidden;
       position: relative;
       width: 100%;
 
       &::-webkit-progress-bar {
-        background: rgb(235, 219, 178);
+        background: rgb(235 219 178);
       }
 
       &::-webkit-progress-value {
@@ -75,9 +75,9 @@ const StyledTransfer = styled.div`
   h1 {
     background: linear-gradient(
       to right,
-      rgb(235, 219, 178),
-      rgb(131, 165, 152),
-      rgb(7, 102, 120)
+      rgb(235 219 178),
+      rgb(131 165 152),
+      rgb(7 102 120)
     );
     display: flex;
     font-size: 15px;
@@ -98,8 +98,8 @@ const StyledTransfer = styled.div`
   }
 
   nav {
-    background-color: rgb(235, 219, 178);
-    border-top: 1px solid rgb(213, 196, 161);
+    background-color: rgb(235 219 178);
+    border-top: 1px solid rgb(213 196 161);
     bottom: 0;
     box-sizing: content-box;
     display: flex;

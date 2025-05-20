@@ -19,7 +19,6 @@ import {
   desktopEntryIsHidden,
   desktopEntryIsVisible,
   desktopIsVisible,
-  didCaptureConsoleLogs,
   disableWallpaper,
   filterMenuItems,
   loadApp,
@@ -27,9 +26,9 @@ import {
   selectArea,
 } from "e2e/functions";
 
-test.beforeEach(captureConsoleLogs);
+test.beforeEach(captureConsoleLogs());
 test.beforeEach(disableWallpaper);
-test.beforeEach(loadApp);
+test.beforeEach(loadApp());
 test.beforeEach(desktopIsVisible);
 
 test("has file entry", desktopEntriesAreVisible);
@@ -160,5 +159,3 @@ test.describe("has keyboard shortcuts", () => {
     await appIsOpen(/^DevTools$/, page);
   });
 });
-
-test.afterEach(didCaptureConsoleLogs);

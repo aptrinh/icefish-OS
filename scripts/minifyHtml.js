@@ -45,7 +45,9 @@ const getCommitHash = () => {
   if (!commit) {
     commit =
       process.env.npm_package_gitHead?.slice(0, COMMIT_HASH_LENGTH - 1) ||
-      new Date().toISOString().slice(0, 10);
+      new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 10);
   }
 
   return commit;
@@ -100,7 +102,13 @@ readdirSync(OUT_PATH).forEach(async (entry) => {
     let minifiedHtml = await minify(html.toString(), HTML_MINIFIER_CONFIG);
 
     CODE_REPLACE_FUNCTIONS.forEach((codeFunction) => {
-      minifiedHtml = codeFunction(minifiedHtml);
+      const changedCode = codeFunction(minifiedHtml);
+
+      if (minifiedHtml === changedCode) {
+        throw new Error("Code replacement failed!");
+      }
+
+      minifiedHtml = changedCode;
     });
 
     const repoUrl = getRepoUrl();

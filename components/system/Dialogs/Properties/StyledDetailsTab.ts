@@ -4,7 +4,7 @@ import { DEFAULT_SCROLLBAR_WIDTH } from "utils/constants";
 
 const StyledDetailsTab = styled.div`
   background-color: #fbf1c7;
-  border: 1px solid rgb(213, 196, 161);
+  border: 1px solid rgb(213 196 161);
   height: calc(100% - 64px);
   padding: 12px 13px;
   position: relative;
@@ -12,7 +12,7 @@ const StyledDetailsTab = styled.div`
 
   table {
     ${ScrollBars(DEFAULT_SCROLLBAR_WIDTH, 0, 0, "light")};
-    border: 1px solid rgb(124, 111, 100);
+    border: 1px solid rgb(124 111 100);
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -78,14 +78,14 @@ const StyledDetailsTab = styled.div`
         }
 
         &.header {
-          color: rgb(7, 102, 120);
+          color: rgb(7 102 120);
           display: inline-table;
           margin-top: 4px;
           padding-left: 12px;
           padding-right: 10px;
 
           &:hover {
-            background-color: rgba(0, 140, 255, 10%);
+            background-color: rgb(0 140 255 / 10%);
           }
 
           &:first-child {
@@ -97,7 +97,7 @@ const StyledDetailsTab = styled.div`
             width: 100%;
 
             &::before {
-              background-color: rgb(69, 133, 136);
+              background-color: rgb(69 133 136);
               content: "";
               display: block;
               height: 1px;

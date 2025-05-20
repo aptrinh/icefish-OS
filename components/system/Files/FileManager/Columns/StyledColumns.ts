@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 const StyledColumns = styled.span`
-  background-color: rgb(32, 32, 32);
+  background-color: rgb(32 32 32);
   display: block;
   margin-bottom: 6px;
   margin-right: ${({ theme }) => theme.sizes.fileManager.detailsStartPadding}px;
@@ -12,10 +12,10 @@ const StyledColumns = styled.span`
 
   ol {
     display: flex;
-    height: ${({ theme }) => theme.sizes.fileManager.columnHeight};
+    height: ${({ theme }) => theme.sizes.fileManager.columnHeight}px;
 
     li {
-      color: rgb(222, 222, 222);
+      color: rgb(222 222 222);
       display: flex;
       font-size: 12px;
       padding-left: 6px;
@@ -23,7 +23,7 @@ const StyledColumns = styled.span`
       position: relative;
 
       > svg {
-        fill: rgb(149, 149, 149);
+        fill: rgb(149 149 149);
         left: calc(50% - 4px);
         position: absolute;
         top: 0;
@@ -44,9 +44,9 @@ const StyledColumns = styled.span`
       }
 
       .resize {
-        border-left: 1px solid rgb(99, 99, 99);
+        border-left: 1px solid rgb(99 99 99);
         cursor: col-resize;
-        height: 25px;
+        height: ${({ theme }) => theme.sizes.fileManager.columnHeight}px;
         padding-left: ${({ theme }) =>
           theme.sizes.fileManager.columnResizeWidth}px;
         position: absolute;
@@ -55,7 +55,7 @@ const StyledColumns = styled.span`
       }
 
       &:hover {
-        background-color: rgb(67, 67, 67);
+        background-color: rgb(67 67 67);
 
         .resize {
           border-left: none;
@@ -63,7 +63,7 @@ const StyledColumns = styled.span`
       }
 
       &:active {
-        background-color: rgb(131, 131, 131);
+        background-color: rgb(131 131 131);
       }
 
       &:first-child {

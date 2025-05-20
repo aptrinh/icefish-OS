@@ -63,12 +63,12 @@ const StyledSections = styled.div<StyledSectionsProps>`
   }
 
   figure.card {
-    background-color: rgba(50, 48, 47, 60%);
+    background-color: rgb(50 48 47 / 60%);
     border-radius: 5px;
     padding: 8px 12px;
 
     &:hover {
-      box-shadow: 0 3px 6px rgba(0, 0, 0, 40%);
+      box-shadow: 0 3px 6px rgb(0 0 0 / 40%);
     }
 
     > figcaption {
@@ -90,7 +90,7 @@ const StyledSections = styled.div<StyledSectionsProps>`
         text-align: left;
 
         img {
-          background-color: rgba(60, 56, 54, 85%);
+          background-color: rgb(60 56 54 / 85%);
           border-radius: 5px;
           margin-bottom: 4px;
           min-height: 80px;
@@ -100,7 +100,7 @@ const StyledSections = styled.div<StyledSectionsProps>`
           user-select: all;
 
           &:hover {
-            background-color: rgba(7, 102, 120, 85%);
+            background-color: rgb(7 102 120 / 85%);
           }
         }
 

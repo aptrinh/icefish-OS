@@ -13,7 +13,7 @@ const StyledResultsHeader = styled.figcaption`
   }
 
   &:hover {
-    background-color: rgba(60, 56, 54, 95%);
+    background-color: rgb(60 56 54 / 95%);
   }
 `;
 

@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { SUPPORTED_ICON_PIXEL_RATIOS } from "utils/constants";
 import {
@@ -17,6 +17,8 @@ export type IconProps = {
   $moving?: boolean;
   displaySize?: number;
   imgSize: number;
+  singleSrc?: boolean;
+  src?: string;
 };
 
 type StyledIconProps = Pick<IconProps, "$eager" | "$moving"> & {
@@ -51,8 +53,15 @@ const StyledIcon = styled.img.attrs<StyledIconProps>(
 
 const Icon: FCWithRef<
   HTMLImageElement,
-  IconProps & React.ImgHTMLAttributes<HTMLImageElement>
-> = ({ displaySize = 0, imgSize = 0, ref, src = "", ...componentProps }) => {
+  IconProps & Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src">
+> = ({
+  displaySize = 0,
+  imgSize = 0,
+  ref,
+  singleSrc = false,
+  src = "",
+  ...componentProps
+}) => {
   const [loaded, setLoaded] = useState(false);
   const isDynamic = isDynamicIcon(src);
   const imgSrc = useMemo(
@@ -74,6 +83,29 @@ const Icon: FCWithRef<
     };
   }, [displaySize, imgSize]);
   const [failedUrls, setFailedUrls] = useState<string[]>([]);
+  const onError: React.ReactEventHandler<HTMLImageElement> = useCallback(
+    ({ target }) => {
+      const { currentSrc = "" } = (target as HTMLImageElement) || {};
+
+      try {
+        const { pathname } = new URL(currentSrc);
+
+        if (pathname && !failedUrls.includes(pathname)) {
+          setFailedUrls((currentFailedUrls) => [
+            ...currentFailedUrls,
+            pathname,
+          ]);
+        }
+      } catch {
+        // Ignore failure to log failed url
+      }
+    },
+    [failedUrls]
+  );
+  const onLoad: React.ReactEventHandler<HTMLImageElement> = useCallback(
+    () => setLoaded(true),
+    []
+  );
 
   useEffect(
     () => () => {
@@ -82,44 +114,10 @@ const Icon: FCWithRef<
     [loaded, src]
   );
 
-  const RenderedIcon = (
-    <StyledIcon
-      ref={ref}
-      $loaded={loaded}
-      onError={({ target }) => {
-        const { currentSrc = "" } = (target as HTMLImageElement) || {};
-
-        try {
-          const { pathname } = new URL(currentSrc);
-
-          if (pathname && !failedUrls.includes(pathname)) {
-            setFailedUrls((currentFailedUrls) => [
-              ...currentFailedUrls,
-              pathname,
-            ]);
-          }
-        } catch {
-          // Ignore failure to log failed url
-        }
-      }}
-      onLoad={() => setLoaded(true)}
-      src={isDynamic ? imageSrc(imgSrc, imgSize, 1, srcExt) : src || undefined}
-      srcSet={
-        isDynamic
-          ? imageSrcs(imgSrc, imgSize, srcExt, failedUrls) ||
-            (failedUrls.length === 0
-              ? ""
-              : createFallbackSrcSet(imgSrc, failedUrls))
-          : undefined
-      }
-      {...componentProps}
-      {...dimensionProps}
-    />
-  );
-
   return (
     <picture>
-      {isDynamic &&
+      {!singleSrc &&
+        isDynamic &&
         SUPPORTED_ICON_PIXEL_RATIOS.map((ratio) => {
           const srcSet = imageSrc(imgSrc, imgSize, ratio, srcExt);
           const mediaRatio = ratio - 0.99;
@@ -145,7 +143,25 @@ const Icon: FCWithRef<
             />
           );
         })}
-      {RenderedIcon}
+      <StyledIcon
+        ref={ref}
+        $loaded={loaded}
+        onError={onError}
+        onLoad={onLoad}
+        src={
+          isDynamic ? imageSrc(imgSrc, imgSize, 1, srcExt) : src || undefined
+        }
+        srcSet={
+          !singleSrc && isDynamic
+            ? imageSrcs(imgSrc, imgSize, srcExt, failedUrls) ||
+              (failedUrls.length === 0
+                ? ""
+                : createFallbackSrcSet(imgSrc, failedUrls))
+            : undefined
+        }
+        {...componentProps}
+        {...dimensionProps}
+      />
     </picture>
   );
 };

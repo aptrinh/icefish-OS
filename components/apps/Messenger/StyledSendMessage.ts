@@ -22,7 +22,7 @@ const StyledSendMessage = styled.div`
 
     &:disabled {
       &::placeholder {
-        color: rgba(146, 131, 116, 75%);
+        color: rgb(146 131 116 / 75%);
       }
     }
   }
@@ -39,7 +39,7 @@ const StyledSendMessage = styled.div`
     }
 
     &:hover {
-      fill: rgb(131, 165, 152, 75%);
+      fill: rgb(131 165 152 / 75%);
     }
   }
 

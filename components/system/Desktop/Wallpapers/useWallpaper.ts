@@ -62,9 +62,7 @@ const useWallpaper = (
   );
   const vantaWireframe = wallpaperImage === "VANTA WIREFRAME";
   const wallpaperWorker = useWorker<void>(
-    WALLPAPER_WORKERS[wallpaperName],
-    undefined,
-    vantaWireframe ? "Wireframe" : ""
+    sessionLoaded ? WALLPAPER_WORKERS[wallpaperName] : undefined
   );
   const wallpaperTimerRef = useRef(0);
   const failedOffscreenContext = useRef(false);

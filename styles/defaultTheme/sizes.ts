@@ -11,9 +11,10 @@ const sizes = {
   },
   fileEntry: {
     fontSize: "12px",
+    iconPadding: "2px",
     iconSize: "48px",
-    maxIconTextDisplayWidth: 72,
-    maxListTextDisplayWidth: 102,
+    maxIconTextDisplayWidth: 70,
+    maxListTextDisplayWidth: 100,
     renamePadding: 5,
     renameWidth: 75,
   },
@@ -25,7 +26,7 @@ const sizes = {
   },
   fileManager: {
     columnGap: "1px",
-    columnHeight: "25px",
+    columnHeight: 25,
     columnMinWidth: 70,
     columnResizeWidth: 7,
     detailsEndPadding: 16,
@@ -86,6 +87,7 @@ const sizes = {
   window: {
     cascadeOffset: 26,
     outline: "1px",
+    textTopPadding: 14,
   },
 };
 

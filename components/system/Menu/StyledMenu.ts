@@ -12,12 +12,12 @@ const StyledMenu = styled(motion.nav).attrs<StyledMenuProps>(({ $x, $y }) => ({
     transform: `translate(${$x}px, ${$y}px)`,
   },
 }))<StyledMenuProps>`
-  background-color: rgb(40, 40, 40);
-  border: 1px solid rgb(168, 153, 132);
+  background-color: rgb(40 40 40);
+  border: 1px solid rgb(168 153 132);
   box-shadow:
-    1px 1px 1px hsla(0, 0%, 20%, 70%),
-    2px 2px 2px hsla(0, 0%, 10%, 70%);
-  color: rgb(251, 241, 199);
+    1px 1px 1px hsl(0 0% 20% / 70%),
+    2px 2px 2px hsl(0 0% 10% / 70%);
+  color: rgb(251 241 199);
   contain: layout;
   font-size: 12px;
   max-height: fit-content;
@@ -32,12 +32,12 @@ const StyledMenu = styled(motion.nav).attrs<StyledMenuProps>(({ $x, $y }) => ({
     pointer-events: all;
 
     li.disabled {
-      color: rgb(102, 92, 84);
+      color: rgb(102 92 84);
       pointer-events: none;
     }
 
     hr {
-      background-color: rgb(124, 111, 100);
+      background-color: rgb(124 111 100);
       height: 1px;
       margin: 3px 8px;
     }
@@ -48,7 +48,7 @@ const StyledMenu = styled(motion.nav).attrs<StyledMenuProps>(({ $x, $y }) => ({
 
       &:hover,
       &.active {
-        background-color: rgb(60, 56, 54);
+        background-color: rgb(60 56 54);
       }
 
       figcaption {

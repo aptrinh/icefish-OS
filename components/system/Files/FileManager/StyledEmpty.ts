@@ -1,6 +1,10 @@
 import styled from "styled-components";
 
-const StyledEmpty = styled.div`
+type StyledEmptyProps = {
+  $hasColumns?: boolean;
+};
+
+const StyledEmpty = styled.div<StyledEmptyProps>`
   position: absolute;
   width: 100%;
 
@@ -13,7 +17,11 @@ const StyledEmpty = styled.div`
     justify-content: center;
     letter-spacing: 0.3px;
     mix-blend-mode: difference;
-    padding-top: 14px;
+    padding-top: ${({ $hasColumns, theme }) =>
+      $hasColumns
+        ? theme.sizes.window.textTopPadding +
+          theme.sizes.fileManager.columnHeight
+        : theme.sizes.window.textTopPadding}px;
   }
 `;
 

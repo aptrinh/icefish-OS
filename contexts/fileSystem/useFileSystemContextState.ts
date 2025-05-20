@@ -18,8 +18,12 @@ import {
   removeInvalidFilenameCharacters,
 } from "components/system/Files/FileManager/functions";
 import { type NewPath } from "components/system/Files/FileManager/useFolder";
-import { getFileSystemHandles } from "contexts/fileSystem/core";
-import { isMountedFolder } from "contexts/fileSystem/functions";
+import {
+  getFileSystemHandles,
+  hasIndexedDB,
+  isMountedFolder,
+  KEYVAL_DB,
+} from "contexts/fileSystem/core";
 import useAsyncFs, {
   type AsyncFS,
   type EmscriptenFS,
@@ -355,14 +359,20 @@ const useFileSystemContextState = (): FileSystemContextState => {
                       relativePathComponents[relativePathComponents.length - 1];
                   }
 
-                  updateFolder(
-                    join(mappedPath, ...relativePathComponents.slice(0, -1)),
-                    newFile,
-                    oldFile
-                  );
+                  if (newFile || oldFile) {
+                    updateFolder(
+                      join(mappedPath, ...relativePathComponents.slice(0, -1)),
+                      newFile,
+                      oldFile
+                    );
+                  }
                 });
 
-                observer.observe(handle, { recursive: true });
+                try {
+                  observer.observe(handle, { recursive: true });
+                } catch {
+                  observer = undefined;
+                }
               }
 
               import("contexts/fileSystem/functions").then(
@@ -609,25 +619,27 @@ const useFileSystemContextState = (): FileSystemContextState => {
 
         let mappedOntoDesktop = false;
 
-        await Promise.all(
-          Object.entries(await getFileSystemHandles()).map(
-            async ([handleDirectory, handle]) => {
-              if (!(await exists(handleDirectory))) {
-                try {
-                  const mapDirectory = SYSTEM_DIRECTORIES.has(handleDirectory)
-                    ? handleDirectory
-                    : dirname(handleDirectory);
+        if (await hasIndexedDB(KEYVAL_DB)) {
+          await Promise.all(
+            Object.entries(await getFileSystemHandles()).map(
+              async ([handleDirectory, handle]) => {
+                if (!(await exists(handleDirectory))) {
+                  try {
+                    const mapDirectory = SYSTEM_DIRECTORIES.has(handleDirectory)
+                      ? handleDirectory
+                      : dirname(handleDirectory);
 
-                  await mapFs(mapDirectory, handle);
+                    await mapFs(mapDirectory, handle);
 
-                  if (mapDirectory === DESKTOP_PATH) mappedOntoDesktop = true;
-                } catch {
-                  // Ignore failure
+                    if (mapDirectory === DESKTOP_PATH) mappedOntoDesktop = true;
+                  } catch {
+                    // Ignore failure
+                  }
                 }
               }
-            }
-          )
-        );
+            )
+          );
+        }
 
         if (mappedOntoDesktop) updateFolder(DESKTOP_PATH);
       };
