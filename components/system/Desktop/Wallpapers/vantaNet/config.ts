@@ -20,9 +20,9 @@ export const config: VantaNetConfig = {
 
 export const disableControls = {
   gyroControls: false,
-  mouseControls: true,
+  mouseControls: false,
   mouseEase: true,
-  touchControls: true,
+  touchControls: false,
 };
 
 export const libs = [
