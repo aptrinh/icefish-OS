@@ -107,29 +107,33 @@ export const cleanBufferOnSkinLoad = (
     if (url) cleanUpBufferUrl(url);
   });
 
-export const closeEqualizer = (webamp: WebampCI): void =>
+export const closeEqualizer = (webamp: WebampCI): void => {
   webamp.store.dispatch({
     type: "CLOSE_WINDOW",
     windowId: "equalizer",
   });
+};
 
-export const enabledMilkdrop = (webamp: WebampCI): void =>
+export const enabledMilkdrop = (webamp: WebampCI): void => {
   webamp.store.dispatch({
     open: false,
     type: "ENABLE_MILKDROP",
   });
+};
 
-export const setSkinData = (webamp: WebampCI, data: SkinData): void =>
+export const setSkinData = (webamp: WebampCI, data: SkinData): void => {
   webamp.store.dispatch({
     data,
     type: "SET_SKIN_DATA",
   });
+};
 
-const loadButterchurn = (webamp: WebampCI, butterchurn: unknown): void =>
+const loadButterchurn = (webamp: WebampCI, butterchurn: unknown): void => {
   webamp.store.dispatch({
     butterchurn,
     type: "GOT_BUTTERCHURN",
   });
+};
 
 const loadButterchurnPresets = (
   webamp: WebampCI,
@@ -298,7 +302,7 @@ export const parseTrack = async (
 
 export const createM3uPlaylist = (tracks: URLTrack[]): string => {
   const m3uPlaylist = tracks.map((track): string => {
-    const trackUrl = track.url ? `\n${track.url.toString()}` : "";
+    const trackUrl = track.url ? `\n${track.url}` : "";
     let title = track.defaultName;
 
     if (track.metaData?.artist) {

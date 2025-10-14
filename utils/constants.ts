@@ -167,11 +167,15 @@ export const MILLISECONDS_IN_SECOND = 1000;
 
 export const MILLISECONDS_IN_MINUTE = 60000;
 
+export const MILLISECONDS_IN_HOUR = 3600000;
+
 export const MILLISECONDS_IN_DAY = 86400000;
 
 export const ZIP_EXTENSIONS = new Set([".jsdos", ".pk3", ".wsz", ".zip"]);
 
 export const MOUNTABLE_EXTENSIONS = new Set([".iso", ...ZIP_EXTENSIONS]);
+
+export const MOUNTABLE_FS_TYPES = new Set(["FileSystemAccess", "HTTPRequest"]);
 
 export const SPREADSHEET_FORMATS = [
   ".csv",

@@ -71,12 +71,22 @@ export const REDUCED_MOTION_PERCENT = 0.1;
 
 export const WALLPAPER_MENU: WallpaperMenuItem[] = [
   {
+    id: "ART_INSTITUTE_OF_CHICAGO",
+    name: "Art Institute of Chicago",
+  },
+  {
+    hasAlt: false,
     id: "COASTAL_LANDSCAPE",
     name: "Coastal Landscape",
   },
   {
+    hasAlt: false,
     id: "HEXELLS",
     name: "Hexells",
+  },
+  {
+    id: "LOREM_PICSUM",
+    name: "Lorem Picsum",
   },
   {
     id: "MATRIX 2D",
@@ -89,13 +99,13 @@ export const WALLPAPER_MENU: WallpaperMenuItem[] = [
   {
     id: "APOD",
     name: "NASA APOD",
-    startsWith: true,
   },
   {
     id: "SLIDESHOW",
     name: "Picture Slideshow",
   },
   {
+    hasAlt: false,
     id: "STABLE_DIFFUSION",
     name: "Stable Diffusion (beta)",
     requiresWebGPU: true,

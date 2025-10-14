@@ -6,6 +6,7 @@ const bundleAnalyzer = process.env.npm_config_argv?.includes(
   "build:bundle-analyzer"
 );
 
+const path = require("path");
 const webpack = require("webpack");
 
 /**
@@ -27,9 +28,10 @@ const nextConfig = {
   devIndicators: {
     buildActivityPosition: "top-right",
   },
-//  output: "export",
+  //  output: "export",
   productionBrowserSourceMaps: false,
-  reactStrictMode: true,
+  reactProductionProfiling: false,
+  reactStrictMode: !isProduction,
   webpack: (config) => {
     config.plugins.push(
       new webpack.NormalModuleReplacementPlugin(/node:/, (resource) => {
@@ -49,6 +51,12 @@ const nextConfig = {
       new webpack.DefinePlugin({
         __REACT_DEVTOOLS_GLOBAL_HOOK__: "({ isDisabled: true })",
       })
+    );
+
+    config.resolve.alias = config.resolve.alias || {};
+    config.resolve.alias["MediaInfoModule.wasm"] = path.resolve(
+      __dirname,
+      "public/System/mediainfo.js/MediaInfoModule.wasm"
     );
 
     config.resolve.fallback = config.resolve.fallback || {};

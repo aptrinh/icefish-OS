@@ -35,6 +35,7 @@
       - speak.js ([1](https://github.com/kripken/speak.js), [2](https://github.com/mtttmpl/speak-js))
     - [Transformers.js](https://xenova.github.io/transformers.js/)
 - System Tray Icons
+- Crypto Wallet Explorer ([MainNet](https://mainnet.base.org))
 - Email App
   - Open SMTP Server
   - [openpgpjs](https://github.com/openpgpjs/openpgpjs)
@@ -286,8 +287,10 @@
   - [MMoA](https://metmuseum.github.io/)
   - [AIoC](https://api.artic.edu/docs/)
 - [spacekit](https://github.com/typpo/spacekit)
+- [twigl](https://github.com/doxas/twigl)
 - [UVCanvas](https://github.com/latentcat/uvcanvas)
 - [Google Easter Eggs](https://elgoog.im/)
+- [Aurelia](https://github.com/holtsetio/aurelia/)
 - [Shan, Shui](https://github.com/LingDong-/shan-shui-inf) (Procedural Chinese Landscape)
 - [gpu-io](https://github.com/amandaghassaei/gpu-io) (Physics Simulations)
 - [Retro Synthwave](https://github.com/victorqribeiro/retroSynthwave)
@@ -317,7 +320,7 @@
   - [Xash3D-Emscripten](https://github.com/btarg/Xash3D-Emscripten)
 - Minesweeper ([1](https://github.com/ziebelje/minesweeper), [2](https://github.com/ShizukuIchi/minesweeper))
 - [S.U.R.F.](https://github.com/jackbuehner/MicrosoftEdge-S.U.R.F.)
-- Game of Life ([1](https://github.com/rustwasm/wasm_game_of_life), [2](https://github.com/skeeto/webgl-game-of-life/))
+- Game of Life ([1](https://github.com/copy/life), [2](https://github.com/rustwasm/wasm_game_of_life), [3](https://github.com/skeeto/webgl-game-of-life/))
 - Solitaire ([1](https://github.com/rjanjic/js-solitaire), [2](https://github.com/1j01/98/tree/master/programs/js-solitaire))
 - [Heroes of Might and Magic II](https://github.com/ihhub/fheroes2)
 - [Doom 3](https://wasm.continuation-labs.com/d3demo/)
