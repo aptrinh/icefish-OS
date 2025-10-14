@@ -1,5 +1,5 @@
 import { basename, dirname, join } from "path";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import StyledPaint from "components/apps/Paint/StyledPaint";
 import { type ComponentProcessProps } from "components/system/Apps/RenderComponent";
 import StyledLoading from "components/system/Apps/StyledLoading";
@@ -160,7 +160,10 @@ const Paint: FC<ComponentProcessProps> = ({ id }) => {
             prependFileToTitle("Untitled");
           }
         };
-        jsPaintInstance.open_from_file(new File([buffer], url), url);
+        jsPaintInstance.open_from_file(
+          new File([buffer as BlobPart], url),
+          url
+        );
         prependFileToTitle(basename(url));
       });
     }
@@ -183,4 +186,4 @@ const Paint: FC<ComponentProcessProps> = ({ id }) => {
   );
 };
 
-export default Paint;
+export default memo(Paint);

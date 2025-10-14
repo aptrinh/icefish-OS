@@ -1,11 +1,10 @@
 import { useTheme } from "styled-components";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { type Variant } from "motion/react";
 import FileManager from "components/system/Files/FileManager";
 import Sidebar from "components/system/StartMenu/Sidebar";
 import StyledStartMenu from "components/system/StartMenu/StyledStartMenu";
 import { updateInputValueOnReactElement } from "components/system/Taskbar/Search/functions";
-import StyledBackground from "components/system/Taskbar/StyledBackground";
 import {
   SEARCH_BUTTON_TITLE,
   START_BUTTON_TITLE,
@@ -105,7 +104,6 @@ const StartMenu: FC<StartMenuProps> = ({ toggleStartMenu }) => {
       {...startMenuTransition}
       {...FOCUSABLE_ELEMENT}
     >
-      <StyledBackground $height={height} />
       <Sidebar height={height} />
       <FileManager
         url={START_MENU_PATH}
@@ -121,4 +119,4 @@ const StartMenu: FC<StartMenuProps> = ({ toggleStartMenu }) => {
   );
 };
 
-export default StartMenu;
+export default memo(StartMenu);

@@ -2,6 +2,7 @@ import { type StableDiffusionConfig } from "components/apps/StableDiffusion/type
 import { type Size } from "components/system/Window/RndWindow/useResizable";
 import type MatrixConfig from "components/system/Desktop/Wallpapers/Matrix/config";
 import { type VantaNetConfig } from "components/system/Desktop/Wallpapers/vantaNet/types";
+import { type WallpaperFit } from "contexts/session/types";
 
 declare global {
   interface Window {
@@ -30,10 +31,31 @@ export type OffscreenRenderProps = {
 };
 
 export type WallpaperMenuItem = {
+  hasAlt?: boolean;
   id: string;
   name?: string;
   requiresWebGPU?: boolean;
-  startsWith?: boolean;
 };
 
 export type WallpaperMessage = { message: string; type: string };
+
+export type WallpaperData = {
+  fallbackBackground: string;
+  newWallpaperFit: WallpaperFit;
+  updateTimeout: number;
+  wallpaperUrl: string;
+};
+
+export type WallpaperHandler = (props: {
+  isAlt: boolean;
+}) => Promise<WallpaperData> | WallpaperData;
+
+export type ApodResponse = {
+  date: string;
+  hdurl?: string;
+  url?: string;
+};
+
+export type ArtInstituteOfChicagoResponse = {
+  data: { image_id: string }[];
+};

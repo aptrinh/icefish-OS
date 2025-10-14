@@ -1,6 +1,7 @@
 import { basename, dirname, extname, join } from "path";
 import { useTheme } from "styled-components";
 import {
+  memo,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -180,6 +181,7 @@ const FileEntry: FC<FileEntryProps> = ({
   const [showInFileManager, setShowInFileManager] = useState(false);
   const { formats, sizes } = useTheme();
   const listView = useMemo(() => view === "list", [view]);
+  const detailsView = useMemo(() => view === "details", [view]);
   const fileName = useMemo(() => basename(path), [path]);
   const urlExt = useMemo(
     () => (isDirectory ? "" : getExtension(url)),
@@ -305,8 +307,8 @@ const FileEntry: FC<FileEntryProps> = ({
     urlExt,
   ]);
   const showColumn = useMemo(
-    () => isVisible && columns !== undefined && view === "details",
-    [columns, isVisible, view]
+    () => isVisible && columns !== undefined && detailsView,
+    [columns, detailsView, isVisible]
   );
   const columnWidth = useMemo(
     () =>
@@ -343,7 +345,12 @@ const FileEntry: FC<FileEntryProps> = ({
   );
 
   useEffect(() => {
-    if (!isLoadingFileManager && isVisible && !isIconCached.current) {
+    if (
+      !isLoadingFileManager &&
+      isVisible &&
+      !isIconCached.current &&
+      !detailsView
+    ) {
       const updateIcon = async (): Promise<void> => {
         if (icon.startsWith("blob:") || icon.startsWith("data:")) {
           if (icon.startsWith("data:image/jpeg;base64,")) return;
@@ -503,6 +510,7 @@ const FileEntry: FC<FileEntryProps> = ({
       getIconAbortController.current.abort();
     }
   }, [
+    detailsView,
     exists,
     fs,
     getIcon,
@@ -672,4 +680,4 @@ const FileEntry: FC<FileEntryProps> = ({
   );
 };
 
-export default FileEntry;
+export default memo(FileEntry);

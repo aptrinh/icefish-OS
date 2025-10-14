@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import StyledScreenSaver from "components/system/Dialogs/ScreenSaver/StyledScreenSaver";
 import { type ComponentProcessProps } from "components/system/Apps/RenderComponent";
 import { useFileSystem } from "contexts/fileSystem";
 import { useProcesses } from "contexts/process";
 import { TRANSITIONS_IN_MILLISECONDS } from "utils/constants";
-import { haltEvent } from "utils/functions";
 
 const ONE_TIME_PASSIVE_CAPTURE_EVENT = {
   capture: true,
@@ -41,18 +40,13 @@ const ScreenSaver: FC<ComponentProcessProps> = ({ id }) => {
       }),
     [readFile, url]
   );
-  const closeScreenSaver = useCallback(
-    (event?: Event) => {
-      if (event) haltEvent(event);
+  const closeScreenSaver = useCallback(() => {
+    if (iframeRef.current) {
+      iframeRef.current.style.display = "none";
+    }
 
-      if (iframeRef.current) {
-        iframeRef.current.style.display = "none";
-      }
-
-      close(id);
-    },
-    [close, id]
-  );
+    close(id);
+  }, [close, id]);
 
   useEffect(() => {
     if (url && !srcDoc[url]) loadScreenSaver();
@@ -91,4 +85,4 @@ const ScreenSaver: FC<ComponentProcessProps> = ({ id }) => {
   );
 };
 
-export default ScreenSaver;
+export default memo(ScreenSaver);

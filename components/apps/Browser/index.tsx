@@ -1,5 +1,5 @@
 import { basename, join, resolve } from "path";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useProxyMenu, {
   type ProxyState,
 } from "components/apps/Browser/useProxyMenu";
@@ -415,7 +415,7 @@ const Browser: FC<ComponentProcessProps> = ({ id }) => {
           </Button>
           <Button
             disabled={!canGoForward}
-            onClick={() => changeHistory(+1)}
+            onClick={() => changeHistory(1)}
             {...label("Click to go forward")}
             {...forwardMenu}
           >
@@ -499,4 +499,4 @@ const Browser: FC<ComponentProcessProps> = ({ id }) => {
   );
 };
 
-export default Browser;
+export default memo(Browser);

@@ -1,5 +1,5 @@
 import { basename, dirname } from "path";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AddressBar from "components/apps/FileExplorer/AddressBar";
 import {
   Back,
@@ -105,7 +105,7 @@ const Navigation: FC<NavigationProps> = ({
       </Button>
       <Button
         disabled={!canGoForward}
-        onClick={() => moveHistory(+1)}
+        onClick={() => moveHistory(1)}
         {...label(
           canGoForward
             ? `Forward to ${basename(history[position + 1]) || ROOT_NAME}`
@@ -158,4 +158,4 @@ const Navigation: FC<NavigationProps> = ({
   );
 };
 
-export default Navigation;
+export default memo(Navigation);

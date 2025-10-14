@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { Search as SearchIcon } from "components/apps/FileExplorer/NavigationIcons";
 import { NO_RESULTS, type TabName } from "components/system/Taskbar/Search";
 import ResultEntry from "components/system/Taskbar/Search/ResultEntry";
@@ -57,7 +57,7 @@ const ResultSection: FC<ResultsSectionProps> = ({
         ) : (
           results.map(({ ref }) => (
             <ResultEntry
-              key={ref}
+              key={`${title}-${ref}`}
               active={activeItem === ref}
               details={details}
               openApp={openApp}
@@ -72,4 +72,4 @@ const ResultSection: FC<ResultsSectionProps> = ({
   );
 };
 
-export default ResultSection;
+export default memo(ResultSection);
