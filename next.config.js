@@ -25,23 +25,10 @@ const nextConfig = {
       transpileTemplateLiterals: true,
     },
   },
-  devIndicators: false,
-  headers: async () => [
-    {
-      source: "/:path*",
-      headers: [
-        {
-          key: "Cross-Origin-Opener-Policy",
-          value: "same-origin",
-        },
-        {
-          key: "Cross-Origin-Embedder-Policy",
-          value: "credentialless",
-        },
-      ],
-    },
-  ],
-  output: "export",
+  devIndicators: {
+    buildActivityPosition: "top-right",
+  },
+  //  output: "export",
   productionBrowserSourceMaps: false,
   reactProductionProfiling: false,
   reactStrictMode: !isProduction,
