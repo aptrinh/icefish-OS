@@ -25,6 +25,7 @@ export const EXCLUDED_CONSOLE_LOGS = (
     "Cannot update a component (`Unknown`) while rendering a different component",
     "browserContext.",
     "Web browser doesn't support Web Audio API",
+    "Slow execution detected",
   ];
 
   if (browserName === "webkit") {
@@ -184,6 +185,10 @@ export const MEDIA_RECORDER_HEADLESS_NOT_SUPPORTED_BROWSERS = new Set([
   "webkit",
 ]);
 export const PYODIDE_HEADLESS_NOT_SUPPORTED_BROWSERS = new Set(["firefox"]);
+export const WEBGPU_HEADLESS_NOT_SUPPORTED_BROWSERS = new Set([
+  "firefox",
+  "webkit",
+]);
 
 export const FILE_MENU_ITEMS = [
   /^Open$/,
@@ -220,8 +225,9 @@ export const DESKTOP_MENU_ITEMS: MenuItems = {
 
 export const CLOCK_MENU_ITEMS = [/^Local time$/, /^Server time$/];
 
-export const TASKBAR_ENTRIES_MENU_ITEMS = [
+export const TASKBAR_ENTRIES_MENU_ITEMS = (hasWebGpu: boolean): RegExp[] => [
   /^Enter full screen$/,
+  ...(hasWebGpu ? [/^Show Talos button$/] : []),
   /^Show the desktop$/,
 ];
 

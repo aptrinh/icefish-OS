@@ -20,6 +20,7 @@ import {
   MAX_RES_ICON_OVERRIDE,
   MILLISECONDS_IN_SECOND,
   ONE_TIME_PASSIVE_EVENT,
+  PACKAGE_DATA,
   PREVENT_SCROLL,
   SHORTCUT_EXTENSION,
   SUPPORTED_ICON_SIZES,
@@ -29,7 +30,7 @@ import {
 } from "utils/constants";
 
 export const bufferToBlob = (buffer: Buffer, type?: string): Blob =>
-  new Blob([buffer], type ? { type } : undefined);
+  new Blob([buffer as BlobPart], type ? { type } : undefined);
 
 export const bufferToUrl = (buffer: Buffer, mimeType?: string): string =>
   mimeType === "image/svg+xml"
@@ -763,9 +764,7 @@ const formatNumber = (number: number, roundUpNumber = false): string => {
           minimumSignificantDigits: number < 1 ? 2 : 3,
         }
   ).format(
-    roundUpNumber
-      ? Math.ceil(Number(number))
-      : Number(number.toFixed(4).slice(0, -2))
+    roundUpNumber ? Math.ceil(number) : Number(number.toFixed(4).slice(0, -2))
   );
 
   if (roundUpNumber) return formattedNumber;
@@ -1027,9 +1026,11 @@ const supportsModulePreload = (): boolean => {
   if (HAS_MODULE_PRELOAD_SUPPORT) return true;
 
   try {
-    HAS_MODULE_PRELOAD_SUPPORT = Boolean(
-      document.createElement("link").relList?.supports?.("modulepreload")
-    );
+    const { relList } = document.createElement("link");
+
+    HAS_MODULE_PRELOAD_SUPPORT = relList
+      ? relList.supports("modulepreload")
+      : false;
   } catch {
     // Ignore failure to check for modulepreload support
   }
@@ -1153,15 +1154,16 @@ export const getGifJs = async (): Promise<GIFWithWorkers> => {
 
   return new GIFInstance({
     quality: 10,
-    workerScript: "Program Files/gif.js/gif.worker.js",
+    workerScript: "System/gif.js/gif.worker.js",
     workers: Math.max(Math.floor(navigator.hardwareConcurrency / 4), 1),
   }) as GIFWithWorkers;
 };
 
 export const jsonFetch = async (
-  url: string
+  url: string,
+  options?: RequestInit
 ): Promise<Record<string, unknown>> => {
-  const response = await fetch(url, HIGH_PRIORITY_REQUEST);
+  const response = await fetch(url, { ...HIGH_PRIORITY_REQUEST, ...options });
   const json = (await response.json()) as Record<string, unknown>;
 
   return json || {};
@@ -1219,6 +1221,14 @@ export const maybeRequestIdleCallback = (
   ) {
     requestIdleCallback(callback);
   } else {
-    callback();
+    setTimeout(callback, 0);
   }
 };
+
+export const displayVersion = (): string => {
+  const { __NEXT_DATA__: { buildId } = {} } = window;
+
+  return `${PACKAGE_DATA.version}${buildId ? `-${buildId}` : ""}`;
+};
+
+export const isDev = (): boolean => "__nextDevClientId" in window;
