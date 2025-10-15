@@ -1,10 +1,10 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: Convert SVG files to PNG (144x144) with transparent background if no PNG equivalent exists
+:: Convert SVG files to PNG (144x144) if no PNG equivalent exists
 for %%s in (*.svg) do (
     if not exist "%%~ns.png" (
-        magick -background none "%%s" -resize 144x144 "%%~ns.png"
+        magick "%%s" -resize 144x144 "%%~ns.png"
     )
 )
 
