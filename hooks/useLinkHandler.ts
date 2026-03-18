@@ -8,7 +8,7 @@ import { useSession } from "contexts/session";
 
 type LinkHandler = (
   event: Event,
-  url: string,
+  rawUrl: string,
   pathName: string,
   title?: string
 ) => void;
@@ -17,9 +17,11 @@ export const useLinkHandler = (): LinkHandler => {
   const { open } = useProcesses();
   const { updateRecentFiles } = useSession();
 
-  return useCallback(
-    (event: Event, url: string, pathName: string, title?: string) => {
+  return useCallback<LinkHandler>(
+    (event, rawUrl, pathName, title) => {
       haltEvent(event);
+
+      const url = rawUrl.replace(/^http:/i, "https:");
 
       if (isYouTubeUrl(url)) open("VideoPlayer", { url });
       else if (isCorsUrl(url)) open("Browser", { initialTitle: title, url });
@@ -47,7 +49,7 @@ export const useLinkHandler = (): LinkHandler => {
           if (pathUrl) updateRecentFiles(pathUrl, defaultProcess);
         }
       } else {
-        window.open(url, "_blank", "noopener, noreferrer");
+        window.open(rawUrl, "_blank", "noopener, noreferrer");
       }
     },
     [open, updateRecentFiles]
