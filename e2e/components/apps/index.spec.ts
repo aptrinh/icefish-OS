@@ -19,7 +19,6 @@ test.describe("can open app", () => {
   );
 
   for (const [app, { hasWindow, hideTaskbarEntry }] of apps) {
-    // eslint-disable-next-line playwright/valid-title
     test(app, async ({ page }) => {
       test.fail(
         !hasWindow && Boolean(hideTaskbarEntry),

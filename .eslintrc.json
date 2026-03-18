@@ -127,6 +127,7 @@
     "no-undef-init": "error",
     "no-underscore-dangle": "off",
     "no-unsafe-optional-chaining": "error",
+    "playwright/consistent-spacing-between-blocks": "off",
     "playwright/expect-expect": "off",
     "playwright/no-conditional-in-test": "off",
     "playwright/no-skipped-test": "off",

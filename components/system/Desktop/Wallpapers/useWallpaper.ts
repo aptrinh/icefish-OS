@@ -36,6 +36,7 @@ import {
   cleanUpBufferUrl,
   createOffscreenCanvas,
   getExtension,
+  getSearchParam,
   isBeforeBg,
   parseBgPosition,
   preloadImage,
@@ -80,7 +81,13 @@ const useWallpaper = (
   );
   const loadWallpaper = useCallback(
     async (keepCanvas?: boolean) => {
-      if (!desktopRef.current || window.DEBUG_DISABLE_WALLPAPER) return;
+      if (
+        !desktopRef.current ||
+        window.DEBUG_DISABLE_WALLPAPER ||
+        getSearchParam("disableWallpaper") === "true"
+      ) {
+        return;
+      }
 
       let config: WallpaperConfig | undefined;
       const { matches: prefersReducedMotion } = window.matchMedia(
@@ -327,7 +334,10 @@ const useWallpaper = (
         wallpaperUrl = newWallpaper.wallpaperUrl || "";
         fallbackBackground = newWallpaper.fallbackBackground || "";
         newWallpaperFit = newWallpaper.newWallpaperFit || newWallpaperFit;
-        setTimeout(loadFileWallpaper, newWallpaper.updateTimeout);
+        wallpaperTimerRef.current = window.setTimeout(
+          loadFileWallpaper,
+          newWallpaper.updateTimeout
+        );
       }
     } else if (await exists(wallpaperImage)) {
       const { decodeImageToBuffer } = await import("utils/imageDecoder");
