@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/consistent-type-imports */
+
 type FC<T = Record<string, unknown>> = (
   props: React.PropsWithChildren<T>
 ) => React.JSX.Element | null;
@@ -23,4 +25,21 @@ declare module "Burn-My-Windows/resources/shaders/*.glsl" {
 declare module "Burn-My-Windows/schemas/*.xml" {
   const content: string;
   export default content;
+}
+
+declare module "stockfish/bin/*.js" {
+  const content: string;
+  export default content;
+}
+
+declare module "stockfish/bin/*.wasm" {
+  const content: string;
+  export default content;
+}
+
+declare module "@chrisoakman/chessboard2/dist/chessboard2.min.mjs" {
+  export const Chessboard2: (
+    target: HTMLElement,
+    config?: import("components/apps/Chess/types").Chessboard2Config
+  ) => import("components/apps/Chess/types").Chessboard2Instance;
 }

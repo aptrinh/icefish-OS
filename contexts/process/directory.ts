@@ -32,6 +32,17 @@ const directory: Processes = {
     icon: "/System/Icons/chromium.webp",
     title: "Browser",
   },
+  Chess: {
+    Component: dynamic(() => import("components/apps/Chess")),
+    backgroundColor: "#312E2B",
+    defaultSize: {
+      height: 567,
+      width: 420,
+    },
+    icon: "/System/Icons/chess.webp",
+    libs: ["/Program Files/Chess/chessboard2.min.css"],
+    title: "Chess",
+  },
   ClassiCube: {
     Component: dynamic(() => import("components/apps/ClassiCube")),
     backgroundColor: "#201E20",

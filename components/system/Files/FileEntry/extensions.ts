@@ -19,6 +19,11 @@ const types = {
     process: ["Webamp"],
     type: "Audio Playlist File",
   },
+  ChessGame: {
+    icon: "chess",
+    process: ["Chess", ...TEXT_EDITORS],
+    type: "Portable Game Notation File",
+  },
   DiscImage: {
     icon: "image",
     process: ["V86"],
@@ -135,6 +140,7 @@ const extensions: Record<string, Extension> = {
   ".mp3": types.Music,
   ".otf": types.Font,
   ".pdf": types.PdfDocument,
+  ".pgn": types.ChessGame,
   ".pls": types.AudioPlaylist,
   ".py": types.PythonFile,
   ".rtf": types.WysiwygHtmlDocument,

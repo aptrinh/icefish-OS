@@ -79,11 +79,18 @@ const nextConfig = {
     config.module.parser.javascript = config.module.parser.javascript || {};
     config.module.parser.javascript.dynamicImportFetchPriority = "high";
 
-    config.module.rules.push({
-      include: path.resolve(__dirname, "node_modules/Burn-My-Windows"),
-      test: /\.(frag|glsl|xml)$/,
-      type: "asset/source",
-    });
+    config.module.rules.push(
+      {
+        include: path.resolve(__dirname, "node_modules/Burn-My-Windows"),
+        test: /\.(frag|glsl|xml)$/,
+        type: "asset/source",
+      },
+      {
+        include: path.resolve(__dirname, "node_modules/stockfish/bin"),
+        test: /\.(js|wasm)$/,
+        type: "asset/resource",
+      }
+    );
 
     return config;
   },

@@ -300,13 +300,6 @@
 
 ## Games
 
-- Chess
-  - Stockfish.js ([1](https://github.com/nmrugg/stockfish.js), [2](https://github.com/lichess-org/stockfish.js), [WASM](https://github.com/lichess-org/stockfish.wasm))
-  - Boards
-    - [chessboard.js](https://chessboardjs.com/)
-    - [chessboard3.js](https://jtiscione.github.io/chessboard3js/index.html)
-  - [HTML5 2D/3D chess](https://sourceforge.net/projects/htmlchess/)
-  - [chess.js](https://github.com/jhlywa/chess.js/)
 - Doom (WASM) ([1](https://github.com/cloudflare/doom-wasm), [2](https://github.com/lazarv/wasm-doom))
 - [Jazz Jackrabbit 2](https://deat.tk/jazz2/)
 - [Wipeout](https://github.com/phoboslab/wipeout-rewrite)
