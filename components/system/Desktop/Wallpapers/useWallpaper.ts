@@ -354,12 +354,18 @@ const useWallpaper = (
     } else if (await exists(wallpaperImage)) {
       resetWallpaper();
 
-      let fileData = await readFile(wallpaperImage);
       const imgExt = getExtension(wallpaperImage);
+      const isNative = NATIVE_IMAGE_FORMATS.has(imgExt);
+      const [initialData, decoder] = await Promise.all([
+        readFile(wallpaperImage),
+        isNative
+          ? Promise.resolve()
+          : import("utils/imageDecoder").then((m) => m.decodeImageToBuffer),
+      ]);
+      let fileData = initialData;
 
-      if (!NATIVE_IMAGE_FORMATS.has(imgExt)) {
-        const { decodeImageToBuffer } = await import("utils/imageDecoder");
-        const decodedData = await decodeImageToBuffer(imgExt, fileData);
+      if (!isNative && decoder) {
+        const decodedData = await decoder(imgExt, fileData);
 
         if (decodedData) fileData = decodedData;
       }

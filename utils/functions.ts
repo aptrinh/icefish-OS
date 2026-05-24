@@ -74,7 +74,13 @@ export const getDpi = (): number => {
   return dpi;
 };
 
+const extensionUrlMap = new Map<string, string>();
+
 export const getExtension = (url: string): string => {
+  const cachedExtension = extensionUrlMap.get(url);
+
+  if (cachedExtension) return cachedExtension;
+
   let ext = extname(url);
 
   if (!ext) {
@@ -83,7 +89,19 @@ export const getExtension = (url: string): string => {
     if (baseName.startsWith(".")) ext = baseName;
   }
 
-  return ext.toLowerCase();
+  const lcExt = ext.toLowerCase();
+
+  extensionUrlMap.set(url, lcExt);
+
+  return lcExt;
+};
+
+export const writeTextToClipboard = (text: string): void => {
+  try {
+    navigator.clipboard?.writeText(text);
+  } catch {
+    // Ignore failure to write to clipboard
+  }
 };
 
 export const sendMouseClick = (target: HTMLElement, count = 1): void => {
@@ -125,12 +143,19 @@ export const toggleShowDesktop = (
   }
 };
 
+const imageSrcMap = new Map<string, string>();
+
 export const imageSrc = (
   imagePath: string,
   size: number,
   ratio: number,
   extension: string
 ): string => {
+  const cacheKey = `${imagePath}-${size}-${ratio}-${extension}`;
+  const cachedSrc = imageSrcMap.get(cacheKey);
+
+  if (cachedSrc) return cachedSrc;
+
   const imageName = basename(imagePath, extension);
   const [expectedSize, maxIconSize] = MAX_RES_ICON_OVERRIDE[imageName] || [];
   const ratioSize = size * ratio;
@@ -138,14 +163,17 @@ export const imageSrc = (
     MAX_ICON_SIZE,
     expectedSize === size ? Math.min(maxIconSize, ratioSize) : ratioSize
   );
-
-  return `${join(
+  const src = `${join(
     dirname(imagePath),
     `${ICON_RES_MAP[imageSize] || imageSize}x${
       ICON_RES_MAP[imageSize] || imageSize
     }`,
     `${imageName}${extension}`
   ).replace(/\\/g, "/")}${ratio > 1 ? ` ${ratio}x` : ""}`;
+
+  imageSrcMap.set(cacheKey, src);
+
+  return src;
 };
 
 export const imageSrcs = (
@@ -361,14 +389,18 @@ export const loadFiles = async (
           : loadScript(encodeURI(file), defer, force, asModule, contentWindow));
       }, Promise.resolve());
 
+type WindowWithHtmlToImage = Window & { htmlToImage?: typeof HtmlToImage };
+
 export const getHtmlToImage = async (): Promise<
   typeof HtmlToImage | undefined
 > => {
+  if ("htmlToImage" in window) {
+    return (window as unknown as WindowWithHtmlToImage).htmlToImage;
+  }
+
   await loadFiles(["/System/html-to-image/html-to-image.js"]);
 
-  const { htmlToImage } = window as unknown as Window & {
-    htmlToImage: typeof HtmlToImage;
-  };
+  const { htmlToImage } = window as unknown as WindowWithHtmlToImage;
 
   return htmlToImage;
 };
@@ -754,16 +786,23 @@ const bytesInMB = 1022976; // 1024 * 999
 const bytesInGB = 1047527424; // 1024 * 1024 * 999
 const bytesInTB = 1072668082176; // 1024 * 1024 * 1024 * 999
 
+const roundedNumberFormatter = new Intl.NumberFormat("en-US");
+const nonRoundedNumberFormatterMax = new Intl.NumberFormat("en-US", {
+  maximumSignificantDigits: 4,
+  minimumSignificantDigits: 3,
+});
+const nonRoundedNumberFormatterMaxDouble = new Intl.NumberFormat("en-US", {
+  maximumSignificantDigits: 2,
+  minimumSignificantDigits: 2,
+});
+
 const formatNumber = (number: number, roundUpNumber = false): string => {
-  const formattedNumber = new Intl.NumberFormat(
-    "en-US",
-    roundUpNumber
-      ? undefined
-      : {
-          maximumSignificantDigits: number < 1 ? 2 : 4,
-          minimumSignificantDigits: number < 1 ? 2 : 3,
-        }
-  ).format(
+  const numberFormatter = roundUpNumber
+    ? roundedNumberFormatter
+    : number < 1
+      ? nonRoundedNumberFormatterMaxDouble
+      : nonRoundedNumberFormatterMax;
+  const formattedNumber = numberFormatter.format(
     roundUpNumber ? Math.ceil(number) : Number(number.toFixed(4).slice(0, -2))
   );
 

@@ -50,7 +50,7 @@ const useClassiCube = ({
   const [contentWindow, setContentWindow] = useState<Window>();
 
   useEffect(() => {
-    setTimeout(() => {
+    const timeoutId = window.setTimeout(() => {
       let currentSize = size;
 
       if (!currentSize && componentWindow) {
@@ -67,6 +67,8 @@ const useClassiCube = ({
         contentWindow?.CCModule.OnResize?.();
       }
     }, TRANSITIONS_IN_MILLISECONDS.WINDOW);
+
+    return () => window.clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks-addons/no-unused-deps
   }, [
     componentWindow,
@@ -77,40 +79,46 @@ const useClassiCube = ({
   ]);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     if (loading) {
       const newContentWindow = getContentWindow?.();
 
-      if (!newContentWindow) return;
+      if (newContentWindow) {
+        const canvas = newContentWindow?.document.querySelector(
+          "canvas"
+        ) as HTMLCanvasElement;
 
-      const canvas = newContentWindow?.document.querySelector(
-        "canvas"
-      ) as HTMLCanvasElement;
+        canvas.addEventListener("contextmenu", haltEvent);
 
-      canvas.addEventListener("contextmenu", haltEvent);
+        newContentWindow.CCModule = {
+          arguments: ["Singleplayer"],
+          canvas,
+          postRun: [
+            () => {
+              setLoading(false);
+              setContentWindow(newContentWindow);
+              mountEmFs(newContentWindow.FS as EmscriptenFS, id);
+            },
+            () => {
+              const { width, height } = canvas.getBoundingClientRect() || {};
 
-      newContentWindow.CCModule = {
-        arguments: ["Singleplayer"],
-        canvas,
-        postRun: [
-          () => {
-            setLoading(false);
-            setContentWindow(newContentWindow);
-            mountEmFs(newContentWindow.FS as EmscriptenFS, id);
-          },
-          () => {
-            const { width, height } = canvas.getBoundingClientRect() || {};
+              canvas.width = width;
+              canvas.height = height;
+            },
+          ],
+          print: console.info,
+          setStatus: console.info,
+          windowElement: newContentWindow.document.body,
+        };
 
-            canvas.width = width;
-            canvas.height = height;
-          },
-        ],
-        print: console.info,
-        setStatus: console.info,
-        windowElement: newContentWindow.document.body,
-      };
+        loadFiles(libs, undefined, undefined, undefined, newContentWindow);
 
-      loadFiles(libs, undefined, undefined, undefined, newContentWindow);
+        cleanup = () => canvas.removeEventListener("contextmenu", haltEvent);
+      }
     }
+
+    return cleanup;
   }, [getContentWindow, id, libs, loading, mountEmFs, setLoading]);
 };
 

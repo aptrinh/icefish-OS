@@ -25,41 +25,57 @@ const useSpaceCadet = ({
   const [contentWindow, setContentWindow] = useState<Window>();
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     if (loading) {
       const newContentWindow = getContentWindow?.();
 
-      if (!newContentWindow) return;
+      if (newContentWindow) {
+        const canvas = newContentWindow?.document.querySelector(
+          "canvas"
+        ) as HTMLCanvasElement;
 
-      const canvas = newContentWindow?.document.querySelector(
-        "canvas"
-      ) as HTMLCanvasElement;
+        canvas.addEventListener("contextmenu", haltEvent);
 
-      canvas.addEventListener("contextmenu", haltEvent);
+        newContentWindow.Module = {
+          canvas,
+          postRun: () => {
+            setLoading(false);
+            setContentWindow(newContentWindow);
+            mountEmFs(newContentWindow.FS as EmscriptenFS, id);
+          },
+          windowElement: newContentWindow.document.body,
+        };
 
-      newContentWindow.Module = {
-        canvas,
-        postRun: () => {
-          setLoading(false);
-          setContentWindow(newContentWindow);
-          mountEmFs(newContentWindow.FS as EmscriptenFS, id);
-        },
-        windowElement: newContentWindow.document.body,
-      };
+        const { height, width } =
+          newContentWindow.document.body.getBoundingClientRect() || {};
+        let timeoutId: number | undefined;
 
-      const { height, width } =
-        newContentWindow.document.body.getBoundingClientRect() || {};
+        if (height && width) {
+          canvas.style.height = `${height}px`;
+          canvas.style.width = `${width}px`;
 
-      if (height && width) {
-        canvas.style.height = `${height}px`;
-        canvas.style.width = `${width}px`;
+          timeoutId = window.setTimeout(
+            () =>
+              loadFiles(
+                libs,
+                undefined,
+                undefined,
+                undefined,
+                newContentWindow
+              ),
+            TRANSITIONS_IN_MILLISECONDS.WINDOW
+          );
+        }
 
-        setTimeout(
-          () =>
-            loadFiles(libs, undefined, undefined, undefined, newContentWindow),
-          TRANSITIONS_IN_MILLISECONDS.WINDOW
-        );
+        cleanup = () => {
+          canvas.removeEventListener("contextmenu", haltEvent);
+          if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+        };
       }
     }
+
+    return cleanup;
   }, [getContentWindow, id, libs, loading, mountEmFs, setLoading]);
 
   useEffect(

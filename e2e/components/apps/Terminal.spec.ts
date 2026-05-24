@@ -203,6 +203,19 @@ test.describe("has file system access", () => {
       await terminalHasText({ page }, `/Users/Public/${testFile}`);
     });
 
+    test("new file after reload", async ({ page }) => {
+      const testFile = "persisted.txt";
+
+      await sendToTerminal({ page }, `touch ${testFile}`);
+
+      await page.reload();
+      await windowsAreVisible({ page });
+      await terminalHasRows({ page });
+
+      await sendToTerminal({ page }, `find ${testFile}`);
+      await terminalHasText({ page }, `/Users/Public/${testFile}`);
+    });
+
     test("folder", async ({ page }) => {
       await sendToTerminal({ page }, "find document");
       await terminalHasText(
@@ -242,7 +255,7 @@ test.describe("has commands", () => {
   });
 
   test("exit", async ({ page }) => {
-    await sendToTerminal({ page }, "exit");
+    await sendToTerminal({ page }, "exit", false);
     await windowIsHidden({ page });
   });
 
@@ -333,12 +346,12 @@ test.describe("has commands", () => {
 
     expect(pageLoaded).toBeFalsy();
 
-    await sendToTerminal({ page }, "shutdown");
+    await sendToTerminal({ page }, "shutdown", false);
     await expect(() => expect(pageLoaded).toBeTruthy()).toPass();
   });
 
   test("taskkill", async ({ page }) => {
-    await sendToTerminal({ page }, "taskkill Terminal");
+    await sendToTerminal({ page }, "taskkill Terminal", false);
     await windowIsHidden({ page });
   });
 
@@ -392,7 +405,7 @@ test.describe("has commands", () => {
 test.describe("has tab completion", () => {
   test("can see file/folder list", async ({ page }) => {
     await sendTextToTerminal({ page }, "d");
-    await sendTabToTerminal({ page });
+    await sendTabToTerminal({ page }, true);
 
     await terminalHasText({ page }, "Documents");
     await terminalHasText({ page }, ROOT_PUBLIC_TEST_FILE);
@@ -400,7 +413,7 @@ test.describe("has tab completion", () => {
 
   test("can complete folder name", async ({ page }) => {
     await sendTextToTerminal({ page }, "Vi");
-    await sendTabToTerminal({ page });
+    await sendTabToTerminal({ page }, true);
 
     await terminalHasText({ page }, "Videos", 1, true);
   });

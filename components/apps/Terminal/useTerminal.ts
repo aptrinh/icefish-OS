@@ -104,27 +104,38 @@ const useTerminal = ({
       setFitAddon(newFitAddon);
       setLocalEcho(newLocalEcho);
 
-      containerRef.current.addEventListener("contextmenu", (event) => {
+      const onContextMenu = (event: MouseEvent): void => {
         haltEvent(event);
 
         const textSelection = terminal.getSelection();
 
         if (textSelection) {
-          navigator.clipboard?.writeText(textSelection);
-          terminal.clearSelection();
+          try {
+            navigator.clipboard?.writeText(textSelection);
+            terminal.clearSelection();
+          } catch {
+            // Ignore failure to write to clipboard
+          }
         } else {
           readClipboardToTerminal(newLocalEcho);
         }
-      });
-      containerRef.current
-        ?.closest("section")
-        ?.addEventListener(
-          "focus",
-          () => terminal?.textarea?.focus(PREVENT_SCROLL),
-          { passive: true }
-        );
+      };
+      const onFocus = (): void => terminal?.textarea?.focus(PREVENT_SCROLL);
+      const containerElement = containerRef.current;
+      const sectionElement = containerElement.closest("section");
+
+      containerElement.addEventListener("contextmenu", onContextMenu);
+      sectionElement?.addEventListener("focus", onFocus, { passive: true });
 
       setLoading(false);
+
+      return () => {
+        if (terminal && closing) {
+          terminal.dispose();
+          containerElement.removeEventListener("contextmenu", onContextMenu);
+          sectionElement?.removeEventListener("focus", onFocus);
+        }
+      };
     }
 
     return () => {
@@ -173,10 +184,17 @@ const useTerminal = ({
       terminal.focus();
       autoFit();
 
-      readdir(cd.current).then((files) => autoComplete(files, localEcho));
+      autoComplete([], localEcho);
+      readdir(cd.current).then((files) => {
+        autoComplete(files, localEcho);
+        containerRef.current
+          ?.querySelector(".terminal")
+          ?.setAttribute("data-autocomplete-files", "true");
+      });
     }
   }, [
     autoFit,
+    containerRef,
     initialCommand,
     localEcho,
     processCommand,

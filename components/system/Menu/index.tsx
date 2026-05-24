@@ -113,6 +113,8 @@ const Menu: FC<MenuProps> = ({ subMenu }) => {
   }, [baseMenu, calculateOffset, subMenu, x, y]);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     if (items && !subMenu) {
       const focusedElement = document.activeElement;
 
@@ -145,10 +147,21 @@ const Menu: FC<MenuProps> = ({ subMenu }) => {
 
         focusedElement.addEventListener("click", menuUnfocused, options);
         focusedElement.addEventListener("blur", menuUnfocused, options);
+
+        cleanup = () => {
+          focusedElement.removeEventListener("click", menuUnfocused, {
+            capture: true,
+          });
+          focusedElement.removeEventListener("blur", menuUnfocused, {
+            capture: true,
+          });
+        };
       } else {
         menuRef.current?.focus(PREVENT_SCROLL);
       }
     }
+
+    return cleanup;
   }, [items, resetMenu, subMenu]);
 
   useEffect(() => {

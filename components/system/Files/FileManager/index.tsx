@@ -70,7 +70,7 @@ const FileManager: FC<FileManagerProps> = ({
   skipSorting,
   url,
 }) => {
-  const { views, setViews } = useSession();
+  const { foregroundId, views, setViews } = useSession();
   const view = useMemo(() => {
     if (isDesktop) return "icon";
     if (isStartMenu) return "list";
@@ -218,15 +218,22 @@ const FileManager: FC<FileManagerProps> = ({
       folderActions.resetFiles();
       setCurrentUrl(url);
       setPermission("denied");
+      focusedOnLoad.current = false;
     }
   }, [currentUrl, folderActions, url]);
 
   useEffect(() => {
-    if (!focusedOnLoad.current && !loading && !isDesktop && !isStartMenu) {
+    if (
+      !focusedOnLoad.current &&
+      !loading &&
+      !isDesktop &&
+      !isStartMenu &&
+      (!id || foregroundId === id)
+    ) {
       fileManagerRef.current?.focus(PREVENT_SCROLL);
       focusedOnLoad.current = true;
     }
-  }, [isDesktop, isStartMenu, loading]);
+  }, [foregroundId, id, isDesktop, isStartMenu, loading]);
 
   useEffect(() => {
     setColumns(isDetailsView ? DEFAULT_COLUMNS : undefined);

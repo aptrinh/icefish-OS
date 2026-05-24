@@ -25,7 +25,7 @@
   - Cut, Copy, Create shortcut, Delete, Rename
   - [Add file(s)](https://developer.mozilla.org/en-US/docs/Web/API/File/Using_files_from_web_applications), [Map directory](https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API)
   - Open with options/dialog, Open file/folder location, Open in new window, Open Terminal here
-  - Download, Add to archive, Extract here, Set as wallpaper, Convert audio/video/photo/spreadsheets, Properties (w/Details)
+  - Download, Add to archive, Extract here, Set as wallpaper, Set as mouse pointer, Convert audio/video/photo/spreadsheets, Properties (w/Details)
   - Sort by, New Folder, New Text Document
   - Screen Capture
 - Keyboard Shortcuts
@@ -80,12 +80,18 @@
 - Picture Slideshow
 - [Astronomy Picture of the Day](https://api.nasa.gov/#apod)
 - [Art Institute of Chicago](https://api.artic.edu/docs/)
+- [Metropolitan Museum of Art](https://metmuseum.github.io/)
 - [Lorem Picsum](https://picsum.photos/)
 - AI Generated Wallpapers [Stable Diffusion](https://stability.ai/stable-diffusion)
 - Custom screen saver file support
   - [3D FlowerBox](https://github.com/kevin-shannon/3D-FlowerBox)
   - [3D Maze](https://github.com/ibid-11962/Windows-95-3D-Maze-Screensaver)
   - [Pipes](https://github.com/1j01/pipes)
+
+### Run Dialog
+
+- Launch apps by alias or paths
+- Opens `ipfs:` & `nostr:` URIs
 
 ### URL
 
@@ -103,8 +109,8 @@
 ### Browser (**_.htm, .html_**)
 
 - Loads websites (_w/CORS support_)
-- Bookmark bar
-- Favicon support
+- Bookmark bar with favicon support
+- Proxy support (Wayback Machine & The Old Net)
 - Back/Forward & Reload
 - Google search via Address bar
 - IPFS protocol support
@@ -150,6 +156,10 @@
 - [Prettier](https://prettier.io/) formatting
   - json, js/ts, css/sass/less, html, markdown
 
+### [OpenType](https://github.com/opentypejs/opentype.js) (**_.otf, .ttf, .woff_**)
+
+- Font viewer
+
 ### [Paint](https://github.com/1j01/jspaint) (**_.bmp, .gif, .ico, .jpg, .png, .tiff, .webp,_**)
 
 - Create & edit images
@@ -191,6 +201,11 @@
 - [eSheep](https://adrianotiger.github.io/web-esheep/)
 - Activate from Start Menu or **_SHIFT+F10_**
 - Neofetch
+- [FFmpeg](https://github.com/ffmpegwasm/ffmpeg.wasm) & [ImageMagick](https://github.com/KnicKnic/WASM-ImageMagick) conversion
+
+### [TIC-80](https://tic80.com/) (**_.tic_**)
+
+- Runs "fantasy computer" games
 
 ### [TinyMCE](https://www.tiny.cloud/tinymce/) (**_.rtf, .whtml_**)
 
@@ -206,7 +221,7 @@
 
 ### [Video Player](https://videojs.com/)
 
-- [Supported Formats](https://developer.mozilla.org/en-US/docs/Web/Media/Formats/Video_codecs)
+- [Supported Formats](https://developer.mozilla.org/en-US/docs/Web/Media/Formats/Video_codecs) ([codecbox.js](https://github.com/duanyao/codecbox.js))
 - Plays [YouTube](https://github.com/videojs/videojs-youtube) videos/shortcuts
 - Keyboard Shortcuts (Volume, Seek, Scale, Fullscreen)
 
@@ -218,11 +233,16 @@
 ### [Webamp](https://webamp.org/) (**_.mp3, .wsz_**)
 
 - Winamp audio player
-- [Skin support](https://skins.webamp.org/)
+- [Skin support](https://skins.webamp.org/) (w/random skins via [Winamp Skin Museum](https://skins.webamp.org/))
 - Playlist & streaming support
 - Visualization support (["Milkdrop"](https://github.com/jberg/butterchurn))
 
 # Games 🎮
+
+### [Chess](https://github.com/jhlywa/chess.js) (**_.pgn_**)
+
+- Play against [stockfish.js](https://github.com/nmrugg/stockfish.js), a friend, or watch CPU vs CPU
+- Load PGN games w/move navigation
 
 ### [ClassiCube](https://www.classicube.net/)
 

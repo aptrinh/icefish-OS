@@ -194,12 +194,14 @@ const useFolderContextMenu = (
           !isFirefoxOrSafari &&
           (!currentMediaRecorder || currentMediaRecorder.state === "inactive")
         ) {
-          const { default: fixWebmDuration } = await import(
-            "fix-webm-duration"
-          );
+          const [{ default: fixWebmDuration }, capturedBuffer] =
+            await Promise.all([
+              import("fix-webm-duration"),
+              readFile(capturePath),
+            ]);
 
           fixWebmDuration(
-            bufferToBlob(await readFile(capturePath)),
+            bufferToBlob(capturedBuffer),
             Date.now() - startTime,
             async (capturedFile) => {
               await writeFile(

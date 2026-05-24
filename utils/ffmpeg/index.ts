@@ -6,18 +6,18 @@ import { fetchBlob } from "utils/functions";
 export const getFFmpeg = async (
   printLn: (message: string) => void = console.info
 ): Promise<FFmpeg> => {
-  const { FFmpeg: CreateFFmpeg } = await import("@ffmpeg/ffmpeg");
+  const [{ FFmpeg: CreateFFmpeg }, coreBlob, wasmBlob] = await Promise.all([
+    import("@ffmpeg/ffmpeg"),
+    fetchBlob("/System/ffmpeg/ffmpeg-core.js"),
+    fetchBlob("/System/ffmpeg/ffmpeg-core.wasm"),
+  ]);
   const ffmpeg = new CreateFFmpeg();
 
   ffmpeg.on("log", ({ message }) => printLn(message));
 
   await ffmpeg.load({
-    coreURL: URL.createObjectURL(
-      await fetchBlob("/System/ffmpeg/ffmpeg-core.js")
-    ),
-    wasmURL: URL.createObjectURL(
-      await fetchBlob("/System/ffmpeg/ffmpeg-core.wasm")
-    ),
+    coreURL: URL.createObjectURL(coreBlob),
+    wasmURL: URL.createObjectURL(wasmBlob),
   });
 
   return ffmpeg;

@@ -76,7 +76,10 @@ export const prettyPrint = async (
     }
   }
 
-  const prettier = await import("prettier/standalone");
+  const [prettier, parser] = await Promise.all([
+    import("prettier/standalone"),
+    getLanguageParser(lcLanguage),
+  ]);
 
-  return prettier.format(code, await getLanguageParser(lcLanguage));
+  return prettier.format(code, parser);
 };

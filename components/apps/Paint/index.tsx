@@ -70,17 +70,23 @@ const Paint: FC<ComponentProcessProps> = ({ id }) => {
   }, [prependFileToTitle]);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     if (foregroundId !== id) {
-      iframeRef.current?.contentWindow?.addEventListener(
-        "click",
-        () => setForegroundId(id),
-        ONE_TIME_PASSIVE_EVENT
-      );
+      const onClick = (): void => setForegroundId(id);
+      const contentWindow = iframeRef.current?.contentWindow;
+
+      contentWindow?.addEventListener("click", onClick, ONE_TIME_PASSIVE_EVENT);
+
+      cleanup = () => contentWindow?.removeEventListener("click", onClick);
     }
+
+    return cleanup;
   }, [foregroundId, id, setForegroundId]);
 
   useEffect(() => {
     const { contentWindow } = iframeRef.current || {};
+    let cleanup: (() => void) | undefined;
 
     if (loaded && contentWindow && !jsPaintInstance) {
       const jsPaint = contentWindow as unknown as JsPaint;
@@ -128,7 +134,14 @@ const Paint: FC<ComponentProcessProps> = ({ id }) => {
 
       contentWindow.addEventListener("dragover", onDragOver);
       contentWindow.addEventListener("drop", onDrop);
+
+      cleanup = () => {
+        contentWindow.removeEventListener("dragover", onDragOver);
+        contentWindow.removeEventListener("drop", onDrop);
+      };
     }
+
+    return cleanup;
   }, [
     closeWithTransition,
     createPath,
@@ -172,16 +185,18 @@ const Paint: FC<ComponentProcessProps> = ({ id }) => {
   return (
     <StyledPaint $loaded={loaded}>
       {!loaded && <StyledLoading className="loading" />}
-      <iframe
-        ref={iframeRef}
-        height="100%"
-        id={`jspaint-${id}`}
-        onLoad={() => setLoaded(true)}
-        src={paintSrc}
-        title={id}
-        width="100%"
-        {...IFRAME_CONFIG}
-      />
+      {paintSrc && (
+        <iframe
+          ref={iframeRef}
+          height="100%"
+          id={`jspaint-${id}`}
+          onLoad={() => setLoaded(true)}
+          src={paintSrc}
+          title={id}
+          width="100%"
+          {...IFRAME_CONFIG}
+        />
+      )}
     </StyledPaint>
   );
 };

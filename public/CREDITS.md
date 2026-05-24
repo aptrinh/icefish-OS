@@ -70,6 +70,8 @@ This project is greatly augmented by code from the open source community. Thank 
 ## App Libraries
 
 - [Boxedwine](https://github.com/danoon2/Boxedwine)
+- [chess.js](https://github.com/jhlywa/chess.js)
+- [chessboard2](https://chessboardjs.com/v2/)
 - [ClassiCube](https://github.com/UnknownShadow200/ClassiCube)
 - [DX-Ball](https://habr.com/en/post/147339/)
 - [emulatorjs](https://github.com/ethanaobrien/emulatorjs)
@@ -89,6 +91,7 @@ This project is greatly augmented by code from the open source community. Thank 
 - [quickjs-emscripten](https://github.com/justjake/quickjs-emscripten)
 - [Ruffle](https://github.com/ruffle-rs/ruffle)
 - [Space Cadet Pinball](https://github.com/alula/SpaceCadetPinball)
+- [stockfish.js](https://github.com/nmrugg/stockfish.js)
 - [t-rex-runner](https://github.com/wayou/t-rex-runner)
 - [TIC-80](https://tic80.com/)
 - [TinyMCE](https://github.com/tinymce/tinymce)

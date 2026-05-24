@@ -112,7 +112,11 @@ const useV86 = ({
       setEmulator({ [url]: undefined });
     }
 
-    const imageContents = url ? await readFile(url) : Buffer.from("");
+    const savePath = join(SAVE_PATH, `${basename(url)}${saveExtension}`);
+    const [imageContents, hasSavedState] = await Promise.all([
+      url ? readFile(url) : Promise.resolve(Buffer.from("")),
+      exists(savePath),
+    ]);
     const ext = getExtension(url);
     const isISO = ext === ".iso";
     const bufferUrl = bufferToUrl(imageContents);
@@ -125,16 +129,16 @@ const useV86 = ({
       },
     };
     const { deviceMemory = 0.25 } = navigator as NavigatorWithMemory;
+    const memBase = Math.min(deviceMemory || 0.25, 8);
     const v86StarterConfig: V86Config = {
       boot_order: isISO ? BOOT_CD_FD_HD : BOOT_FD_CD_HD,
-      memory_size: deviceMemory * 128 * 1024 * 1024,
+      memory_size: memBase * 128 * 1024 * 1024,
       screen_container: containerRef.current,
-      vga_memory_size: deviceMemory * 8 * 1024 * 1024,
+      vga_memory_size: memBase * 8 * 1024 * 1024,
       ...v86ImageConfig,
       ...config,
     };
-    const savePath = join(SAVE_PATH, `${basename(url)}${saveExtension}`);
-    const saveContents = (await exists(savePath))
+    const saveContents = hasSavedState
       ? bufferToUrl(await readFile(savePath))
       : undefined;
 

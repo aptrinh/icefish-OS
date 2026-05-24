@@ -49,29 +49,38 @@ const StatusBar: FC<StatusBarProps> = ({
   const statusBarRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const updateSelectedSize = async (): Promise<void> =>
-      setSelectedSize(
-        await selected.reduce(async (totalSize, file) => {
-          const currentSize = await totalSize;
-
-          if (currentSize === UNCALCULATED_SIZE) return UNCALCULATED_SIZE;
-
+    const updateSelectedSize = async (): Promise<void> => {
+      const fileSizes = await Promise.all(
+        selected.map(async (file) => {
           const path = join(directory, file);
 
           try {
             if (await exists(path)) {
-              return (await lstat(path)).isDirectory()
-                ? UNCALCULATED_SIZE
-                : (currentSize === UNKNOWN_SIZE ? 0 : currentSize) +
-                    (await stat(path)).size;
+              if ((await lstat(path)).isDirectory()) return UNCALCULATED_SIZE;
+
+              return (await stat(path)).size;
             }
           } catch {
             // Ignore errors getting file sizes
           }
 
-          return totalSize;
-        }, Promise.resolve(UNKNOWN_SIZE))
+          return UNKNOWN_SIZE;
+        })
       );
+
+      if (fileSizes.includes(UNCALCULATED_SIZE)) {
+        setSelectedSize(UNCALCULATED_SIZE);
+        return;
+      }
+
+      const validSizes = fileSizes.filter((size) => size !== UNKNOWN_SIZE);
+
+      setSelectedSize(
+        validSizes.length === 0
+          ? UNKNOWN_SIZE
+          : validSizes.reduce((total, size) => total + size, 0)
+      );
+    };
 
     updateSelectedSize();
   }, [directory, exists, lstat, selected, stat]);

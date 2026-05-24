@@ -72,8 +72,10 @@ const decodeHeic = async (image: Buffer): Promise<Buffer> => {
 };
 
 const aniToGif = async (aniBuffer: Buffer): Promise<Buffer> => {
-  const gif = await getGifJs();
-  const { parseAni } = await import("ani-cursor/dist/parser");
+  const [gif, { parseAni }] = await Promise.all([
+    getGifJs(),
+    import("ani-cursor/dist/parser"),
+  ]);
   let images: Uint8Array[] = [];
   let metadata: { iDispRate?: number } = {};
 

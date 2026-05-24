@@ -34,7 +34,7 @@ import {
 } from "components/apps/Messenger/types";
 import { type MenuItem } from "contexts/menu/useMenuContextState";
 import { MILLISECONDS_IN_DAY, MILLISECONDS_IN_SECOND } from "utils/constants";
-import { toSorted } from "utils/functions";
+import { toSorted, writeTextToClipboard } from "utils/functions";
 
 export const getRelayUrls = async (): Promise<string[]> => {
   if (window.nostr?.getRelays) {
@@ -209,20 +209,19 @@ export const copyKeyMenuItems = (
   nsecHex?: string
 ): MenuItem[] => [
   {
-    action: () => navigator.clipboard?.writeText(nip19.npubEncode(hexKey)),
+    action: () => writeTextToClipboard(nip19.npubEncode(hexKey)),
     label: "Copy npub address",
   },
   ...(nsecHex
     ? [
         {
-          action: () =>
-            navigator.clipboard?.writeText(nip19.nsecEncode(nsecHex)),
+          action: () => writeTextToClipboard(nip19.nsecEncode(nsecHex)),
           label: "Copy nsec address",
         },
       ]
     : [
         {
-          action: () => navigator.clipboard?.writeText(hexKey),
+          action: () => writeTextToClipboard(hexKey),
           label: "Copy hex address",
         },
       ]),

@@ -480,9 +480,13 @@ const AIChat: FC<AIChatProps> = ({ toggleAI }) => {
                   <button
                     className="control"
                     onClick={() => {
-                      navigator.clipboard?.writeText(text);
-                      setCopiedIndex(index);
-                      setTimeout(() => setCopiedIndex(-1), 5000);
+                      try {
+                        navigator.clipboard?.writeText(text);
+                        setCopiedIndex(index);
+                        setTimeout(() => setCopiedIndex(-1), 5000);
+                      } catch {
+                        // Ignore failure to write to clipboard
+                      }
                     }}
                     type="button"
                     {...label(copiedIndex === index ? "Copied" : "Copy")}

@@ -93,9 +93,11 @@ const useDosCI = (
       setDosCI({ [url]: undefined });
     }
 
-    const urlBuffer = url ? await readFile(url) : Buffer.from("");
+    const [urlBuffer, { zipAsync }] = await Promise.all([
+      url ? readFile(url) : Promise.resolve(Buffer.from("")),
+      import("utils/zipFunctions"),
+    ]);
     const extension = getExtension(url);
-    const { zipAsync } = await import("utils/zipFunctions");
     const zippedPayload = async (buffer: Buffer): Promise<Buffer> =>
       Buffer.from(await zipAsync({ [basename(url)]: buffer }));
     const zipBufferToUrl = async (buffer: Buffer): Promise<string> =>

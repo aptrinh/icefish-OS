@@ -59,9 +59,10 @@ export const removeFileSystemHandle = async (
 ): Promise<void> => {
   if (!(await supportsIndexedDB())) return;
 
-  const { [directory]: _removedHandle, ...handles } =
-    await getFileSystemHandles();
-  const db = await getKeyValStore();
+  const [{ [directory]: _removedHandle, ...handles }, db] = await Promise.all([
+    getFileSystemHandles(),
+    getKeyValStore(),
+  ]);
 
   try {
     await db.put(KEYVAL_STORE_NAME, handles, FS_HANDLES);
@@ -119,19 +120,20 @@ export const resetStorage = (rootFs?: RootFileSystem): Promise<void> =>
     };
 
     if (window.indexedDB) {
-      import("idb").then(({ deleteDB }) => {
-        if (window.indexedDB.databases) {
-          window.indexedDB
-            .databases()
-            .then((databases) =>
-              databases
-                .filter(({ name }) => name && name !== "browserfs")
-                .forEach(({ name }) => deleteDB(name as string))
-            )
-            .then(clearFs)
-            .catch(clearFs);
-        } else {
-          KNOWN_IDB_DBS.forEach((name) => deleteDB(name));
+      import("idb").then(async ({ deleteDB }) => {
+        try {
+          const dbs = window.indexedDB.databases
+            ? (await window.indexedDB.databases())
+                .filter(
+                  ({ name }) => typeof name === "string" && name !== "browserfs"
+                )
+                .map(({ name }) => name as string)
+            : KNOWN_IDB_DBS;
+
+          await Promise.all(dbs.map((name) => deleteDB(name)));
+        } catch {
+          // Ignore errors deleting databases
+        } finally {
           clearFs();
         }
       });

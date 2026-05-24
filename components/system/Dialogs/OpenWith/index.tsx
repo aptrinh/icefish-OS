@@ -95,17 +95,22 @@ const OpenWith: FC<ComponentProcessProps> = ({ id }) => {
 
   useEffect(() => {
     const isForeground = foregroundId === id;
+    let cleanup: (() => void) | undefined;
 
     if (closeOnBlur) {
       if (!isForeground) closeWithTransition(id);
     } else {
       if (!isForeground) setForegroundId(id);
 
-      setTimeout(
+      const timeoutId = window.setTimeout(
         () => setCloseOnBlur(true),
         TRANSITIONS_IN_MILLISECONDS.WINDOW
       );
+
+      cleanup = () => window.clearTimeout(timeoutId);
     }
+
+    return cleanup;
   }, [closeOnBlur, closeWithTransition, foregroundId, id, setForegroundId]);
 
   return (

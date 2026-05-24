@@ -51,8 +51,10 @@ const processGit = async (
   const git = await import("isomorphic-git");
 
   if (command in git) {
-    const http = await import("isomorphic-git/http/web");
-    const { default: minimist } = await import("minimist");
+    const [http, { default: minimist }] = await Promise.all([
+      import("isomorphic-git/http/web"),
+      import("minimist"),
+    ]);
     const { username, password, ...cliArgs } = minimist(args) as GitAuth &
       ParsedArgs;
     const onAuth: AuthCallback = () => ({ password, username });

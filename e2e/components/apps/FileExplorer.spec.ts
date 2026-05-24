@@ -518,4 +518,14 @@ test.describe("has navigation", () => {
     await clickContextMenuEntry(/^My PC$/, { page });
     await windowTitlebarTextIsVisible(/^My PC$/, { page });
   });
+
+  test("can blur via desktop click after navigation", async ({ page }) => {
+    await pageHasTitle(`System - ${BASE_APP_TITLE}`, { page });
+
+    const { width = 0 } =
+      (await page.locator(DESKTOP_SELECTOR).boundingBox()) || {};
+
+    await clickDesktop({ page }, false, width - 25, 25);
+    await pageHasTitle(BASE_APP_TITLE, { page });
+  });
 });

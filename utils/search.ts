@@ -2,7 +2,7 @@ import { basename, extname } from "path";
 import { useEffect, useState } from "react";
 import { type Index } from "lunr";
 import type OverlayFS from "browserfs/dist/node/backend/OverlayFS";
-import type IndexedDBFileSystem from "browserfs/dist/node/backend/IndexedDB";
+import { type FileSystem } from "browserfs/dist/node/core/file_system";
 import { useFileSystem } from "contexts/fileSystem";
 import { type RootFileSystem } from "contexts/fileSystem/useAsyncFs";
 import SEARCH_EXTENSIONS from "scripts/searchExtensions.json";
@@ -30,6 +30,20 @@ export const SEARCH_INPUT_PROPS = {
 
 let baseIndex = Object.create(null) as Index;
 let basePaths = [] as string[];
+let lunrLoadPromise: Promise<void> | undefined;
+
+const getLunr = async (): Promise<typeof window.lunr> => {
+  if (!window.lunr) {
+    if (!lunrLoadPromise) {
+      lunrLoadPromise = loadFiles([SEARCH_LIB]).catch((error) => {
+        lunrLoadPromise = undefined;
+        throw error;
+      });
+    }
+    await lunrLoadPromise;
+  }
+  return window.lunr;
+};
 
 type ResponseIndex = Index & {
   paths: string[];
@@ -39,16 +53,18 @@ const search = async (
   searchTerm: string,
   index?: Index
 ): Promise<Index.Result[]> => {
-  if (!window.lunr) await loadFiles([SEARCH_LIB]);
   if (!index && !baseIndex?.search) {
-    const response = await fetch(FILE_INDEX, HIGH_PRIORITY_REQUEST);
+    const [response, lunr] = await Promise.all([
+      fetch(FILE_INDEX, HIGH_PRIORITY_REQUEST),
+      getLunr(),
+    ]);
 
     try {
       const { paths, ...responseIndex } = JSON.parse(
         await response.text()
       ) as ResponseIndex;
 
-      baseIndex = window.lunr?.Index.load(responseIndex);
+      baseIndex = lunr?.Index.load(responseIndex);
       basePaths = paths;
     } catch {
       // Failed to parse text data to JSON
@@ -56,42 +72,89 @@ const search = async (
   }
 
   const searchIndex = index ?? baseIndex;
-  let results: Index.Result[] = [];
   const normalizedSearchTerm = searchTerm
     .trim()
     .replace(/\./g, " ")
     .replace(/\*~\^-\+/g, "");
+  const merged = new Map<string | number, Index.Result>();
 
-  try {
-    results = searchIndex.search?.(normalizedSearchTerm);
+  if (normalizedSearchTerm) {
+    try {
+      const exactResults = searchIndex.search?.(normalizedSearchTerm) ?? [];
+      const wildcardResults =
+        searchIndex.search?.(
+          `${normalizedSearchTerm.split(" ").join("* ")}*`
+        ) ?? [];
 
-    if (results?.length === 0) {
-      results = searchIndex.search?.(
-        `${normalizedSearchTerm.split(" ").join("* ")}*`
-      );
+      for (const result of [...exactResults, ...wildcardResults]) {
+        const existing = merged.get(result.ref);
+
+        if (!existing || existing.score < result.score) {
+          merged.set(result.ref, result);
+        }
+      }
+    } catch {
+      // Ignore search errors
     }
-  } catch {
-    // Ignore search errors
   }
 
-  if (results) {
-    return results.map((result) => ({
-      ...result,
-      ref:
-        (Object.prototype.hasOwnProperty.call(basePaths, result.ref)
-          ? (basePaths[result.ref as keyof typeof basePaths] as string)
-          : result.ref) || "",
-    }));
-  }
+  if (merged.size === 0) return [];
 
-  return [];
+  return [...merged.values()].map((result) => ({
+    ...result,
+    ref:
+      (Object.prototype.hasOwnProperty.call(basePaths, result.ref)
+        ? (basePaths[result.ref as keyof typeof basePaths] as string)
+        : result.ref) || "",
+  }));
 };
 
-interface IWritableFs extends Omit<IndexedDBFileSystem, "_cache"> {
-  _cache: {
-    map: Map<string, unknown>;
-  };
-}
+const sortByScore = (a: Index.Result, b: Index.Result): number =>
+  b.score - a.score;
+
+const mergeWithDynamicFirst = (
+  baseResult: Index.Result[],
+  dynamicResult: Index.Result[]
+): Index.Result[] => {
+  const dynamicRefs = new Set(dynamicResult.map(({ ref }) => ref));
+
+  return [
+    ...[...dynamicResult].sort(sortByScore),
+    ...baseResult.filter(({ ref }) => !dynamicRefs.has(ref)).sort(sortByScore),
+  ];
+};
+
+const walkWritable = (fileSystem: FileSystem, dir: string): Promise<string[]> =>
+  new Promise((resolve) => {
+    fileSystem.readdir(dir, async (readErr, entries = []) => {
+      if (readErr) {
+        resolve([]);
+        return;
+      }
+
+      const results = await Promise.all(
+        entries.map(
+          (entry) =>
+            // eslint-disable-next-line promise/param-names
+            new Promise<string[]>((resolveEntry) => {
+              const fullPath = dir === "/" ? `/${entry}` : `${dir}/${entry}`;
+
+              fileSystem.stat(fullPath, false, async (statErr, stats) =>
+                resolveEntry(
+                  statErr || !stats
+                    ? []
+                    : stats.isDirectory()
+                      ? await walkWritable(fileSystem, fullPath)
+                      : [fullPath]
+                )
+              );
+            })
+        )
+      );
+
+      resolve(results.flat());
+    });
+  });
 
 const buildDynamicIndex = async (
   readFile: (path: string) => Promise<Buffer>,
@@ -99,42 +162,38 @@ const buildDynamicIndex = async (
 ): Promise<Index> => {
   const overlayFs = rootFs?._getFs("/")?.fs as OverlayFS;
   const overlayedFileSystems = overlayFs?.getOverlayedFileSystems();
-  const writable = overlayedFileSystems?.writable as IWritableFs;
+  const writable = overlayedFileSystems?.writable;
 
-  const writableFiles =
-    (typeof writable?._cache?.map?.keys === "function" && [
-      ...writable._cache.map.keys(),
-    ]) ||
-    Object.keys(
-      (writable?._cache?.map as unknown as Record<string, unknown>) || {}
-    ) ||
-    [];
+  const writableFiles = writable ? await walkWritable(writable, "/") : [];
   const filesToIndex = writableFiles.filter((path) => {
     const ext = getExtension(path);
 
     return Boolean(ext) && !SEARCH_EXTENSIONS.ignore.includes(ext);
   });
-  const indexedFiles = await Promise.all(
-    filesToIndex.map(async (path) => {
-      const name = basename(path, extname(path));
+  const [indexedFiles, lunr] = await Promise.all([
+    Promise.all(
+      filesToIndex.map(async (path) => {
+        const name = basename(path, extname(path));
 
-      return {
-        name,
-        path,
-        text: SEARCH_EXTENSIONS.index.includes(getExtension(path))
-          ? `${name} ${(await readFile(path)).toString()}`
-          : name,
-      };
-    })
-  );
-  const dynamicIndex = window.lunr?.(function buildIndex() {
+        return {
+          name,
+          path,
+          text: SEARCH_EXTENSIONS.index.includes(getExtension(path))
+            ? `${name} ${(await readFile(path)).toString()}`
+            : name,
+        };
+      })
+    ),
+    getLunr(),
+  ]);
+  const dynamicIndex = lunr?.(function buildIndex() {
     this.ref("path");
     this.field("name");
     this.field("text");
     indexedFiles.forEach((doc) => this.add(doc));
   });
 
-  return window.lunr?.Index.load(dynamicIndex.toJSON());
+  return lunr?.Index.load(dynamicIndex.toJSON());
 };
 
 export const fullSearch = async (
@@ -142,11 +201,13 @@ export const fullSearch = async (
   readFile: (path: string) => Promise<Buffer>,
   rootFs?: RootFileSystem
 ): Promise<Index.Result[]> => {
-  const baseResult = await search(searchTerm);
-  const dynamicIndex = await buildDynamicIndex(readFile, rootFs);
+  const [baseResult, dynamicIndex] = await Promise.all([
+    search(searchTerm),
+    buildDynamicIndex(readFile, rootFs),
+  ]);
   const dynamicResult = await search(searchTerm, dynamicIndex);
 
-  return [...baseResult, ...dynamicResult].sort((a, b) => b.score - a.score);
+  return mergeWithDynamicFirst(baseResult, dynamicResult);
 };
 
 export const useSearch = (searchTerm: string): Index.Result[] => {
@@ -156,15 +217,11 @@ export const useSearch = (searchTerm: string): Index.Result[] => {
   useEffect(() => {
     const updateResults = async (): Promise<void> => {
       if (searchTerm.length > 0) {
-        if (!window.lunr) await loadFiles([SEARCH_LIB]);
-
-        search(searchTerm).then(setResults);
+        setResults([...(await search(searchTerm))].sort(sortByScore));
         buildDynamicIndex(readFile, rootFs).then((dynamicIndex) =>
           search(searchTerm, dynamicIndex).then((searchResults) =>
             setResults((currentResults) =>
-              [...currentResults, ...searchResults].sort(
-                (a, b) => b.score - a.score
-              )
+              mergeWithDynamicFirst(currentResults, searchResults)
             )
           )
         );

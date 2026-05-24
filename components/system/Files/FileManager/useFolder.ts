@@ -218,42 +218,58 @@ const useFolder = (
           const dirContents = (await readdir(directory)).filter(
             filterSystemFiles(directory)
           );
-          const sortedFiles = await dirContents.reduce(
-            async (processedFiles, file) => {
+          const filesAccumulator: Files = Object.create(null) as Files;
+          const effectiveSortOrder = (!skipSorting && sortOrder) || [];
+          const sortFunction = isSimpleSort
+            ? undefined
+            : sortBy === "date"
+              ? sortByDate(directory)
+              : sortBySize;
+          const sortAccumulator = (): Files =>
+            sortContents(
+              filesAccumulator,
+              effectiveSortOrder,
+              sortFunction,
+              sortAscending
+            );
+          let pendingFrame = 0;
+
+          await Promise.all(
+            dirContents.map(async (file) => {
               try {
                 const filePath = join(directory, file);
                 const fileStats = isSimpleSort
                   ? await lstat(filePath)
                   : await stat(filePath);
                 const hideEntry = hideFolders && fileStats.isDirectory();
-                let newFiles = await processedFiles;
 
                 if (!hideEntry) {
-                  newFiles[file] = await statsWithShortcutInfo(file, fileStats);
-                  newFiles = sortContents(
-                    newFiles,
-                    (!skipSorting && sortOrder) || [],
-                    isSimpleSort
-                      ? undefined
-                      : sortBy === "date"
-                        ? sortByDate(directory)
-                        : sortBySize,
-                    sortAscending
+                  filesAccumulator[file] = await statsWithShortcutInfo(
+                    file,
+                    fileStats
                   );
+
+                  if (hideLoading && pendingFrame === 0) {
+                    pendingFrame = window.requestAnimationFrame(() => {
+                      pendingFrame = 0;
+                      setFiles(sortAccumulator());
+                    });
+                  }
                 }
-
-                if (hideLoading) setFiles(newFiles);
-
-                return newFiles;
               } catch {
-                return processedFiles;
+                // Ignore failure to process file
               }
-            },
-            Promise.resolve({} as Files)
+            })
           );
 
+          if (pendingFrame !== 0) {
+            window.cancelAnimationFrame(pendingFrame);
+          }
+
           if (dirContents.length > 0) {
-            if (!hideLoading) setFiles(sortedFiles);
+            const sortedFiles = sortAccumulator();
+
+            setFiles(sortedFiles);
 
             const newSortOrder = Object.keys(sortedFiles);
 
@@ -450,12 +466,11 @@ const useFolder = (
   const createZipFile = useCallback(
     async (paths: string[]): Promise<AsyncZippable> => {
       const allPaths = await findPathsRecursive(paths, readdir, stat);
-      const filePaths = await Promise.all(
-        allPaths.map((path) => getFile(path))
-      );
-      const { addEntryToZippable, createZippable } = await import(
-        "utils/zipFunctions"
-      );
+      const [filePaths, { addEntryToZippable, createZippable }] =
+        await Promise.all([
+          Promise.all(allPaths.map((path) => getFile(path))),
+          import("utils/zipFunctions"),
+        ]);
 
       return filePaths
         .filter(Boolean)
@@ -478,20 +493,19 @@ const useFolder = (
   );
   const archiveFiles = useCallback(
     async (paths: string[]): Promise<void> => {
-      const { zip } = await import("fflate");
+      const [{ zip }, zipFile] = await Promise.all([
+        import("fflate"),
+        createZipFile(paths),
+      ]);
 
-      zip(
-        await createZipFile(paths),
-        BASE_ZIP_CONFIG,
-        (_zipError, newZipFile) => {
-          if (newZipFile) {
-            newPath(
-              `${basename(directory) || "archive"}.zip`,
-              Buffer.from(newZipFile)
-            );
-          }
+      zip(zipFile, BASE_ZIP_CONFIG, (_zipError, newZipFile) => {
+        if (newZipFile) {
+          newPath(
+            `${basename(directory) || "archive"}.zip`,
+            Buffer.from(newZipFile)
+          );
         }
-      );
+      });
     },
     [createZipFile, directory, newPath]
   );
@@ -534,8 +548,10 @@ const useFolder = (
         close(`Transfer${PROCESS_DELIMITER}${path}`);
 
       try {
-        const { unarchive, unzip } = await import("utils/zipFunctions");
-        const data = await readFile(path);
+        const [{ unarchive, unzip }, data] = await Promise.all([
+          import("utils/zipFunctions"),
+          readFile(path),
+        ]);
         const unzippedFiles = Object.entries(
           ZIP_EXTENSIONS.has(getExtension(path))
             ? await unzip(data)
