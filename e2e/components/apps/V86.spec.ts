@@ -9,7 +9,7 @@ import {
 
 const APP = "V86";
 const DISK_IMAGE = "linux.bin";
-const DISK_IMAGE_URL = `/Users/Public/System/${DISK_IMAGE}`;
+const DISK_IMAGE_URL = `/System/${DISK_IMAGE}`;
 
 test.beforeEach(captureConsoleLogs("apps"));
 test.beforeEach(disableWallpaper);
