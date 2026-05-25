@@ -8,17 +8,13 @@ import {
 } from "e2e/functions";
 
 const APP = "V86";
-const DISK_IMAGE = "kolibri.img";
-const DISK_IMAGE_URL = `/Users/Public/Documents/Disk Images/${DISK_IMAGE}`;
+const DISK_IMAGE = "linux.bin";
+const DISK_IMAGE_URL = `/Users/Public/System/${DISK_IMAGE}`;
 
 test.beforeEach(captureConsoleLogs("apps"));
 test.beforeEach(disableWallpaper);
 
-const EMULATOR_BOOT_TIMEOUT = 30_000;
-
 test.describe("loads disk image", () => {
-  test.describe.configure({ timeout: EMULATOR_BOOT_TIMEOUT });
-
   for (const deviceMemory of [0.25, 8, 32]) {
     test(`with deviceMemory of ${deviceMemory} GB`, async ({ page }) => {
       await page.addInitScript((memory) => {
@@ -32,8 +28,7 @@ test.describe("loads disk image", () => {
       await windowsAreVisible({ page });
 
       await expect(page.locator(WINDOW_TITLEBAR_SELECTOR)).toContainText(
-        `Virtual x86 - ${DISK_IMAGE}`,
-        { timeout: EMULATOR_BOOT_TIMEOUT }
+        `Virtual x86 - ${DISK_IMAGE}`
       );
     });
   }
