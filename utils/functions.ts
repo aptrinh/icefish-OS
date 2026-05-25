@@ -240,11 +240,11 @@ export const blobToBuffer = async (blob?: Blob | null): Promise<Buffer> =>
 export const fetchBlob = async (url: string): Promise<Blob> =>
   (await fetch(url)).blob();
 
+export const dataUrlToBuffer = (mimeType: string, dataUrl?: string): Buffer =>
+  Buffer.from(dataUrl?.replace(`data:${mimeType};base64,`, "") || "", "base64");
+
 export const canvasToBuffer = (canvas?: HTMLCanvasElement): Buffer =>
-  Buffer.from(
-    canvas?.toDataURL("image/png").replace("data:image/png;base64,", "") || "",
-    "base64"
-  );
+  dataUrlToBuffer("image/png", canvas?.toDataURL("image/png"));
 
 export const imgDataToBuffer = (imageData: ImageData): Buffer => {
   const canvas = document.createElement("canvas");
