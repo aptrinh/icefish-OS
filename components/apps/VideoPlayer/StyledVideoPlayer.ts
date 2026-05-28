@@ -129,6 +129,11 @@ const StyledVideoPlayer = styled.div`
       }
     }
 
+    .vjs-progress-control {
+      display: flex !important;
+      flex: auto !important;
+    }
+
     .vjs-progress-holder {
       border-radius: 5px;
       font-size: 1.7em !important;
