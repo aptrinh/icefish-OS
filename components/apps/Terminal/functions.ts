@@ -1,10 +1,11 @@
 import { extname } from "path";
+import { type Terminal } from "xterm";
 import { colorAttributes, rgbAnsi } from "components/apps/Terminal/color";
 import { commands as gitCommands } from "components/apps/Terminal/processGit";
 import { type LocalEcho } from "components/apps/Terminal/types";
 import { resourceAliasMap } from "components/system/Dialogs/Run";
 import processDirectory from "contexts/process/directory";
-import { ONE_DAY_IN_MILLISECONDS } from "utils/constants";
+import { ONE_DAY_IN_MILLISECONDS, PREVENT_SCROLL } from "utils/constants";
 
 export const help = (
   printLn: (message: string) => void,
@@ -298,14 +299,20 @@ export const printColor = (
 export const clearAnsiBackground = (text: string): string =>
   text.replace(/;48;2;/g, ";48;0;").replace(/;48;5;/g, ";48;0;");
 
-export const readClipboardToTerminal = (localEcho: LocalEcho): void => {
-  try {
-    navigator.clipboard
-      ?.readText?.()
-      .then((clipboardText) => localEcho.handleCursorInsert(clipboardText));
-  } catch {
-    // Ignore failure to read clipboard
-  }
+export const readClipboardToTerminal = (
+  localEcho: LocalEcho,
+  terminal?: Terminal
+): void => {
+  navigator.clipboard
+    ?.readText?.()
+    .then((clipboardText) => {
+      localEcho.handleCursorInsert(clipboardText);
+      terminal?.scrollToBottom();
+      terminal?.textarea?.focus(PREVENT_SCROLL);
+    })
+    .catch(() => {
+      // Ignore failure to read clipboard
+    });
 };
 
 export const formatToExtension = (format: string): string => {

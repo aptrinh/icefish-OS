@@ -48,12 +48,18 @@ const Photos: FC<ComponentProcessProps> = ({ id }) => {
   );
   const { fullscreenElement, toggleFullscreen } = useViewport();
   const loadPhoto = useCallback(async (): Promise<void> => {
-    let fileContents = await readFile(url);
     const ext = getExtension(url);
+    const isNative = NATIVE_IMAGE_FORMATS.has(ext);
+    const [initialContents, decoder] = await Promise.all([
+      readFile(url),
+      isNative
+        ? Promise.resolve()
+        : import("utils/imageDecoder").then((m) => m.decodeImageToBuffer),
+    ]);
+    let fileContents = initialContents;
 
-    if (!NATIVE_IMAGE_FORMATS.has(ext)) {
-      const { decodeImageToBuffer } = await import("utils/imageDecoder");
-      const decodedData = await decodeImageToBuffer(ext, fileContents);
+    if (!isNative && decoder) {
+      const decodedData = await decoder(ext, fileContents);
 
       if (decodedData) fileContents = decodedData;
     }

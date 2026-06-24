@@ -61,10 +61,11 @@ const Calendar: FC<CalendarProps> = ({ toggleCalendar }) => {
   const finePointer = useMemo(() => hasFinePointer(), []);
 
   useEffect(() => {
-    calendarRef.current?.addEventListener("blur", ({ relatedTarget }) => {
+    const calendarElement = calendarRef.current;
+    const onBlur = ({ relatedTarget }: FocusEvent): void => {
       if (relatedTarget instanceof HTMLElement) {
-        if (calendarRef.current?.contains(relatedTarget)) {
-          calendarRef.current?.focus(PREVENT_SCROLL);
+        if (calendarElement?.contains(relatedTarget)) {
+          calendarElement?.focus(PREVENT_SCROLL);
 
           return;
         }
@@ -81,8 +82,12 @@ const Calendar: FC<CalendarProps> = ({ toggleCalendar }) => {
       }
 
       toggleCalendar(false);
-    });
-    calendarRef.current?.focus(PREVENT_SCROLL);
+    };
+
+    calendarElement?.addEventListener("blur", onBlur);
+    calendarElement?.focus(PREVENT_SCROLL);
+
+    return () => calendarElement?.removeEventListener("blur", onBlur);
   }, [toggleCalendar]);
 
   return (

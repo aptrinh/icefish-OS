@@ -70,8 +70,10 @@ const OpenType: FC<ComponentProcessProps> = ({ id }) => {
   const [font, setFont] = useState<Font>();
   const loadFont = useCallback(
     async (fontUrl: string) => {
-      const { default: openType } = await import("opentype.js");
-      const { buffer } = await readFile(fontUrl);
+      const [{ default: openType }, { buffer }] = await Promise.all([
+        import("opentype.js"),
+        readFile(fontUrl),
+      ]);
 
       try {
         setFont(openType.parse(buffer));

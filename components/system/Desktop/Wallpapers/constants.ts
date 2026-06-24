@@ -97,6 +97,10 @@ export const WALLPAPER_MENU: WallpaperMenuItem[] = [
     name: "Matrix (3D)",
   },
   {
+    id: "MET_MUSEUM",
+    name: "Metropolitan Museum of Art",
+  },
+  {
     id: "APOD",
     name: "NASA APOD",
   },

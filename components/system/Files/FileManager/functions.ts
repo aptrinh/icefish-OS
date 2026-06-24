@@ -31,8 +31,10 @@ type FileStats = [string, FileStat];
 
 type SortFunction = (a: FileStats, b: FileStats) => number;
 
+const nameCollator = new Intl.Collator("en", { sensitivity: "base" });
+
 const sortByName = ([a]: FileStats, [b]: FileStats): number =>
-  a.localeCompare(b, "en", { sensitivity: "base" });
+  nameCollator.compare(a, b);
 
 export const sortByDate =
   (directory: string) =>
@@ -68,7 +70,7 @@ const sortByType = (
   const aType = aExt ? getFileType(aExt) : "";
   const bType = bExt ? getFileType(bExt) : "";
 
-  return aType.localeCompare(bType, "en", { sensitivity: "base" });
+  return nameCollator.compare(aType, bType);
 };
 
 const sortSystemShortcuts = (
@@ -213,7 +215,7 @@ export const createFileReaders = async (
     [...files].forEach((file) => addFile(file));
   } else {
     await Promise.all(
-      [...files].map(async (file) =>
+      [...files].map((file) =>
         addEntry(file.webkitGetAsEntry() as FileSystemEntry)
       )
     );

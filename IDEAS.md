@@ -268,8 +268,6 @@
 ## Visuals & Effects
 
 - [Frosted Glass](https://frosted-glass.shud.in/)
-- Window Animations
-  - [Burn My Windows](https://github.com/Schneegans/Burn-My-Windows) ([#358](https://github.com/Schneegans/Burn-My-Windows/discussions/358))
 - 3D
   - [noclip](https://noclip.website/)
   - [Object Viewer](https://rubenandrebarreiro.github.io/projects/threejs/3d-object-viewer-super-mario-bros/3d-object-viewer-super-mario-bros.html)
@@ -283,8 +281,6 @@
   - [Paper Clouds](https://www.shadertoy.com/view/WtjGRc)
   - [Descent](https://www.shadertoy.com/view/wdfGW4)
   - [Glassy Field](https://www.shadertoy.com/view/4ttGDH)
-- Art Wallpapers
-  - [MMoA](https://metmuseum.github.io/)
 - [spacekit](https://github.com/typpo/spacekit)
 - [ASCII Clouds](https://caidan.dev/portfolio/ascii_clouds/)
 - [twigl](https://github.com/doxas/twigl)
@@ -304,13 +300,6 @@
 
 ## Games
 
-- Chess
-  - Stockfish.js ([1](https://github.com/nmrugg/stockfish.js), [2](https://github.com/lichess-org/stockfish.js), [WASM](https://github.com/lichess-org/stockfish.wasm))
-  - Boards
-    - [chessboard.js](https://chessboardjs.com/)
-    - [chessboard3.js](https://jtiscione.github.io/chessboard3js/index.html)
-  - [HTML5 2D/3D chess](https://sourceforge.net/projects/htmlchess/)
-  - [chess.js](https://github.com/jhlywa/chess.js/)
 - Doom (WASM) ([1](https://github.com/cloudflare/doom-wasm), [2](https://github.com/lazarv/wasm-doom))
 - [Jazz Jackrabbit 2](https://deat.tk/jazz2/)
 - [Wipeout](https://github.com/phoboslab/wipeout-rewrite)

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useMenu } from "contexts/menu";
 import { type ContextMenuCapture } from "contexts/menu/useMenuContextState";
+import { writeTextToClipboard } from "utils/functions";
 
 const useAddressBarContextMenu = (address: string): ContextMenuCapture => {
   const { contextMenu } = useMenu();
@@ -9,7 +10,7 @@ const useAddressBarContextMenu = (address: string): ContextMenuCapture => {
     () =>
       contextMenu?.(() => [
         {
-          action: () => navigator.clipboard?.writeText(address),
+          action: () => writeTextToClipboard(address),
           label: "Copy address",
         },
       ]),

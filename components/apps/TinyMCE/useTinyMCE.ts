@@ -18,6 +18,10 @@ import { DEFAULT_LOCALE, DEFAULT_SCROLLBAR_WIDTH } from "utils/constants";
 import { getExtension, loadFiles } from "utils/functions";
 import { useLinkHandler } from "hooks/useLinkHandler";
 
+const TITLE_DATE_FORMATTER = new Intl.DateTimeFormat(DEFAULT_LOCALE, {
+  dateStyle: "medium",
+});
+
 const useTinyMCE = ({
   containerRef,
   id,
@@ -36,9 +40,7 @@ const useTinyMCE = ({
       const modifiedDate = new Date(
         getModifiedTime(currentUrl, await stat(currentUrl))
       );
-      const date = new Intl.DateTimeFormat(DEFAULT_LOCALE, {
-        dateStyle: "medium",
-      }).format(modifiedDate);
+      const date = TITLE_DATE_FORMATTER.format(modifiedDate);
 
       prependFileToTitle(
         `${basename(currentUrl, extname(currentUrl))} (${date})`

@@ -74,7 +74,13 @@ export const getDpi = (): number => {
   return dpi;
 };
 
+const extensionUrlMap = new Map<string, string>();
+
 export const getExtension = (url: string): string => {
+  const cachedExtension = extensionUrlMap.get(url);
+
+  if (cachedExtension) return cachedExtension;
+
   let ext = extname(url);
 
   if (!ext) {
@@ -83,7 +89,19 @@ export const getExtension = (url: string): string => {
     if (baseName.startsWith(".")) ext = baseName;
   }
 
-  return ext.toLowerCase();
+  const lcExt = ext.toLowerCase();
+
+  extensionUrlMap.set(url, lcExt);
+
+  return lcExt;
+};
+
+export const writeTextToClipboard = (text: string): void => {
+  try {
+    navigator.clipboard?.writeText(text);
+  } catch {
+    // Ignore failure to write to clipboard
+  }
 };
 
 export const sendMouseClick = (target: HTMLElement, count = 1): void => {
@@ -125,12 +143,19 @@ export const toggleShowDesktop = (
   }
 };
 
+const imageSrcMap = new Map<string, string>();
+
 export const imageSrc = (
   imagePath: string,
   size: number,
   ratio: number,
   extension: string
 ): string => {
+  const cacheKey = `${imagePath}-${size}-${ratio}-${extension}`;
+  const cachedSrc = imageSrcMap.get(cacheKey);
+
+  if (cachedSrc) return cachedSrc;
+
   const imageName = basename(imagePath, extension);
   const [expectedSize, maxIconSize] = MAX_RES_ICON_OVERRIDE[imageName] || [];
   const ratioSize = size * ratio;
@@ -138,14 +163,17 @@ export const imageSrc = (
     MAX_ICON_SIZE,
     expectedSize === size ? Math.min(maxIconSize, ratioSize) : ratioSize
   );
-
-  return `${join(
+  const src = `${join(
     dirname(imagePath),
     `${ICON_RES_MAP[imageSize] || imageSize}x${
       ICON_RES_MAP[imageSize] || imageSize
     }`,
     `${imageName}${extension}`
   ).replace(/\\/g, "/")}${ratio > 1 ? ` ${ratio}x` : ""}`;
+
+  imageSrcMap.set(cacheKey, src);
+
+  return src;
 };
 
 export const imageSrcs = (
@@ -212,11 +240,11 @@ export const blobToBuffer = async (blob?: Blob | null): Promise<Buffer> =>
 export const fetchBlob = async (url: string): Promise<Blob> =>
   (await fetch(url)).blob();
 
+export const dataUrlToBuffer = (mimeType: string, dataUrl?: string): Buffer =>
+  Buffer.from(dataUrl?.replace(`data:${mimeType};base64,`, "") || "", "base64");
+
 export const canvasToBuffer = (canvas?: HTMLCanvasElement): Buffer =>
-  Buffer.from(
-    canvas?.toDataURL("image/png").replace("data:image/png;base64,", "") || "",
-    "base64"
-  );
+  dataUrlToBuffer("image/png", canvas?.toDataURL("image/png"));
 
 export const imgDataToBuffer = (imageData: ImageData): Buffer => {
   const canvas = document.createElement("canvas");
@@ -361,14 +389,18 @@ export const loadFiles = async (
           : loadScript(encodeURI(file), defer, force, asModule, contentWindow));
       }, Promise.resolve());
 
+type WindowWithHtmlToImage = Window & { htmlToImage?: typeof HtmlToImage };
+
 export const getHtmlToImage = async (): Promise<
   typeof HtmlToImage | undefined
 > => {
+  if ("htmlToImage" in window) {
+    return (window as unknown as WindowWithHtmlToImage).htmlToImage;
+  }
+
   await loadFiles(["/System/html-to-image/html-to-image.js"]);
 
-  const { htmlToImage } = window as unknown as Window & {
-    htmlToImage: typeof HtmlToImage;
-  };
+  const { htmlToImage } = window as unknown as WindowWithHtmlToImage;
 
   return htmlToImage;
 };
@@ -754,16 +786,23 @@ const bytesInMB = 1022976; // 1024 * 999
 const bytesInGB = 1047527424; // 1024 * 1024 * 999
 const bytesInTB = 1072668082176; // 1024 * 1024 * 1024 * 999
 
+const roundedNumberFormatter = new Intl.NumberFormat("en-US");
+const nonRoundedNumberFormatterMax = new Intl.NumberFormat("en-US", {
+  maximumSignificantDigits: 4,
+  minimumSignificantDigits: 3,
+});
+const nonRoundedNumberFormatterMaxDouble = new Intl.NumberFormat("en-US", {
+  maximumSignificantDigits: 2,
+  minimumSignificantDigits: 2,
+});
+
 const formatNumber = (number: number, roundUpNumber = false): string => {
-  const formattedNumber = new Intl.NumberFormat(
-    "en-US",
-    roundUpNumber
-      ? undefined
-      : {
-          maximumSignificantDigits: number < 1 ? 2 : 4,
-          minimumSignificantDigits: number < 1 ? 2 : 3,
-        }
-  ).format(
+  const numberFormatter = roundUpNumber
+    ? roundedNumberFormatter
+    : number < 1
+      ? nonRoundedNumberFormatterMaxDouble
+      : nonRoundedNumberFormatterMax;
+  const formattedNumber = numberFormatter.format(
     roundUpNumber ? Math.ceil(number) : Number(number.toFixed(4).slice(0, -2))
   );
 
@@ -1064,14 +1103,20 @@ const supportsImageSrcSet = (): boolean =>
 export const preloadImage = (
   image: string,
   id?: string,
-  fetchPriority: "auto" | "high" | "low" = "high"
+  deleteExistingElement?: boolean,
+  fetchPriority?: "auto" | "high" | "low",
+  onLoad?: () => void,
+  onError?: () => void
 ): void => {
   const extension = getExtension(image);
   const link = document.createElement("link");
 
   link.as = "image";
-  if (id) link.id = id;
-  link.fetchPriority = fetchPriority;
+  if (id) {
+    if (deleteExistingElement) document.querySelector(`#${id}`)?.remove();
+    link.id = id;
+  }
+  link.fetchPriority = fetchPriority || "high";
   link.rel = "preload";
   link.type = getMimeType(extension);
 
@@ -1086,6 +1131,9 @@ export const preloadImage = (
   } else {
     link.href = image;
   }
+
+  if (onLoad) link.addEventListener("load", onLoad, ONE_TIME_PASSIVE_EVENT);
+  if (onError) link.addEventListener("error", onError, ONE_TIME_PASSIVE_EVENT);
 
   const preloadedLinks = getPreloadedLinks();
 
@@ -1232,3 +1280,13 @@ export const displayVersion = (): string => {
 };
 
 export const isDev = (): boolean => "__nextDevClientId" in window;
+
+export const stopGlobalMusicVisualization = (): void => {
+  window.WebampGlobal?.store?.dispatch?.({
+    enabled: false,
+    type: "SET_MILKDROP_DESKTOP",
+  });
+};
+
+export const isGlobalMusicVisualizationRunning = (): boolean =>
+  window.WebampGlobal?.store?.getState?.()?.milkdrop?.display === "DESKTOP";

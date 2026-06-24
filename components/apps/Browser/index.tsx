@@ -22,6 +22,7 @@ import {
   HOME_PAGE,
   NOT_FOUND,
   PROXIES,
+  SURF_TO_MISC,
   bookmarks,
 } from "components/apps/Browser/config";
 import { type ComponentProcessProps } from "components/system/Apps/RenderComponent";
@@ -134,13 +135,23 @@ const Browser: FC<ComponentProcessProps> = ({ id }) => {
         if (isHtml) setSrcDoc((await readFile(addressInput)).toString());
         setIcon(id, processDirectory.Browser.icon);
 
-        if (addressInput.toLowerCase().startsWith(DINO_GAME.url)) {
+        const loadLocalSite = (localPath: string, localTitle: string): void => {
+          iframeRef.current?.removeAttribute("sandbox");
           changeIframeWindowLocation(
-            `${window.location.origin}${DINO_GAME.path}`,
+            `${window.location.origin}${localPath}`,
             contentWindow
           );
-          prependFileToTitle(`${DINO_GAME.url}/`);
+          prependFileToTitle(localTitle);
+        };
+        const lowerAddressInput = addressInput.toLowerCase();
+
+        if (lowerAddressInput.startsWith(SURF_TO_MISC.url)) {
+          loadLocalSite(SURF_TO_MISC.path, SURF_TO_MISC.name);
+        } else if (lowerAddressInput.startsWith(DINO_GAME.url)) {
+          loadLocalSite(DINO_GAME.path, `${DINO_GAME.url}/`);
         } else if (!isHtml) {
+          iframeRef.current?.setAttribute("sandbox", IFRAME_CONFIG.sandbox);
+
           const processedUrl = await getUrlOrSearch(addressInput);
 
           if (

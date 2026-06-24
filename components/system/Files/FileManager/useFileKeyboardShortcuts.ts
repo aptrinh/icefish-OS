@@ -141,7 +141,10 @@ const useFileKeyboardShortcuts = (
               break;
             case "v":
               event.stopPropagation();
-              if (target instanceof HTMLOListElement) {
+              if (
+                !(target instanceof HTMLInputElement) &&
+                !(target instanceof HTMLTextAreaElement)
+              ) {
                 pasteToFolder();
               }
               break;

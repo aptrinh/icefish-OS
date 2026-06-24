@@ -30,7 +30,7 @@ export const getResultInfo = async (
   url: string,
   signal?: AbortSignal
 ): Promise<ResultInfo | undefined> => {
-  if (!fs) return undefined;
+  if (!fs || signal?.aborted) return undefined;
 
   const {
     subIcons,

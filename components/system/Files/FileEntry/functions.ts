@@ -900,6 +900,11 @@ export const getTextWrapData = (
   };
 };
 
+const dateModifiedFormaters = new Map<
+  Intl.DateTimeFormatOptions,
+  Intl.DateTimeFormat
+>();
+
 export const getDateModified = (
   path: string,
   fullStats: Stats,
@@ -907,7 +912,14 @@ export const getDateModified = (
 ): string => {
   const modifiedTime = getModifiedTime(path, fullStats);
   const date = getTZOffsetISOString(modifiedTime).slice(0, 10);
-  const time = new Intl.DateTimeFormat(DEFAULT_LOCALE, format).format(
+  let formatter: Intl.DateTimeFormat | undefined;
+
+  if (!dateModifiedFormaters.has(format)) {
+    formatter = new Intl.DateTimeFormat(DEFAULT_LOCALE, format);
+    dateModifiedFormaters.set(format, formatter);
+  }
+
+  const time = (formatter || dateModifiedFormaters.get(format))?.format(
     modifiedTime
   );
 
