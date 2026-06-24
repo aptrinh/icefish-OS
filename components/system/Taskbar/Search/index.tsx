@@ -203,45 +203,44 @@ const Search: FC<SearchProps> = ({ toggleSearch }) => {
   }, []);
 
   useEffect(() => {
-    if (results.length > 0) {
-      results
-        .reduce(
-          async (acc, result) => {
-            const currentResults = await acc;
-            const extension = extname(result.ref);
-            let pid = "";
-
-            if (extension === SHORTCUT_EXTENSION) {
-              if (result.ref.startsWith(`${PICTURES_FOLDER}/`)) pid = "Photos";
-              else if (result.ref.startsWith(`${VIDEOS_FOLDER}/`)) {
-                pid = "VideoPlayer";
-              } else {
-                ({ pid } = isExistingFile(await lstat(result.ref))
-                  ? getCachedShortcut(result.ref)
-                  : getShortcutInfo(await readFile(result.ref)));
-              }
-            } else pid = getProcessByFileExtension(extension);
-
-            if (pid === "Photos") {
-              currentResults.Photos.push(result);
-            } else if (pid === "VideoPlayer") {
-              currentResults.Videos.push(result);
-            } else {
-              currentResults.Documents.push(result);
-            }
-
-            return currentResults;
-          },
-          Promise.resolve({
-            Documents: [] as lunr.Index.Result[],
-            Photos: [] as lunr.Index.Result[],
-            Videos: [] as lunr.Index.Result[],
-          })
-        )
-        .then((newResults) => setSubResults(Object.entries(newResults)));
-    } else {
+    if (results.length === 0) {
       setSubResults([]);
+      return;
     }
+
+    Promise.all(
+      results.map(async (result) => {
+        const extension = extname(result.ref);
+        let pid = "";
+
+        if (extension === SHORTCUT_EXTENSION) {
+          if (result.ref.startsWith(`${PICTURES_FOLDER}/`)) pid = "Photos";
+          else if (result.ref.startsWith(`${VIDEOS_FOLDER}/`)) {
+            pid = "VideoPlayer";
+          } else {
+            ({ pid } = isExistingFile(await lstat(result.ref))
+              ? getCachedShortcut(result.ref)
+              : getShortcutInfo(await readFile(result.ref)));
+          }
+        } else pid = getProcessByFileExtension(extension);
+
+        return { pid, result };
+      })
+    ).then((enriched) => {
+      const newResults = {
+        Documents: [] as lunr.Index.Result[],
+        Photos: [] as lunr.Index.Result[],
+        Videos: [] as lunr.Index.Result[],
+      };
+
+      for (const { pid, result } of enriched) {
+        if (pid === "Photos") newResults.Photos.push(result);
+        else if (pid === "VideoPlayer") newResults.Videos.push(result);
+        else newResults.Documents.push(result);
+      }
+
+      setSubResults(Object.entries(newResults));
+    });
   }, [lstat, readFile, results]);
 
   return (

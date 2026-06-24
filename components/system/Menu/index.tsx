@@ -47,14 +47,7 @@ const Menu: FC<MenuProps> = ({ subMenu }) => {
   const isSubMenu = Boolean(subMenu);
   const offsetCalculated = useRef<Partial<DOMRect>>({});
   const calculateOffset = useCallback(() => {
-    if (
-      !menuRef.current ||
-      (offsetCalculated.current.x === x && offsetCalculated.current.y === y)
-    ) {
-      return;
-    }
-
-    offsetCalculated.current = { x, y };
+    if (!menuRef.current) return;
 
     const {
       height = 0,
@@ -63,6 +56,22 @@ const Menu: FC<MenuProps> = ({ subMenu }) => {
       y: menuY = 0,
     } = menuRef.current?.getBoundingClientRect() || {};
     const [vh, vw] = [viewHeight(), viewWidth()];
+    const offsetToCalculate = {
+      height,
+      vh,
+      vw,
+      width,
+      x,
+      y,
+    };
+    const isOffsetCalculated =
+      JSON.stringify(offsetToCalculate) ===
+      JSON.stringify(offsetCalculated.current);
+
+    if (isOffsetCalculated) return;
+
+    offsetCalculated.current = offsetToCalculate;
+
     const newOffset = { x: 0, y: 0 };
 
     if (!staticX) {
@@ -92,6 +101,10 @@ const Menu: FC<MenuProps> = ({ subMenu }) => {
         Math.round(
           Math.max(0, y + height - (adjustedHeight - topAdjustedBottomOffset))
         ) + (subMenuOffscreenY ? Math.round(height + (subMenu?.y || 0)) : 0);
+
+      if (subMenu && menuY - newOffset.y < 0) {
+        newOffset.y = Math.round(menuY);
+      }
     }
 
     setOffset(newOffset);
@@ -109,6 +122,8 @@ const Menu: FC<MenuProps> = ({ subMenu }) => {
   }, [baseMenu, calculateOffset, subMenu, x, y]);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     if (items && !subMenu) {
       const focusedElement = document.activeElement;
 
@@ -141,10 +156,21 @@ const Menu: FC<MenuProps> = ({ subMenu }) => {
 
         focusedElement.addEventListener("click", menuUnfocused, options);
         focusedElement.addEventListener("blur", menuUnfocused, options);
+
+        cleanup = () => {
+          focusedElement.removeEventListener("click", menuUnfocused, {
+            capture: true,
+          });
+          focusedElement.removeEventListener("blur", menuUnfocused, {
+            capture: true,
+          });
+        };
       } else {
         menuRef.current?.focus(PREVENT_SCROLL);
       }
     }
+
+    return cleanup;
   }, [items, resetMenu, subMenu]);
 
   useEffect(() => {

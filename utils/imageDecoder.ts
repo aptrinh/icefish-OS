@@ -8,6 +8,7 @@ import {
   blobToBuffer,
   bufferToUrl,
   cleanUpBufferUrl,
+  dataUrlToBuffer,
   getExtension,
   getGifJs,
   getMimeType,
@@ -72,8 +73,10 @@ const decodeHeic = async (image: Buffer): Promise<Buffer> => {
 };
 
 const aniToGif = async (aniBuffer: Buffer): Promise<Buffer> => {
-  const gif = await getGifJs();
-  const { parseAni } = await import("ani-cursor/dist/parser");
+  const [gif, { parseAni }] = await Promise.all([
+    getGifJs(),
+    import("ani-cursor/dist/parser"),
+  ]);
   let images: Uint8Array[] = [];
   let metadata: { iDispRate?: number } = {};
 
@@ -257,11 +260,9 @@ export const decodeImageToBuffer = async (
     default:
       if (HEIF_IMAGE_FORMATS.has(extension)) return decodeHeic(file);
       if (TIFF_IMAGE_FORMATS.has(extension)) {
-        return Buffer.from(
-          (await import("utif"))
-            .bufferToURI(file)
-            .replace("data:image/png;base64,", ""),
-          "base64"
+        return dataUrlToBuffer(
+          "image/png",
+          (await import("utif")).bufferToURI(file)
         );
       }
   }

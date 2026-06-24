@@ -1,6 +1,10 @@
+import { basename } from "path";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
-import { SUPPORTED_ICON_PIXEL_RATIOS } from "utils/constants";
+import {
+  MAX_RES_ICON_OVERRIDE,
+  SUPPORTED_ICON_PIXEL_RATIOS,
+} from "utils/constants";
 import {
   cleanUpBufferUrl,
   createFallbackSrcSet,
@@ -50,6 +54,36 @@ const StyledIcon = styled.img.attrs<StyledIconProps>(
   top: ${({ $offset }) => $offset || undefined};
   visibility: ${({ $loaded }) => ($loaded ? "visible" : "hidden")};
 `;
+
+const supportedPixelRatios = new Map<string, number[]>();
+
+const getSupportedPixelRatios = (
+  imagePath: string,
+  extension: string
+): number[] => {
+  if (supportedPixelRatios.has(imagePath)) {
+    const cachedEntry = supportedPixelRatios.get(imagePath);
+
+    if (cachedEntry) return cachedEntry;
+  }
+
+  let ratios = SUPPORTED_ICON_PIXEL_RATIOS;
+  const iconOverride = MAX_RES_ICON_OVERRIDE[basename(imagePath, extension)];
+
+  if (iconOverride) {
+    const [expectedSize, maxIconSize] = iconOverride;
+
+    if (expectedSize && maxIconSize) {
+      const maxRatio = Math.floor(maxIconSize / expectedSize);
+
+      ratios = SUPPORTED_ICON_PIXEL_RATIOS.filter((ratio) => ratio <= maxRatio);
+    }
+  }
+
+  supportedPixelRatios.set(imagePath, ratios);
+
+  return ratios;
+};
 
 const Icon: FCWithRef<
   HTMLImageElement,
@@ -118,7 +152,7 @@ const Icon: FCWithRef<
     <picture>
       {!singleSrc &&
         isDynamic &&
-        SUPPORTED_ICON_PIXEL_RATIOS.map((ratio) => {
+        getSupportedPixelRatios(imgSrc, srcExt).map((ratio) => {
           const srcSet = imageSrc(imgSrc, imgSize, ratio, srcExt);
           const mediaRatio = ratio - 0.99;
 

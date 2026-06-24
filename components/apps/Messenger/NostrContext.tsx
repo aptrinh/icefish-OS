@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -32,7 +33,7 @@ const NostrProviderFC: FC<{ relayUrls: string[] }> = ({
   const [connectedRelays, setConnectedRelays] = useState<Record<string, Relay>>(
     {}
   );
-  const [knownRelays, setKnownRelays] = useState<string[]>([]);
+  const knownRelaysRef = useRef<string[]>([]);
   const disconnectToRelays = useCallback((urls: string[]) => {
     if (urls.length === 0) return;
 
@@ -78,6 +79,8 @@ const NostrProviderFC: FC<{ relayUrls: string[] }> = ({
   );
 
   useEffect(() => {
+    const { current: knownRelays } = knownRelaysRef;
+
     if (
       relayUrls.length === knownRelays.length &&
       relayUrls.every((url) => knownRelays.includes(url))
@@ -88,8 +91,8 @@ const NostrProviderFC: FC<{ relayUrls: string[] }> = ({
     disconnectToRelays(knownRelays.filter((url) => !relayUrls.includes(url)));
     connectToRelays(relayUrls);
 
-    setKnownRelays(relayUrls);
-  }, [connectToRelays, disconnectToRelays, knownRelays, relayUrls]);
+    knownRelaysRef.current = relayUrls;
+  }, [connectToRelays, disconnectToRelays, relayUrls]);
 
   return (
     <NostrContext

@@ -79,6 +79,10 @@ const SYNTAX_ERROR = "The syntax of the command is incorrect.";
 
 const { alias } = PACKAGE_DATA;
 
+const LS_TIME_FORMATTER = new Intl.DateTimeFormat(DEFAULT_LOCALE, {
+  timeStyle: "short",
+});
+
 type WindowPerformance = Performance & {
   memory: {
     jsHeapSizeLimit: number;
@@ -391,9 +395,6 @@ const useCommandInterpreter = (
                 entries = await readdir(dirPath);
               }
 
-              const timeFormatter = new Intl.DateTimeFormat(DEFAULT_LOCALE, {
-                timeStyle: "short",
-              });
               const entriesWithStats = await Promise.all(
                 entries
                   .filter(
@@ -413,7 +414,10 @@ const useCommandInterpreter = (
                       0,
                       10
                     );
-                    const time = timeFormatter.format(mDate).padStart(8, "0");
+                    const time = LS_TIME_FORMATTER.format(mDate).padStart(
+                      8,
+                      "0"
+                    );
                     const isDirectory = fileStats.isDirectory();
 
                     totalSize += isDirectory ? 0 : fileStats.size;

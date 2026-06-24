@@ -374,11 +374,13 @@ const useFileContextMenu = (
                             absoluteEntry,
                             extname(absoluteEntry)
                           )}.${extension}`;
-                          const { convertSheet } = await import(
-                            "utils/sheetjs"
-                          );
+                          const [{ convertSheet }, sheetBuffer] =
+                            await Promise.all([
+                              import("utils/sheetjs"),
+                              readFile(absoluteEntry),
+                            ]);
                           const workBook = await convertSheet(
-                            await readFile(absoluteEntry),
+                            sheetBuffer,
                             extension
                           );
                           const workBookDirName = dirname(path);
@@ -411,11 +413,16 @@ const useFileContextMenu = (
                         absoluteEntry,
                         extname(absoluteEntry)
                       )}.m3u`;
-                      const { createM3uPlaylist, tracksFromPlaylist } =
-                        await import("components/apps/Webamp/functions");
+                      const [
+                        { createM3uPlaylist, tracksFromPlaylist },
+                        fileBuffer,
+                      ] = await Promise.all([
+                        import("components/apps/Webamp/functions"),
+                        readFile(absoluteEntry),
+                      ]);
                       const playlist = createM3uPlaylist(
                         (await tracksFromPlaylist(
-                          (await readFile(absoluteEntry)).toString(),
+                          fileBuffer.toString(),
                           getExtension(absoluteEntry)
                         )) as URLTrack[]
                       );

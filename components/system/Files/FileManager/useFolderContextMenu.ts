@@ -18,6 +18,7 @@ import { useProcesses } from "contexts/process";
 import { useSession } from "contexts/session";
 import { useProcessesRef } from "hooks/useProcessesRef";
 import { useWebGPUCheck } from "hooks/useWebGPUCheck";
+import { CLOSE_EFFECT_NAMES } from "utils/closeEffect";
 import {
   DESKTOP_PATH,
   FOLDER_ICON,
@@ -33,17 +34,12 @@ import {
   getExtension,
   isFileSystemMappingSupported,
   isFirefox,
+  isGlobalMusicVisualizationRunning,
   isSafari,
+  stopGlobalMusicVisualization,
   updateIconPositions,
 } from "utils/functions";
 import { getMountUrl, isMountedFolder } from "contexts/fileSystem/core";
-
-const stopGlobalMusicVisualization = (): void => {
-  window.WebampGlobal?.store.dispatch({
-    enabled: false,
-    type: "SET_MILKDROP_DESKTOP",
-  });
-};
 
 const NEW_FOLDER = "New folder";
 const NEW_TEXT_DOCUMENT = "New Text Document.txt";
@@ -85,7 +81,9 @@ const useFolderContextMenu = (
     updateFolder,
   } = useFileSystem();
   const {
+    closeEffect,
     iconPositions,
+    setCloseEffect,
     setForegroundId,
     setWallpaper: setSessionWallpaper,
     setIconPositions,
@@ -191,12 +189,14 @@ const useFolderContextMenu = (
           !isFirefoxOrSafari &&
           (!currentMediaRecorder || currentMediaRecorder.state === "inactive")
         ) {
-          const { default: fixWebmDuration } = await import(
-            "fix-webm-duration"
-          );
+          const [{ default: fixWebmDuration }, capturedBuffer] =
+            await Promise.all([
+              import("fix-webm-duration"),
+              readFile(capturePath),
+            ]);
 
           fixWebmDuration(
-            bufferToBlob(await readFile(capturePath)),
+            bufferToBlob(capturedBuffer),
             Date.now() - startTime,
             async (capturedFile) => {
               await writeFile(
@@ -373,9 +373,7 @@ const useFolderContextMenu = (
           ADD_FILE,
           ...(isFileSystemMappingSupported() ? [MAP_DIRECTORY] : []),
         ];
-        const isMusicVisualizationRunning =
-          document.querySelector("main .webamp-desktop canvas") instanceof
-          HTMLCanvasElement;
+        const isMusicVisualizationRunning = isGlobalMusicVisualizationRunning();
         const mountUrl = getMountUrl(url, rootFs?.mntMap || {});
         const isReadOnly =
           MOUNTABLE_EXTENSIONS.has(getExtension(url)) ||
@@ -470,6 +468,14 @@ const useFolderContextMenu = (
                         ]
                       : []
                   ),
+                },
+                {
+                  label: "Window close effect",
+                  menu: CLOSE_EFFECT_NAMES.map((effectName) => ({
+                    action: () => setCloseEffect(effectName),
+                    label: effectName,
+                    toggle: closeEffect === effectName,
+                  })),
                 },
                 ...(canCapture
                   ? [
@@ -579,6 +585,7 @@ const useFolderContextMenu = (
       addToFolder,
       canCapture,
       captureScreen,
+      closeEffect,
       contextMenu,
       exists,
       hasWebGPU,
@@ -594,6 +601,7 @@ const useFolderContextMenu = (
       pasteToFolder,
       processesRef,
       rootFs?.mntMap,
+      setCloseEffect,
       setForegroundId,
       setSessionWallpaper,
       sortBy,

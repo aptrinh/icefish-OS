@@ -41,6 +41,8 @@ const WIDE_IMAGE_TRANSFORM_16 = "matrix(0.5, 0.05, 0, 0.8, 3.5, 2)";
 const SHORT_IMAGE_TRANSFORM = "matrix(0.4, 0.14, 0, 0.7, -4, 2)";
 const SHORT_IMAGE_TRANSFORM_16 = "matrix(0.4, 0.14, 0, 0.8, -0.5, 2)";
 
+const NON_SUB_ICONS = new Set([SHORTCUT_ICON, FOLDER_FRONT_ICON]);
+
 const SubIcon: FC<SubIconProps> = ({
   baseIcon,
   icon,
@@ -53,7 +55,7 @@ const SubIcon: FC<SubIconProps> = ({
 }) => {
   const iconView = useMemo(() => {
     const isSub =
-      ![SHORTCUT_ICON, FOLDER_FRONT_ICON].includes(icon) &&
+      !NON_SUB_ICONS.has(icon) &&
       !icon.startsWith("blob:") &&
       !icon.startsWith(ICON_CACHE) &&
       !icon.startsWith(YT_ICON_CACHE);

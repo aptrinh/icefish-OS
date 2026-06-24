@@ -69,14 +69,14 @@ const useDraggableEntries = (
         if (dragImageRef.current) dragImageRef.current.src = "";
         else dragImageRef.current = new Image();
 
-        const htmlToImage = await getHtmlToImage();
+        const [htmlToImage, { UNKNOWN_ICON }] = await Promise.all([
+          getHtmlToImage(),
+          import("components/system/Files/FileManager/icons"),
+        ]);
 
         if (!htmlToImage) return;
 
         try {
-          const { UNKNOWN_ICON } = await import(
-            "components/system/Files/FileManager/icons"
-          );
           const elementsHavePositions = focusedElements.every(
             ({ style }) => style?.gridRowStart && style?.gridColumnStart
           );

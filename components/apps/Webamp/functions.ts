@@ -54,7 +54,7 @@ export const BASE_WEBAMP_OPTIONS = {
 
               this.loading = true;
 
-              fetch("https://api.webamp.org/graphql", {
+              fetch("https://skins.webamp.org/graphql", {
                 body: JSON.stringify({
                   query: createWebampSkinMuseumQuery(
                     Math.floor(Math.random() * 1000)

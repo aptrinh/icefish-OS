@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   closeProcess,
   maximizeProcess,
@@ -15,6 +15,7 @@ import {
   type ProcessElements,
   type Processes,
 } from "contexts/process/types";
+import { startCloseEffect } from "utils/closeEffect";
 import { TRANSITIONS_IN_MILLISECONDS } from "utils/constants";
 
 type ProcessContextState = {
@@ -48,6 +49,12 @@ const useProcessContextState = (): ProcessContextState => {
   const [processes, setProcesses] = useState<Processes>(
     Object.create(null) as Processes
   );
+  const processesRef = useRef<Processes>({} as Processes);
+
+  useEffect(() => {
+    processesRef.current = processes;
+  }, [processes]);
+
   const argument = useCallback(
     (
       id: string,
@@ -108,8 +115,17 @@ const useProcessContextState = (): ProcessContextState => {
   );
   const closeWithTransition = useCallback(
     (id: string): void => {
-      close(id, true);
-      window.setTimeout(() => close(id), TRANSITIONS_IN_MILLISECONDS.WINDOW);
+      const { componentWindow, hasWindow } = processesRef.current[id] || {};
+      const initClose = (): void => {
+        close(id, true);
+        window.setTimeout(() => close(id), TRANSITIONS_IN_MILLISECONDS.WINDOW);
+      };
+
+      if (componentWindow && hasWindow !== false) {
+        startCloseEffect(componentWindow, initClose);
+      } else {
+        initClose();
+      }
     },
     [close]
   );

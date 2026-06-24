@@ -84,6 +84,7 @@ const findMagicNumberIndex = (
     bufferArray.slice(i, i + magicNumberArray.length)
   );
   const checkArray = (array: number[]): boolean =>
+    array.length === magicNumberArray.length &&
     array.every((number, index) => number === magicNumberArray[index]);
   const foundIndex = last
     ? arrays.findLastIndex((array) => checkArray(array))
@@ -157,8 +158,10 @@ const loadWapm = async (
   pipedCommand?: string
 ): Promise<[string, Uint8Array | Buffer] | []> => {
   const args = commandArgs[0] === "run" ? commandArgs.slice(1) : commandArgs;
-  const { lowerI64Imports } = await import("@wasmer/wasm-transformer");
-  const { default: WASI } = await import("wasi-js");
+  const [{ lowerI64Imports }, { default: WASI }] = await Promise.all([
+    import("@wasmer/wasm-transformer"),
+    import("wasi-js"),
+  ]);
 
   try {
     const wasmBinary = wasmFile || (await fetchCommandFromWAPM({ args }));

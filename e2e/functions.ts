@@ -851,7 +851,16 @@ export const terminalDoesNotHaveText = async (
   cursorLine = false
 ): Promise<void> => terminalHasText({ page }, text, 0, cursorLine);
 
-export const sendTabToTerminal = async ({ page }: TestProps): Promise<void> => {
+export const sendTabToTerminal = async (
+  { page }: TestProps,
+  waitForAutoCompleteFiles = false
+): Promise<void> => {
+  if (waitForAutoCompleteFiles) {
+    await expect(
+      page.locator(`${TERMINAL_SELECTOR}[data-autocomplete-files="true"]`)
+    ).toBeAttached();
+  }
+
   await page.locator(TERMINAL_SELECTOR).press("Tab");
 
   let checkCount = 0;
@@ -884,7 +893,8 @@ export const sendTextToTerminal = async (
 
 export const sendToTerminal = async (
   { page }: TestProps,
-  text: string
+  text: string,
+  waitForPrompt = true
 ): Promise<void> => {
   const terminal = page.locator(TERMINAL_SELECTOR);
 
@@ -893,6 +903,9 @@ export const sendToTerminal = async (
   await terminalHasText({ page }, `>${text}`, 1, true);
   await terminal.press("Enter");
   await terminalDoesNotHaveText({ page }, `>${text}`, true);
+  if (waitForPrompt) {
+    await terminalHasText({ page }, /.*>$/, 1, true);
+  }
 };
 
 export const terminalDirectoryMatchesPublicFolder = async (

@@ -38,6 +38,7 @@ import {
   getExtension,
   getSearchParam,
   isBeforeBg,
+  isGlobalMusicVisualizationRunning,
   parseBgPosition,
   preloadImage,
 } from "utils/functions";
@@ -61,6 +62,7 @@ const useWallpaper = (
     sessionLoaded ? WALLPAPER_WORKERS[wallpaperName] : undefined
   );
   const wallpaperTimerRef = useRef(0);
+  const wallpaperLoadAbortRef = useRef<AbortController>(undefined);
   const failedOffscreenContext = useRef(false);
   const resetWallpaper = useCallback(
     (keepCanvas?: boolean): void => {
@@ -248,6 +250,7 @@ const useWallpaper = (
     [readdir, lstat]
   );
   const loadFileWallpaper = useCallback(async () => {
+    let loadController: AbortController | undefined;
     let [, currentWallpaperUrl] =
       /url\((.*)\)/.exec(
         document.documentElement.style.getPropertyValue(
@@ -305,13 +308,12 @@ const useWallpaper = (
         const [nextWallpaper] = slideshowFiles[wallpaperImage];
 
         if (nextWallpaper) {
-          document.querySelector(`#${PRELOAD_ID}`)?.remove();
-
           preloadImage(
             nextWallpaper.startsWith("/")
               ? `${window.location.origin}${nextWallpaper}`
               : nextWallpaper,
             PRELOAD_ID,
+            true,
             "auto"
           );
         }
@@ -328,7 +330,28 @@ const useWallpaper = (
     } else if (wallpaperHandler[wallpaperName]) {
       resetWallpaper();
 
-      const newWallpaper = await wallpaperHandler[wallpaperName]({ isAlt });
+      wallpaperLoadAbortRef.current?.abort();
+      loadController = new AbortController();
+      wallpaperLoadAbortRef.current = loadController;
+
+      let newWallpaper:
+        | Awaited<ReturnType<(typeof wallpaperHandler)[string]>>
+        | undefined;
+
+      try {
+        newWallpaper = await wallpaperHandler[wallpaperName]({
+          isAlt,
+          signal: loadController.signal,
+        });
+      } catch (error) {
+        if ((error as Error)?.name === "AbortError") return;
+        throw error;
+      }
+
+      if (isGlobalMusicVisualizationRunning()) {
+        wallpaperLoadAbortRef.current?.abort();
+      }
+      if (loadController.signal.aborted) return;
 
       if (newWallpaper) {
         wallpaperUrl = newWallpaper.wallpaperUrl || "";
@@ -340,12 +363,23 @@ const useWallpaper = (
         );
       }
     } else if (await exists(wallpaperImage)) {
-      const { decodeImageToBuffer } = await import("utils/imageDecoder");
-      const fileData = await readFile(wallpaperImage);
-      const imageBuffer = await decodeImageToBuffer(
-        getExtension(wallpaperImage),
-        fileData
-      );
+      resetWallpaper();
+
+      const imgExt = getExtension(wallpaperImage);
+      const isNative = NATIVE_IMAGE_FORMATS.has(imgExt);
+      const [initialData, decoder] = await Promise.all([
+        readFile(wallpaperImage),
+        isNative
+          ? Promise.resolve()
+          : import("utils/imageDecoder").then((m) => m.decodeImageToBuffer),
+      ]);
+      let fileData = initialData;
+
+      if (!isNative && decoder) {
+        const decodedData = await decoder(imgExt, fileData);
+
+        if (decodedData) fileData = decodedData;
+      }
 
       wallpaperUrl = bufferToUrl(imageBuffer || fileData);
     }
@@ -418,14 +452,14 @@ const useWallpaper = (
         };
 
         if (fallbackBackground) {
-          const checkImg = new Image();
-
-          checkImg.addEventListener("load", () => applyWallpaper(wallpaperUrl));
-          checkImg.addEventListener("error", () =>
-            applyWallpaper(fallbackBackground)
+          preloadImage(
+            wallpaperUrl,
+            PRELOAD_ID,
+            true,
+            "high",
+            () => applyWallpaper(wallpaperUrl),
+            () => applyWallpaper(fallbackBackground)
           );
-          checkImg.decoding = "async";
-          checkImg.src = wallpaperUrl;
         } else {
           applyWallpaper(wallpaperUrl);
 
@@ -462,6 +496,8 @@ const useWallpaper = (
         window.clearTimeout(wallpaperTimerRef.current);
         wallpaperTimerRef.current = 0;
       }
+
+      wallpaperLoadAbortRef.current?.abort();
 
       if (wallpaperName && !WALLPAPER_WORKER_NAMES.includes(wallpaperName)) {
         loadFileWallpaper().catch(loadWallpaper);

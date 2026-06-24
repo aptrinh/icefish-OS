@@ -95,19 +95,20 @@ const useMonaco = ({
   }, [editor, prependFileToTitle, updateFolder, url, writeFile]);
 
   useEffect(() => {
-    if (monaco && !editor && containerRef.current) {
-      const currentEditor = monaco.editor.create(containerRef.current, {
+    const containerElement = containerRef.current;
+    const sectionElement = containerElement?.closest("section");
+    let onFocus: (() => void) | undefined;
+
+    if (monaco && !editor && containerElement) {
+      const currentEditor = monaco.editor.create(containerElement, {
         automaticLayout: true,
         theme,
       });
 
-      containerRef.current
-        ?.closest("section")
-        ?.addEventListener("focus", () => currentEditor.focus(), {
-          passive: true,
-        });
+      onFocus = () => currentEditor.focus();
 
-      containerRef.current?.addEventListener("blur", relocateShadowRoot, {
+      sectionElement?.addEventListener("focus", onFocus, { passive: true });
+      containerElement.addEventListener("blur", relocateShadowRoot, {
         capture: true,
         passive: true,
       });
@@ -118,6 +119,10 @@ const useMonaco = ({
     }
 
     return () => {
+      if (onFocus) sectionElement?.removeEventListener("focus", onFocus);
+      containerElement?.removeEventListener("blur", relocateShadowRoot, {
+        capture: true,
+      });
       if (editor && monaco) {
         editor.getModel()?.dispose();
         editor.dispose();

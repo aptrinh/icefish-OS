@@ -48,6 +48,7 @@ type WallpaperData = {
 
 export type WallpaperHandler = (props: {
   isAlt: boolean;
+  signal: AbortSignal;
 }) => Promise<WallpaperData> | WallpaperData;
 
 export type ApodResponse = {
@@ -58,4 +59,15 @@ export type ApodResponse = {
 
 export type ArtInstituteOfChicagoResponse = {
   data: { image_id: string }[];
+};
+
+export type MetMuseumSearchResponse = {
+  objectIDs: number[] | null;
+  total: number;
+};
+
+export type MetMuseumObjectResponse = {
+  isPublicDomain: boolean;
+  primaryImage: string;
+  primaryImageSmall: string;
 };

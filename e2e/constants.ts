@@ -221,6 +221,7 @@ export const DESKTOP_MENU_ITEMS: MenuItems = {
   Inspect: true,
   Properties: false,
   "View page source": true,
+  "Window close effect": true,
 };
 
 export const CLOCK_MENU_ITEMS = [/^Local time$/, /^Server time$/];

@@ -30,6 +30,7 @@ This project is greatly augmented by code from the open source community. Thank 
 - [3D Maze](https://github.com/ibid-11962/Windows-95-3D-Maze-Screensaver)
 - [7z-wasm](https://github.com/use-strict/7z-wasm)
 - [ani-cursor](https://github.com/captbaritone/webamp/tree/master/packages/ani-cursor)
+- [Burn-My-Windows](https://github.com/Schneegans/Burn-My-Windows)
 - [Coastal Landscape](https://www.shadertoy.com/view/fstyD4)
 - [codecbox.js](https://github.com/duanyao/codecbox.js)
 - [decode-ico](https://github.com/LinusU/decode-ico)
@@ -69,6 +70,8 @@ This project is greatly augmented by code from the open source community. Thank 
 ## App Libraries
 
 - [Boxedwine](https://github.com/danoon2/Boxedwine)
+- [chess.js](https://github.com/jhlywa/chess.js)
+- [chessboard2](https://chessboardjs.com/v2/)
 - [ClassiCube](https://github.com/UnknownShadow200/ClassiCube)
 - [DX-Ball](https://habr.com/en/post/147339/)
 - [emulatorjs](https://github.com/ethanaobrien/emulatorjs)
@@ -88,6 +91,7 @@ This project is greatly augmented by code from the open source community. Thank 
 - [quickjs-emscripten](https://github.com/justjake/quickjs-emscripten)
 - [Ruffle](https://github.com/ruffle-rs/ruffle)
 - [Space Cadet Pinball](https://github.com/alula/SpaceCadetPinball)
+- [stockfish.js](https://github.com/nmrugg/stockfish.js)
 - [t-rex-runner](https://github.com/wayou/t-rex-runner)
 - [TIC-80](https://tic80.com/)
 - [TinyMCE](https://github.com/tinymce/tinymce)
@@ -103,11 +107,13 @@ This project is greatly augmented by code from the open source community. Thank 
 
 - [ntp.js](http://www.ntpjs.org/)
 - [allOrigins](https://allorigins.win/)
+- [Art Institute of Chicago](https://www.artic.edu/open-access/public-api)
 - [Astronomy Picture of the Day](https://apod.nasa.gov/apod/)
 - [Cloudflare DoH](https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/make-api-requests/)
 - [Google DoH](https://developers.google.com/speed/public-dns/docs/doh)
 - [isomorphic-git Cors Proxy](https://github.com/isomorphic-git/cors-proxy)
 - [IPFS Public Gateways](https://ipfs.github.io/public-gateway-checker/)
+- [MMoA](https://metmuseum.github.io/)
 - [The Old Net](https://theoldnet.com/)
 - [Wayback Machine](https://web.archive.org/)
 - [Wasmer Registry](https://docs.wasmer.io/registry)

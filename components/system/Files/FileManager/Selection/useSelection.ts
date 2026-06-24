@@ -5,7 +5,7 @@ import { type FocusEntryFunctions } from "components/system/Files/FileManager/us
 import { type Size } from "components/system/Window/RndWindow/useResizable";
 import { useMenu } from "contexts/menu";
 import { type MenuState } from "contexts/menu/useMenuContextState";
-import { ONE_TIME_PASSIVE_EVENT } from "utils/constants";
+import { ONE_TIME_PASSIVE_EVENT, PREVENT_SCROLL } from "utils/constants";
 
 export type SelectionRect = Partial<Position> & Partial<Size>;
 
@@ -61,6 +61,8 @@ const useSelection = (
     target,
   }) => {
     if ((target as HTMLElement) !== containerRef.current) return;
+
+    containerRef.current.focus(PREVENT_SCROLL);
 
     const { scrollLeft = 0, scrollTop = 0 } = containerRef.current;
     const { x: targetX = 0, y: targetY = 0 } =

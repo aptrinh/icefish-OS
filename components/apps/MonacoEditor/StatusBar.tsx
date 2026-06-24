@@ -48,13 +48,19 @@ const StatusBar: FC<ComponentProcessProps> = ({ id }) => {
     ]);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     if (notifications.length > 0) {
-      setTimeout(() => {
+      const timeoutId = window.setTimeout(() => {
         setNotifications((currentNotifications) =>
           currentNotifications.slice(1)
         );
       }, MILLISECONDS_IN_SECOND * 10);
+
+      cleanup = () => window.clearTimeout(timeoutId);
     }
+
+    return cleanup;
   }, [notifications]);
 
   useEffect(() => {
