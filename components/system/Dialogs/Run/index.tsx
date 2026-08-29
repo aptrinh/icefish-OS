@@ -22,6 +22,7 @@ import {
 } from "utils/constants";
 import { getExtension, haltEvent, notFound } from "utils/functions";
 import { getIpfsFileName, getIpfsResource } from "utils/ipfs";
+import { spawnFly } from "utils/spawnFly";
 import { spawnSheep } from "utils/spawnSheep";
 import Icon from "styles/common/Icon";
 import { ADDRESS_INPUT_PROPS } from "components/apps/FileExplorer/AddressBar";
@@ -42,6 +43,8 @@ const MESSAGE = `Type the name of a program, folder, document, or Internet resou
 
 const utilCommandMap: Record<string, () => void> = {
   esheep: spawnSheep,
+  fly: spawnFly,
+  gnat: spawnFly,
   sheep: spawnSheep,
 };
 
@@ -232,7 +235,7 @@ const Run: FC<ComponentProcessProps> = ({ id }) => {
       }}
     >
       <figure>
-        <Icon alt="Run" imgSize={32} src={`${ICON_PATH}/run.webp`} />
+        <Icon alt="" imgSize={32} src={`${ICON_PATH}/run.webp`} />
         <figcaption>{MESSAGE}</figcaption>
       </figure>
       <div>
@@ -244,14 +247,9 @@ const Run: FC<ComponentProcessProps> = ({ id }) => {
             disabled={running}
             id={OPEN_ID}
             onBlurCapture={({ relatedTarget }) => {
-              if (
-                !runProcess?.componentWindow ||
-                runProcess.componentWindow.contains(relatedTarget)
-              ) {
-                inputRef.current?.focus(PREVENT_SCROLL);
-              } else {
-                setIsInputFocused(false);
-              }
+              setIsInputFocused(false);
+
+              if (!relatedTarget) inputRef.current?.focus(PREVENT_SCROLL);
             }}
             onChange={
               checkIsEmpty as React.ChangeEventHandler<HTMLInputElement>
@@ -272,6 +270,7 @@ const Run: FC<ComponentProcessProps> = ({ id }) => {
             {...ADDRESS_INPUT_PROPS}
           />
           <select
+            aria-label="Recent commands"
             disabled={runHistory.length === 0}
             name="addressHistory"
             onChange={({ target }) => {
@@ -299,7 +298,7 @@ const Run: FC<ComponentProcessProps> = ({ id }) => {
           </select>
         </div>
       </div>
-      <nav>
+      <nav role="presentation">
         <StyledButton
           className={isInputFocused ? "focus" : ""}
           disabled={isEmptyInput || running}

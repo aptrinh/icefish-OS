@@ -27,6 +27,15 @@ const StyledResults = styled.div`
 
       position: relative;
 
+      > button {
+        background-color: transparent;
+        color: inherit;
+        display: block;
+        font-family: inherit;
+        text-align: left;
+        width: 100%;
+      }
+
       figure {
         display: flex;
         padding: 12px;
@@ -98,7 +107,8 @@ const StyledResults = styled.div`
         }
       }
 
-      div.select {
+      button.select {
+        background-color: transparent;
         border-left: 1px solid transparent;
         display: flex;
         height: 100%;
@@ -119,7 +129,7 @@ const StyledResults = styled.div`
       &:hover {
         background-color: rgb(102 92 84 / 95%);
 
-        div.select {
+        button.select {
           background-color: rgb(60 56 54 / 95%);
           border-left: 1px solid rgb(40 40 40 / 95%);
         }
@@ -135,7 +145,7 @@ const StyledResults = styled.div`
         }
       }
 
-      div.select:hover {
+      button.select:hover {
         background-color: rgb(102 92 84 / 95%);
       }
     }
