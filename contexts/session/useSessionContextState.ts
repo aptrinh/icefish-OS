@@ -275,14 +275,19 @@ const useSessionContextState = (): SessionContextState => {
             session = DEFAULT_SESSION;
           }
 
-          // const sessionWallpaperImage =
-          //   session.wallpaperImage || DEFAULT_WALLPAPER;
+          const sessionWallpaperImage =
+            session.wallpaperImage || DEFAULT_WALLPAPER;
 
-          // if (sessionWallpaperImage in WALLPAPER_PATHS) {
-          //   WALLPAPER_PATHS[sessionWallpaperImage]().then(({ libs }) =>
-          //     preloadLibs(libs)
-          //   );
-          // }
+          // GALAXY is fully self-contained (no external libs), so there is
+          // nothing to preload and no reason to fetch its fallback chunk
+          if (
+            sessionWallpaperImage in WALLPAPER_PATHS &&
+            sessionWallpaperImage !== "GALAXY"
+          ) {
+            WALLPAPER_PATHS[sessionWallpaperImage]().then(({ libs }) =>
+              preloadLibs(libs)
+            );
+          }
 
           if (session.clockSource) setClockSource(session.clockSource);
           if (session.closeEffect) setCloseEffect(session.closeEffect);

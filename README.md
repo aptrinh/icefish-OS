@@ -85,6 +85,7 @@
 ### Background & Screensaver
 
 - Dynamic animated wallpapers ([OffscreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas)/[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers))
+  - Milky Way ([density wave theory](https://beltoforion.de/en/spiral_galaxy_renderer/), device orientation parallax)
   - [Net](https://www.vantajs.com/?effect=net)
   - [Hexells](https://znah.net/hexells/)
   - [Matrix](https://rezmason.github.io/matrix/)
@@ -128,6 +129,12 @@
 - Google search via Address bar
 - IPFS protocol support
 - [chrome://dino](https://github.com/wayou/t-rex-runner) game
+
+### [DesktopFly](https://github.com/DenisSergeevitch/desktop-fly)
+
+- Fruit fly pets driven by a live spiking simulation of 1,275 real [FlyWire](https://flywire.ai/) connectome neurons, with escape, backward retreat, grooming, sleep & circadian rhythm
+- Every fly has its own brain & senses: window edges are walkable terrain, dragged windows & the cursor loom, clicks swat, and a takeoff startles nearby flies
+- Spawn via `fly` in Terminal or Run dialog
 
 ### [DevTools](https://eruda.liriliri.io/)
 

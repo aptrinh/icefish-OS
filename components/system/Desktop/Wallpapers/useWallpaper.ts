@@ -1,6 +1,7 @@
 import { join } from "path";
 import { useTheme } from "styled-components";
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import { listenGalaxyInput } from "components/system/Desktop/Wallpapers/Galaxy/input";
 import { wallpaperHandler } from "components/system/Desktop/Wallpapers/handlers";
 import {
   BASE_CANVAS_SELECTOR,
@@ -108,7 +109,12 @@ const useWallpaper = (
         }
       }
 
-      if (wallpaperName === "VANTA") {
+      if (wallpaperName === "GALAXY") {
+        config = {
+          faceOn: isAlt,
+          speed: prefersReducedMotion ? REDUCED_MOTION_PERCENT : 1,
+        };
+      } else if (wallpaperName === "VANTA") {
         config = { ...vantaNetConfig };
       } else if (wallpaperImage.startsWith("MATRIX")) {
         config = {
@@ -145,12 +151,22 @@ const useWallpaper = (
         typeof window.OffscreenCanvas === "function" &&
         wallpaperWorker.current
       ) {
-        const workerConfig = { config, devicePixelRatio: 1 };
+        // GALAXY renders at up to 1.5x native resolution so its point stars
+        // stay pin-sharp on hiDPI screens; capped to bound the fill cost on
+        // phones, and its quality governor adapts if a GPU can't keep up
+        const canvasScale =
+          wallpaperName === "GALAXY"
+            ? Math.min(window.devicePixelRatio || 1, 1.5)
+            : 1;
+        const workerConfig = { config, devicePixelRatio: canvasScale };
 
         if (keepCanvas) {
           wallpaperWorker.current.postMessage(workerConfig);
         } else {
-          const offscreen = createOffscreenCanvas(desktopRef.current);
+          const offscreen = createOffscreenCanvas(
+            desktopRef.current,
+            canvasScale
+          );
 
           wallpaperWorker.current.postMessage(
             { canvas: offscreen, ...workerConfig },
@@ -161,6 +177,7 @@ const useWallpaper = (
             const loadingStatus = document.createElement("div");
 
             loadingStatus.id = "loading-status";
+            loadingStatus.setAttribute("role", "status");
 
             desktopRef.current?.append(loadingStatus);
 
@@ -172,6 +189,10 @@ const useWallpaper = (
             wallpaperWorker.current.addEventListener(
               "message",
               ({ data }: { data: WallpaperMessage }) => {
+                // Show the live region before its content changes,
+                // otherwise the announcement is unreliable
+                loadingStatus.style.display = data.message ? "block" : "none";
+
                 if (data.type === "[error]") {
                   setWallpaper(DEFAULT_WALLPAPER);
                 } else if (data.type) {
@@ -184,8 +205,6 @@ const useWallpaper = (
                         STABLE_DIFFUSION_DELAY_IN_MIN)
                   );
                 }
-
-                loadingStatus.style.display = data.message ? "block" : "none";
               }
             );
           } else {
@@ -202,6 +221,27 @@ const useWallpaper = (
                 }
               }
             );
+          }
+
+          if (wallpaperName === "GALAXY") {
+            const stopInput = listenGalaxyInput({
+              onTilt: (x, y) =>
+                wallpaperWorker.current?.postMessage({
+                  type: "tilt",
+                  x,
+                  y,
+                }),
+              onVisibility: (visible) =>
+                wallpaperWorker.current?.postMessage({
+                  type: "visibility",
+                  visible,
+                }),
+            });
+
+            window.WallpaperDestroy = () => {
+              stopInput();
+              window.WallpaperDestroy = undefined;
+            };
           }
         }
       } else if (WALLPAPER_PATHS[wallpaperName]) {
@@ -409,6 +449,8 @@ const useWallpaper = (
         video.style.objectFit = "cover";
         video.style.objectPosition = "center center";
         video.style.zIndex = "-1";
+
+        video.setAttribute("aria-hidden", "true");
 
         desktopRef.current?.append(video);
       } else {
